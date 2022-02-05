@@ -28,8 +28,8 @@ private:
     void computeLocalContribs();
 
 private:
-    Dataset<Points> _dataset;
-    Dataset<Points> _projection;
+    Eigen::ArrayXXf _dataset;
+    Eigen::ArrayXXf _projection;
 
     // Precomputed values
     std::vector<std::vector<int>> _neighbourhoodMatrix;
