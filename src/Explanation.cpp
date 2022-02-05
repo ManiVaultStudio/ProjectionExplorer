@@ -127,7 +127,7 @@ float dimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, const std::v
     return (localDistContrib(dataset, p, dim, neighbourhood) / globalDistContribs[dim]) / sum;
 }
 
-float dimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
+float euclideanDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
 {
     float sum = 0;
     for (int j = 0; j < dataset.cols(); j++)
@@ -135,6 +135,16 @@ float dimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::Array
         sum += localDistContribs(p, j) / globalDistContribs[dim];
     }
     return (localDistContribs(p, dim) / globalDistContribs[dim]) / sum;
+}
+
+float varianceDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localVariances, const std::vector<float>& globalVariance)
+{
+    float sum = 0;
+    for (int j = 0; j < dataset.cols(); j++)
+    {
+        sum += localVariances(p, j) / globalVariance[dim];
+    }
+    return (localVariances(p, dim) / globalVariance[dim]) / sum;
 }
 
 void computeDimensionRanking(const Eigen::ArrayXXf& dataset, const Eigen::ArrayXXf& projection, std::vector<float>& dimRanking)
@@ -212,6 +222,8 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
     computeCentroid();
     computeGlobalContribs();
     computeLocalContribs();
+    computeGlobalVariances();
+    computeLocalVariances();
 }
 
 void Explanation::computeNeighbourhoodMatrix()
@@ -279,6 +291,69 @@ void Explanation::computeLocalContribs()
     }
 }
 
+void Explanation::computeGlobalVariances()
+{
+    int numPoints = _dataset.rows();
+    int numDimensions = _dataset.cols();
+
+    _globalVariance.resize(numDimensions);
+    for (int j = 0; j < numDimensions; j++)
+    {
+        // Compute mean
+        float mean = 0;
+        for (int i = 0; i < numPoints; i++)
+        {
+            mean += _dataset(i, j);
+        }
+        mean /= numPoints;
+
+        // Compute variance
+        float variance = 0;
+        for (int i = 0; i < numPoints; i++)
+        {
+            variance += (_dataset(i, j) - mean) * (_dataset(i, j) - mean);
+        }
+        variance /= numPoints;
+
+        _globalVariance[j] = variance;
+    }
+}
+
+void Explanation::computeLocalVariances()
+{
+    int numPoints = _dataset.rows();
+    int numDimensions = _dataset.cols();
+
+    _localVariances.resize(numPoints, numDimensions);
+    for (int i = 0; i < numPoints; i++)
+    {
+        const std::vector<int>& neighbourhood = _neighbourhoodMatrix[i];
+
+        for (int j = 0; j < numDimensions; j++)
+        {
+            // Compute mean
+            float mean = 0;
+            for (int n = 0; n < neighbourhood.size(); n++)
+            {
+                mean += _dataset(n, j);
+            }
+            mean /= neighbourhood.size();
+
+            // Compute variance
+            float variance = 0;
+            for (int n = 0; n < neighbourhood.size(); n++)
+            {
+                variance += (_dataset(n, j) - mean) * (_dataset(n, j) - mean);
+            }
+            variance /= neighbourhood.size();
+
+            _localVariances(i, j) = variance;
+        }
+        if (i % 1000 == 0)
+            std::cout << "Local var: " << i << std::endl;
+    }
+}
+
 void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vector<unsigned int> selection)
 {
     int numProjDims = 2;
@@ -291,7 +366,7 @@ void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vect
         std::vector<float> dimRanks(_dataset.cols());
         for (int j = 0; j < _dataset.cols(); j++)
         {
-            float dimRank = dimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
+            float dimRank = euclideanDimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
             dimRanks[j] = dimRank;
         }
 
@@ -314,7 +389,7 @@ void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
     computeDimensionRanking(dimRanking, selection);
 }
 
-void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int> selection)
+void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int>& selection, Metric metric)
 {
     int numProjDims = 2;
 
@@ -326,8 +401,22 @@ void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector
         std::vector<float> dimRanks(_dataset.cols());
         for (int j = 0; j < _dataset.cols(); j++)
         {
-            float dimRank = dimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
+            float dimRank = 0;
+
+            if (metric == Metric::EUCLIDEAN)
+                dimRank = euclideanDimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
+            if (metric == Metric::VARIANCE)
+                dimRank = varianceDimensionRank(_dataset, si, j, _localVariances, _globalVariance);
+
             dimRanking(i, j) = dimRank;
         }
     }
+}
+
+void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric)
+{
+    std::vector<unsigned int> selection(_dataset.rows());
+    std::iota(selection.begin(), selection.end(), 0);
+
+    computeDimensionRanks(dimRanks, selection, metric);
 }
