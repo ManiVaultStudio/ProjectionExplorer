@@ -1,5 +1,7 @@
 #pragma once
 
+#include <PointData.h>
+
 #include <QWidget>
 #include <QLabel>
 #include <QPainter>
@@ -16,6 +18,7 @@ class BarChart : public QWidget
 public:
     BarChart();
 
+    void setDataset(hdps::Dataset<Points> dataset);
     void setRanking(Eigen::ArrayXXf& ranking);
     void setImportantDims(const std::vector<float>& importantDims);
 
@@ -24,8 +27,10 @@ protected:
 
 private:
     //QPainter painter;
+    hdps::Dataset<Points> _dataset;
     std::vector<float> _dimAggregation;
     std::vector<float> _importantDims;
+    std::vector<int> _sortIndices;
 
     std::vector<QColor> _colors;
 };

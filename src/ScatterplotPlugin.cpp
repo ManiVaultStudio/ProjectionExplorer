@@ -268,11 +268,9 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 //std::vector<float> importantDims;
                 //QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
 
-                _explanationWidget->setRanking(dimRanking);
+                _explanationWidget->getBarchart().setRanking(dimRanking);
                 //_explanationWidget->getBarchart().setImportantDims(importantDims);
                 //_explanationWidget->getImageWidget().setImage(image);
-
-                _explanationWidget->update();
 
                 ////////////////////////////////////////
 
@@ -468,6 +466,7 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     // Compute explanations
     _explanation.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
+    _explanationWidget->getBarchart().setDataset(_positionDataset->getSourceDataset<Points>());
 
     Eigen::ArrayXXf dimRanking;
     _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
@@ -783,6 +782,8 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 
         // Notify others that the selection changed
         _core->notifyDataSelectionChanged(_positionDataset);
+
+        _explanationWidget->update();
 
         break;
     }
