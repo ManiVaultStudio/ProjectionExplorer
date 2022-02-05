@@ -46,13 +46,33 @@ void BarChart::paintEvent(QPaintEvent* event)
     }
 }
 
+ImageViewWidget::ImageViewWidget() :
+    _image(30, 30, QImage::Format::Format_ARGB32)
+{
+    setFixedSize(100, 100);
+}
+
+void ImageViewWidget::setImage(QImage image)
+{
+    _image = image;
+}
+
+void ImageViewWidget::paintEvent(QPaintEvent* event)
+{
+    QPainter painter(this);
+
+    painter.drawImage(0, 0, _image);
+}
+
 ExplanationWidget::ExplanationWidget()
 {
     _rankLabel = new QLabel("No ranking");
     _barChart = new BarChart();
+    _imageViewWidget = new ImageViewWidget();
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(_barChart);
+    layout->addWidget(_imageViewWidget);
     layout->addWidget(_rankLabel);
 
     setLayout(layout);
@@ -68,6 +88,7 @@ ExplanationWidget::~ExplanationWidget()
 void ExplanationWidget::update()
 {
     _barChart->repaint();
+    _imageViewWidget->repaint();
 }
 
 void ExplanationWidget::setRanking(Eigen::ArrayXXf& ranking)

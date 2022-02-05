@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPainter>
+#include <QColor>
+#include <QImage>
 
 #include <Eigen/Eigen>
 
@@ -22,6 +24,22 @@ protected:
 private:
     //QPainter painter;
     std::vector<float> _dimAggregation;
+
+    std::vector<QColor> _colors;
+};
+
+class ImageViewWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    ImageViewWidget();
+    void setImage(QImage image);
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    QImage _image;
 };
 
 class ExplanationWidget : public QWidget
@@ -34,7 +52,10 @@ public:
     void update();
     void setRanking(Eigen::ArrayXXf& ranking);
 
+    ImageViewWidget& getImageWidget() { return *_imageViewWidget; }
+
 private:
     QLabel* _rankLabel;
     BarChart* _barChart;
+    ImageViewWidget* _imageViewWidget;
 };
