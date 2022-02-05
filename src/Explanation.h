@@ -11,28 +11,6 @@
 
 using namespace hdps;
 
-void findNeighbourhood(Dataset<Points> projection, int centerId, float radius, std::vector<int>& neighbourhood);
-
-float sqrMag(Dataset<Points> dataset, int a, int b);
-
-float sqrMag(Dataset<Points> dataset, const std::vector<float>& a, int b);
-
-float distance(Dataset<Points> dataset, int a, int b);
-
-float distContrib(Dataset<Points> dataset, int p, int r, int dim);
-
-float distContrib(Dataset<Points> dataset, const std::vector<float>& p, int r, int dim);
-
-float localDistContrib(Dataset<Points> dataset, int p, int dim, const std::vector<int>& neighbourhood);
-
-std::vector<float> computeNDCentroid(Dataset<Points> dataset);
-
-float globalDistContrib(Dataset<Points> dataset, const std::vector<float>& centroid, int dim);
-
-float dimensionRank(Dataset<Points> dataset, int p, int dim, const std::vector<int>& neighbourhood, const std::vector<float>& globalDistContribs);
-
-void computeDimensionRanking(Dataset<Points> dataset, Dataset<Points> projection, std::vector<float>& dimRanking);
-
 class Explanation
 {
 public:
@@ -40,6 +18,7 @@ public:
 
     void computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vector<unsigned int> selection);
     void computeDimensionRanking(Eigen::ArrayXXi& dimRanking);
+    void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, std::vector<unsigned int> selection);
 
 private:
     // Precomputation

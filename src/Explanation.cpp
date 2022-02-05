@@ -1,6 +1,6 @@
 #include "Explanation.h"
 
-void findNeighbourhood(Dataset<Points> projection, int centerId, float radius, std::vector<int>& neighbourhood)
+void findNeighbourhood(const Dataset<Points>& projection, int centerId, float radius, std::vector<int>& neighbourhood)
 {
     float x = projection->getValueAt(centerId * 2 + 0);
     float y = projection->getValueAt(centerId * 2 + 1);
@@ -26,7 +26,7 @@ void findNeighbourhood(Dataset<Points> projection, int centerId, float radius, s
     }
 }
 
-float sqrMag(Dataset<Points> dataset, int a, int b)
+float sqrMag(const Dataset<Points>& dataset, int a, int b)
 {
     int numDims = dataset->getNumDimensions();
 
@@ -39,7 +39,7 @@ float sqrMag(Dataset<Points> dataset, int a, int b)
     return dist;
 }
 
-float sqrMag(Dataset<Points> dataset, const std::vector<float>& a, int b)
+float sqrMag(const Dataset<Points>& dataset, const std::vector<float>& a, int b)
 {
     int numDims = dataset->getNumDimensions();
 
@@ -52,12 +52,12 @@ float sqrMag(Dataset<Points> dataset, const std::vector<float>& a, int b)
     return dist;
 }
 
-float distance(Dataset<Points> dataset, int a, int b)
+float distance(const Dataset<Points>& dataset, int a, int b)
 {
     return sqrt(sqrMag(dataset, a, b));
 }
 
-float distContrib(Dataset<Points> dataset, int p, int r, int dim)
+float distContrib(const Dataset<Points>& dataset, int p, int r, int dim)
 {
     int numDims = dataset->getNumDimensions();
     float dimDistSquared = dataset->getValueAt(p * numDims + dim) - dataset->getValueAt(r * numDims + dim);
@@ -67,7 +67,7 @@ float distContrib(Dataset<Points> dataset, int p, int r, int dim)
     return dimDistSquared / totalDistSquared;
 }
 
-float distContrib(Dataset<Points> dataset, const std::vector<float>& p, int r, int dim)
+float distContrib(const Dataset<Points>& dataset, const std::vector<float>& p, int r, int dim)
 {
     int numDims = dataset->getNumDimensions();
     float dimDistSquared = p[dim] - dataset->getValueAt(r * numDims + dim);
@@ -77,7 +77,7 @@ float distContrib(Dataset<Points> dataset, const std::vector<float>& p, int r, i
     return dimDistSquared / totalDistSquared;
 }
 
-float localDistContrib(Dataset<Points> dataset, int p, int dim, const std::vector<int>& neighbourhood)
+float localDistContrib(const Dataset<Points>& dataset, int p, int dim, const std::vector<int>& neighbourhood)
 {
     float localDistContrib = 0;
     for (int i = 0; i < neighbourhood.size(); i++)
@@ -87,7 +87,7 @@ float localDistContrib(Dataset<Points> dataset, int p, int dim, const std::vecto
     return localDistContrib / neighbourhood.size();
 }
 
-std::vector<float> computeNDCentroid(Dataset<Points> dataset)
+std::vector<float> computeNDCentroid(const Dataset<Points>& dataset)
 {
     int numPoints = dataset->getNumPoints();
     int numDimensions = dataset->getNumDimensions();
@@ -107,7 +107,7 @@ std::vector<float> computeNDCentroid(Dataset<Points> dataset)
     return centroid;
 }
 
-float globalDistContrib(Dataset<Points> dataset, const std::vector<float>& centroid, int dim)
+float globalDistContrib(const Dataset<Points>& dataset, const std::vector<float>& centroid, int dim)
 {
     float globalDistContrib = 0;
     for (int i = 0; i < dataset->getNumPoints(); i++)
@@ -117,7 +117,7 @@ float globalDistContrib(Dataset<Points> dataset, const std::vector<float>& centr
     return globalDistContrib / dataset->getNumPoints();
 }
 
-float dimensionRank(Dataset<Points> dataset, int p, int dim, const std::vector<int>& neighbourhood, const std::vector<float>& globalDistContribs)
+float dimensionRank(const Dataset<Points>& dataset, int p, int dim, const std::vector<int>& neighbourhood, const std::vector<float>& globalDistContribs)
 {
     float sum = 0;
     for (int j = 0; j < dataset->getNumDimensions(); j++)
@@ -127,7 +127,7 @@ float dimensionRank(Dataset<Points> dataset, int p, int dim, const std::vector<i
     return (localDistContrib(dataset, p, dim, neighbourhood) / globalDistContribs[dim]) / sum;
 }
 
-float dimensionRank(Dataset<Points> dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
+float dimensionRank(const Dataset<Points>& dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
 {
     float sum = 0;
     for (int j = 0; j < dataset->getNumDimensions(); j++)
@@ -296,4 +296,22 @@ void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
     std::iota(selection.begin(), selection.end(), 0);
 
     computeDimensionRanking(dimRanking, selection);
+}
+
+void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int> selection)
+{
+    int numProjDims = 2;
+
+    dimRanking.resize(selection.size(), _dataset->getNumDimensions());
+    for (int i = 0; i < selection.size(); i++)
+    {
+        int si = selection[i];
+
+        std::vector<float> dimRanks(_dataset->getNumDimensions());
+        for (int j = 0; j < _dataset->getNumDimensions(); j++)
+        {
+            float dimRank = dimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
+            dimRanking(i, j) = dimRank;
+        }
+    }
 }

@@ -14,7 +14,7 @@ class BarChart : public QWidget
 public:
     BarChart();
 
-    void setRanking(Eigen::ArrayXXi& ranking);
+    void setRanking(Eigen::ArrayXXf& ranking);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -31,7 +31,8 @@ public:
     ExplanationWidget();
     ~ExplanationWidget();
 
-    void setRanking(Eigen::ArrayXXi& ranking);
+    void update();
+    void setRanking(Eigen::ArrayXXf& ranking);
 
 private:
     QLabel* _rankLabel;

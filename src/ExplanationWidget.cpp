@@ -3,6 +3,7 @@
 #include <QVBoxLayout>
 
 #include <string>
+#include <iostream>
 
 BarChart::BarChart()
 {
@@ -10,24 +11,23 @@ BarChart::BarChart()
     setMinimumHeight(270);
 }
 
-void BarChart::setRanking(Eigen::ArrayXXi& ranking)
+void BarChart::setRanking(Eigen::ArrayXXf& ranking)
 {
-    std::string rankText;
-
     if (ranking.rows() == 0)
         return;
 
-    std::vector<float> dimAggregation(ranking.cols());
+    std::vector<float> dimAggregation(ranking.cols(), 0);
     for (int i = 0; i < ranking.rows(); i++)
     {
         for (int j = 0; j < ranking.cols(); j++)
         {
-            dimAggregation[ranking(i, j)] += ranking.cols() - j;
+            dimAggregation[j] += ranking(i, j);
         }
     }
     for (int i = 0; i < dimAggregation.size(); i++)
     {
         dimAggregation[i] /= (float) ranking.rows();
+        std::cout << "Agg: " << dimAggregation[i] << std::endl;
     }
 
     _dimAggregation = dimAggregation;
@@ -42,7 +42,7 @@ void BarChart::paintEvent(QPaintEvent* event)
     for (int i = 0; i < _dimAggregation.size(); i++)
     {
         painter.drawText(10, 16 * i, QString::number(i));
-        painter.fillRect(30, 16 * i, _dimAggregation[i] * 10, 14, QColor(255, 0, 0));
+        painter.fillRect(30, 16 * i, _dimAggregation[i] * 600, 14, QColor(255, 0, 0));
     }
 }
 
@@ -65,20 +65,29 @@ ExplanationWidget::~ExplanationWidget()
 
 }
 
-void ExplanationWidget::setRanking(Eigen::ArrayXXi& ranking)
+void ExplanationWidget::update()
 {
-    std::string rankText;
+    _barChart->repaint();
+}
 
+void ExplanationWidget::setRanking(Eigen::ArrayXXf& ranking)
+{
     if (ranking.rows() == 0)
         return;
 
-    std::vector<int> dimAggregation(ranking.cols());
+    std::string rankText;
+
+    std::vector<float> dimAggregation(ranking.cols(), 0);
     for (int i = 0; i < ranking.rows(); i++)
     {
         for (int j = 0; j < ranking.cols(); j++)
         {
-            dimAggregation[ranking(i, j)] += ranking.cols() - j;
+            dimAggregation[j] += ranking(i, j);
         }
+    }
+    for (int i = 0; i < dimAggregation.size(); i++)
+    {
+        dimAggregation[i] /= (float)ranking.rows();
     }
 
     for (int i = 0; i < dimAggregation.size(); i++)
