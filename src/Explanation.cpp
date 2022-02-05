@@ -234,28 +234,27 @@ void Explanation::computeGlobalContrib()
     }
 }
 
-void Explanation::computeDimensionRanking(std::vector<float>& dimRanking)
+void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
 {
     int numProjDims = 2;
 
-    dimRanking.resize(_dataset->getNumPoints());
+    dimRanking.resize(_dataset->getNumPoints(), _dataset->getNumDimensions());
     for (int i = 0; i < _dataset->getNumPoints(); i++)
     {
-        //float x = projection->getValueAt(i * 2 + 0);
-        //float y = projection->getValueAt(i * 2 + 1);
-        std::vector<float> dimRanks;
+        std::vector<float> dimRanks(_dataset->getNumDimensions());
         for (int j = 0; j < _dataset->getNumDimensions(); j++)
         {
-            //std::cout << "Dim rank: " << j << std::endl;
             float dimRank = dimensionRank(_dataset, i, j, _neighbourhoodMatrix[i], _globalDistContribs);
-            dimRanks.push_back(dimRank);
+            dimRanks[j] = dimRank;
         }
 
         std::vector<int> indices(_dataset->getNumDimensions());
-        std::iota(indices.begin(), indices.end(), 0); //Initializing
+        std::iota(indices.begin(), indices.end(), 0);
         std::sort(indices.begin(), indices.end(), [&](int i, int j) {return dimRanks[i] < dimRanks[j]; });
 
-        //std::cout << "Most important dimension: " << indices[0] << std::endl;
-        dimRanking[i] = indices[0];
+        for (int j = 0; j < _dataset->getNumDimensions(); j++)
+        {
+            dimRanking(i, j) = indices[j];
+        }
     }
 }

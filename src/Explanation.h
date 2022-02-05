@@ -7,6 +7,8 @@
 #include <numeric>
 #include <iostream>
 
+#include <Eigen/Eigen>
+
 using namespace hdps;
 
 void findNeighbourhood(Dataset<Points> projection, int centerId, float radius, std::vector<int>& neighbourhood);
@@ -36,7 +38,7 @@ class Explanation
 public:
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
 
-    void computeDimensionRanking(std::vector<float>& dimRanking);
+    void computeDimensionRanking(Eigen::ArrayXXi& dimRanking);
 
 private:
     // Precomputation
