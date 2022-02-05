@@ -268,7 +268,7 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 //std::vector<float> importantDims;
                 //QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
 
-                _explanationWidget->getBarchart().setRanking(dimRanking);
+                _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
                 //_explanationWidget->getBarchart().setImportantDims(importantDims);
                 //_explanationWidget->getImageWidget().setImage(image);
 
