@@ -614,8 +614,12 @@ void ScatterplotPlugin::positionDatasetChanged()
     // Update positions data
     updateData();
 
+    // Compute explanations
+    _explanation.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
+
     std::vector<float> dimRanking;
-    computeDimensionRanking(_positionDataset->getSourceDataset<Points>(), _positionDataset, dimRanking);
+    _explanation.computeDimensionRanking(dimRanking);
+    
     Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
     rankingDataset->setData(dimRanking.data(), dimRanking.size(), 1);
     _core->notifyDataAdded(rankingDataset);

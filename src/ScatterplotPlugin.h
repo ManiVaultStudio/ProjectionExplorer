@@ -3,6 +3,7 @@
 #include <ViewPlugin.h>
 
 #include "util/PixelSelectionTool.h"
+#include "Explanation.h"
 
 #include "Common.h"
 
@@ -114,6 +115,8 @@ protected:
     ScatterplotWidget*          _scatterPlotWidget;
     hdps::gui::DropWidget*      _dropWidget;
     SettingsAction              _settingsAction;
+
+    Explanation                 _explanation;
 };
 
 // =============================================================================
