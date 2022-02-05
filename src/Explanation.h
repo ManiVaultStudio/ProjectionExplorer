@@ -38,13 +38,15 @@ class Explanation
 public:
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
 
+    void computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vector<unsigned int> selection);
     void computeDimensionRanking(Eigen::ArrayXXi& dimRanking);
 
 private:
     // Precomputation
     void computeNeighbourhoodMatrix();
     void computeCentroid();
-    void computeGlobalContrib();
+    void computeGlobalContribs();
+    void computeLocalContribs();
 
 private:
     Dataset<Points> _dataset;
@@ -54,4 +56,5 @@ private:
     std::vector<std::vector<int>> _neighbourhoodMatrix;
     std::vector<float> _centroid;
     std::vector<float> _globalDistContribs;
+    Eigen::ArrayXXf _localDistContribs;
 };

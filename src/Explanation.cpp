@@ -127,6 +127,16 @@ float dimensionRank(Dataset<Points> dataset, int p, int dim, const std::vector<i
     return (localDistContrib(dataset, p, dim, neighbourhood) / globalDistContribs[dim]) / sum;
 }
 
+float dimensionRank(Dataset<Points> dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
+{
+    float sum = 0;
+    for (int j = 0; j < dataset->getNumDimensions(); j++)
+    {
+        sum += localDistContribs(p, j) / globalDistContribs[dim];
+    }
+    return (localDistContribs(p, dim) / globalDistContribs[dim]) / sum;
+}
+
 void computeDimensionRanking(Dataset<Points> dataset, Dataset<Points> projection, std::vector<float>& dimRanking)
 {
     int numProjDims = 2;
@@ -184,7 +194,8 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
 
     computeNeighbourhoodMatrix();
     computeCentroid();
-    computeGlobalContrib();
+    computeGlobalContribs();
+    computeLocalContribs();
 }
 
 void Explanation::computeNeighbourhoodMatrix()
@@ -220,9 +231,9 @@ void Explanation::computeCentroid()
     }
 }
 
-void Explanation::computeGlobalContrib()
+void Explanation::computeGlobalContribs()
 {
-    std::cout << "Precomputing distance contributions.." << std::endl;
+    std::cout << "Precomputing global distance contributions.." << std::endl;
     int numDimensions = _dataset->getNumDimensions();
 
     _globalDistContribs.clear();
@@ -234,17 +245,37 @@ void Explanation::computeGlobalContrib()
     }
 }
 
-void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
+void Explanation::computeLocalContribs()
+{
+    std::cout << "Precomputing local distance contributions.." << std::endl;
+    int numPoints = _dataset->getNumPoints();
+    int numDimensions = _dataset->getNumDimensions();
+
+    _localDistContribs.resize(numPoints, numDimensions);
+
+    for (int i = 0; i < numPoints; i++)
+    {
+        for (int j = 0; j < numDimensions; j++)
+        {
+            _localDistContribs(i, j) = localDistContrib(_dataset, i, j, _neighbourhoodMatrix[i]);
+        }
+        if (i % 100 == 0) std::cout << "Local dist contribs: " << i << std::endl;
+    }
+}
+
+void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vector<unsigned int> selection)
 {
     int numProjDims = 2;
 
-    dimRanking.resize(_dataset->getNumPoints(), _dataset->getNumDimensions());
-    for (int i = 0; i < _dataset->getNumPoints(); i++)
+    dimRanking.resize(selection.size(), _dataset->getNumDimensions());
+    for (int i = 0; i < selection.size(); i++)
     {
+        int si = selection[i];
+
         std::vector<float> dimRanks(_dataset->getNumDimensions());
         for (int j = 0; j < _dataset->getNumDimensions(); j++)
         {
-            float dimRank = dimensionRank(_dataset, i, j, _neighbourhoodMatrix[i], _globalDistContribs);
+            float dimRank = dimensionRank(_dataset, si, j, _localDistContribs, _globalDistContribs);
             dimRanks[j] = dimRank;
         }
 
@@ -257,4 +288,12 @@ void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
             dimRanking(i, j) = indices[j];
         }
     }
+}
+
+void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
+{
+    std::vector<unsigned int> selection(_dataset->getNumPoints());
+    std::iota(selection.begin(), selection.end(), 0);
+
+    computeDimensionRanking(dimRanking, selection);
 }
