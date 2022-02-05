@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 
-set(PROJECT "ScatterplotPlugin")
+set(PROJECT "ExplanationScatterplot")
 
 PROJECT(${PROJECT})
 
@@ -24,6 +24,8 @@ set(PLUGIN
     src/Common.h
     src/ScatterplotPlugin.h
     src/ScatterplotPlugin.cpp
+    src/Explanation.h
+    src/Explanation.cpp
 )
 
 set(UI
@@ -93,6 +95,7 @@ source_group(Shaders FILES ${SHADERS})
 source_group(Aux FILES ${AUX})
 
 include_directories("${INSTALL_DIR}/$<CONFIGURATION>/include/")
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Eigen/include)
 
 add_library(${PROJECT} SHARED ${SOURCES} ${SHADERS} ${AUX})
 

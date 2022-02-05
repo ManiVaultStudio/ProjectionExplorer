@@ -35,6 +35,8 @@ public:
 
     void init() override;
 
+    void onDataEvent(hdps::DataEvent* dataEvent);
+
     /**
      * Load one (or more datasets in the view)
      * @param datasets Dataset(s) to load
@@ -98,6 +100,8 @@ private:
     void updateData();
     void calculatePositions(const Points& points);
     void updateSelection();
+
+    bool eventFilter(QObject* target, QEvent* event);
 
 private:
     Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
