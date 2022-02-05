@@ -773,7 +773,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
             QPoint diff = QPoint(mouseEvent->x(), mouseEvent->y()) - uv;
             //float len = sqrt(pow(diff.x(), 2) + pow(diff.y(), 2));
             //qDebug() << mouseUV << uv << len;
-            if (diff.manhattanLength() < 30)
+            if (sqrt(diff.x() * diff.x() + diff.y() * diff.y()) < 30)
                 targetSelectionIndices.push_back(localGlobalIndices[i]);
         }
 
