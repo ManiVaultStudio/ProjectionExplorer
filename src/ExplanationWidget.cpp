@@ -40,6 +40,11 @@ void BarChart::setRanking(Eigen::ArrayXXf& ranking)
     _dimAggregation = dimAggregation;
 }
 
+void BarChart::setImportantDims(const std::vector<float>& importantDims)
+{
+    _importantDims = importantDims;
+}
+
 void BarChart::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
@@ -51,6 +56,7 @@ void BarChart::paintEvent(QPaintEvent* event)
         painter.fillRect(10, 16 * i, 14, 14, _colors[i]);
         painter.drawText(30, 10 + 16 * i, QString::number(i));
         painter.fillRect(50, 16 * i, _dimAggregation[i] * 600, 14, QColor(255, 0, 0));
+        //painter.fillRect(50, 16 * i + 7, _importantDims[i] * 60, 7, QColor(0, 0, 255));
     }
 }
 

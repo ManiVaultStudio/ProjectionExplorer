@@ -9,7 +9,11 @@
 
 #include <Eigen/Eigen>
 
+#include <QImage>
+
 using namespace hdps;
+
+void computeEigenImage();
 
 class Explanation
 {
@@ -27,6 +31,8 @@ public:
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, std::vector<unsigned int>& selection, Metric metric = Metric::VARIANCE);
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric = Metric::VARIANCE);
 
+    QImage computeEigenImage(std::vector<unsigned int>& selection, std::vector<float>& importantDims);
+
 private:
     // Precomputation
     void computeNeighbourhoodMatrix();
@@ -39,6 +45,8 @@ private:
 private:
     Eigen::ArrayXXf _dataset;
     Eigen::ArrayXXf _projection;
+
+    Eigen::ArrayXXf _normDataset;
 
     // Precomputed values
     std::vector<std::vector<int>> _neighbourhoodMatrix;

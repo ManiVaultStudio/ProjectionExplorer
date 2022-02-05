@@ -17,6 +17,7 @@ public:
     BarChart();
 
     void setRanking(Eigen::ArrayXXf& ranking);
+    void setImportantDims(const std::vector<float>& importantDims);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -24,6 +25,7 @@ protected:
 private:
     //QPainter painter;
     std::vector<float> _dimAggregation;
+    std::vector<float> _importantDims;
 
     std::vector<QColor> _colors;
 };
@@ -52,6 +54,7 @@ public:
     void update();
     void setRanking(Eigen::ArrayXXf& ranking);
 
+    BarChart& getBarchart() { return *_barChart; }
     ImageViewWidget& getImageWidget() { return *_imageViewWidget; }
 
 private:
