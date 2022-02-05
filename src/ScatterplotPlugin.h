@@ -119,6 +119,8 @@ protected:
 
     Explanation                 _explanation;
     ExplanationWidget*          _explanationWidget;
+
+    float _selectionRadius;
 };
 
 // =============================================================================

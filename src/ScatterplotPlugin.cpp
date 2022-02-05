@@ -45,7 +45,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _scatterPlotWidget(new ScatterplotWidget()),
     _explanationWidget(new ExplanationWidget()),
     _dropWidget(nullptr),
-    _settingsAction(this)
+    _settingsAction(this),
+    _selectionRadius(30)
 {
     setObjectName("Scatterplot");
 
@@ -773,7 +774,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
             QPoint diff = QPoint(mouseEvent->x(), mouseEvent->y()) - uv;
             //float len = sqrt(pow(diff.x(), 2) + pow(diff.y(), 2));
             //qDebug() << mouseUV << uv << len;
-            if (sqrt(diff.x() * diff.x() + diff.y() * diff.y()) < 30)
+            if (sqrt(diff.x() * diff.x() + diff.y() * diff.y()) < _selectionRadius)
                 targetSelectionIndices.push_back(localGlobalIndices[i]);
         }
 
@@ -791,6 +792,11 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     case QEvent::Wheel:
     {
         auto wheelEvent = static_cast<QWheelEvent*>(event);
+
+        qDebug() << wheelEvent->angleDelta().y();
+
+        _selectionRadius += wheelEvent->angleDelta().y() > 0 ? 2 : -2;
+        if (_selectionRadius < 2) _selectionRadius = 2;
 
         break;
     }
