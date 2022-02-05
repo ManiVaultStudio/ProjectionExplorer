@@ -263,14 +263,14 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 hdps::Dataset<Points> selection = sourceDataset->getSelection();
 
                 Eigen::ArrayXXf dimRanking;
-                _explanation.computeDimensionRanks(dimRanking, selection->indices, Explanation::Metric::EUCLIDEAN);
+                _explanation.computeDimensionRanks(dimRanking, selection->indices, Explanation::Metric::VARIANCE);
 
-                std::vector<float> importantDims;
-                QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
+                //std::vector<float> importantDims;
+                //QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
 
                 _explanationWidget->setRanking(dimRanking);
-                _explanationWidget->getBarchart().setImportantDims(importantDims);
-                _explanationWidget->getImageWidget().setImage(image);
+                //_explanationWidget->getBarchart().setImportantDims(importantDims);
+                //_explanationWidget->getImageWidget().setImage(image);
 
                 _explanationWidget->update();
 
@@ -470,7 +470,7 @@ void ScatterplotPlugin::positionDatasetChanged()
     _explanation.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
 
     Eigen::ArrayXXf dimRanking;
-    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::EUCLIDEAN);
+    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
     
     // Build vector of top ranked dimensions
     //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");

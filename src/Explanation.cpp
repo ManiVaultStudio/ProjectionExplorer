@@ -132,7 +132,7 @@ float euclideanDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eig
     float sum = 0;
     for (int j = 0; j < dataset.cols(); j++)
     {
-        sum += localDistContribs(p, j) / globalDistContribs[dim];
+        sum += localDistContribs(p, j) / globalDistContribs[j];
     }
     return (localDistContribs(p, dim) / globalDistContribs[dim]) / sum;
 }
@@ -142,7 +142,7 @@ float varianceDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eige
     float sum = 0;
     for (int j = 0; j < dataset.cols(); j++)
     {
-        sum += localVariances(p, j) / globalVariance[dim];
+        sum += localVariances(p, j) / globalVariance[j];
     }
     return (localVariances(p, dim) / globalVariance[dim]) / sum;
 }
@@ -355,7 +355,7 @@ void Explanation::computeLocalVariances()
             float mean = 0;
             for (int n = 0; n < neighbourhood.size(); n++)
             {
-                mean += _dataset(n, j);
+                mean += _dataset(neighbourhood[n], j);
             }
             mean /= neighbourhood.size();
 
@@ -363,7 +363,7 @@ void Explanation::computeLocalVariances()
             float variance = 0;
             for (int n = 0; n < neighbourhood.size(); n++)
             {
-                variance += (_dataset(n, j) - mean) * (_dataset(n, j) - mean);
+                variance += (_dataset(neighbourhood[n], j) - mean) * (_dataset(neighbourhood[n], j) - mean);
             }
             variance /= neighbourhood.size();
 
