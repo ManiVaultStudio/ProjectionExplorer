@@ -9,6 +9,14 @@ BarChart::BarChart()
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumHeight(270);
+
+    _colors.resize(23);
+    const char* kelly_colors[] = { "#31a09a", "#222222", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+
+    for (int i = 0; i < _colors.size(); i++)
+    {
+        _colors[i].setNamedColor(kelly_colors[i]);
+    }
 }
 
 void BarChart::setRanking(Eigen::ArrayXXf& ranking)
@@ -27,7 +35,6 @@ void BarChart::setRanking(Eigen::ArrayXXf& ranking)
     for (int i = 0; i < dimAggregation.size(); i++)
     {
         dimAggregation[i] /= (float) ranking.rows();
-        std::cout << "Agg: " << dimAggregation[i] << std::endl;
     }
 
     _dimAggregation = dimAggregation;
@@ -37,12 +44,13 @@ void BarChart::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
 
-    painter.drawRect(0, 0, 200, 250);
+    painter.drawRect(0, 0, 200, (_dimAggregation.size() + 1) * 16);
 
     for (int i = 0; i < _dimAggregation.size(); i++)
     {
-        painter.drawText(10, 16 * i, QString::number(i));
-        painter.fillRect(30, 16 * i, _dimAggregation[i] * 600, 14, QColor(255, 0, 0));
+        painter.fillRect(10, 16 * i, 14, 14, _colors[i]);
+        painter.drawText(30, 10 + 16 * i, QString::number(i));
+        painter.fillRect(50, 16 * i, _dimAggregation[i] * 600, 14, QColor(255, 0, 0));
     }
 }
 
