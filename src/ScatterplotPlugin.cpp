@@ -263,207 +263,210 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 hdps::Dataset<Points> selection = sourceDataset->getSelection();
 
                 Eigen::ArrayXXf dimRanking;
-                _explanation.computeDimensionRanks(dimRanking, selection->indices);
+                _explanation.computeDimensionRanks(dimRanking, selection->indices, Explanation::Metric::EUCLIDEAN);
 
                 _explanationWidget->setRanking(dimRanking);
 
                 _explanationWidget->update();
 
-    //            hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
-    //            hdps::Dataset<Points> selection = sourceDataset->getSelection();
-    //            int numPoints = selection->indices.size();
-    //            int numDimensions = sourceDataset->getNumDimensions();
+                ////////////////////////////////////////
 
-    //            std::vector<std::vector<float>> values(numPoints, std::vector<float>(numDimensions));
-    //            std::vector<float> means(numDimensions, 0);
-    //            std::vector<float> variances(numDimensions);
+                int numPoints = selection->indices.size();
+                int numDimensions = sourceDataset->getNumDimensions();
 
-    //            for (int i = 0; i < numPoints; i++)
-    //            {
-    //                int selectionIndex = selection->indices[i];
+                std::vector<std::vector<float>> values(numPoints, std::vector<float>(numDimensions));
+                std::vector<float> means(numDimensions, 0);
+                std::vector<float> variances(numDimensions);
 
-    //                for (int d = 0; d < numDimensions; d++)
-    //                {
-    //                    float v = sourceDataset->getValueAt(selectionIndex * numDimensions + d);
-    //                    values[i][d] = v;
-    //                    means[d] += v;
-    //                }
-    //            }
+                for (int i = 0; i < numPoints; i++)
+                {
+                    int selectionIndex = selection->indices[i];
 
-    //            // Normalize means
-    //            for (int d = 0; d < numDimensions; d++)
-    //            {
-    //                means[d] /= numPoints;
-    //            }
+                    for (int d = 0; d < numDimensions; d++)
+                    {
+                        float v = sourceDataset->getValueAt(selectionIndex * numDimensions + d);
+                        values[i][d] = v;
+                        means[d] += v;
+                    }
+                }
 
-    //            //// Compute variances
-    //            //for (int i = 0; i < numPoints; i++)
-    //            //{
-    //            //    for (int d = 0; d < numDimensions; d++)
-    //            //    {
-    //            //        float v = values[i][d];
-    //            //        variances[d] += (v - means[d]) * (v - means[d]);
-    //            //    }
-    //            //}
+                // Normalize means
+                for (int d = 0; d < numDimensions; d++)
+                {
+                    means[d] /= numPoints;
+                }
 
-    //            //// Normalize variances
-    //            //std::cout << "Variances: ";
-    //            //for (int d = 0; d < numDimensions; d++)
-    //            //{
-    //            //    variances[d] /= numPoints;
-    //            //    std::cout << variances[d] << " ";
-    //            //}
-    //            //std::cout << std::endl;
+                //// Compute variances
+                //for (int i = 0; i < numPoints; i++)
+                //{
+                //    for (int d = 0; d < numDimensions; d++)
+                //    {
+                //        float v = values[i][d];
+                //        variances[d] += (v - means[d]) * (v - means[d]);
+                //    }
+                //}
 
-    //            ///////////////////////////////////////
-    //            Eigen::MatrixXf covariance(numDimensions, numDimensions);
-    //            covariance.setZero();
+                //// Normalize variances
+                //std::cout << "Variances: ";
+                //for (int d = 0; d < numDimensions; d++)
+                //{
+                //    variances[d] /= numPoints;
+                //    std::cout << variances[d] << " ";
+                //}
+                //std::cout << std::endl;
 
-    //            // Compute covariance matrix
-    //            for (int i = 0; i < numPoints; i++)
-    //            {
-    //                std::vector<float>& point = values[i];
+                ///////////////////////////////////////
+                Eigen::MatrixXf covariance(numDimensions, numDimensions);
+                covariance.setZero();
 
-    //                Eigen::VectorXf eigenDev(numDimensions);
-    //                for (int d = 0; d < numDimensions; d++)
-    //                {
-    //                    float v = point[d];
-    //                    eigenDev[d] = (v - means[d]);
-    //                }
+                // Compute covariance matrix
+                for (int i = 0; i < numPoints; i++)
+                {
+                    std::vector<float>& point = values[i];
 
-    //                covariance += eigenDev * eigenDev.transpose();
-    //            }
-    //            covariance /= (float) numPoints;
+                    Eigen::VectorXf eigenDev(numDimensions);
+                    for (int d = 0; d < numDimensions; d++)
+                    {
+                        float v = point[d];
+                        eigenDev[d] = (v - means[d]);
+                    }
 
-    //            // Compute eigenvectors for the covariance matrix
-    //            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> solver(covariance);
-    //            Eigen::MatrixXf eVectors = solver.eigenvectors().real();
-    //            Eigen::VectorXf eValues = solver.eigenvalues().real();
+                    covariance += eigenDev * eigenDev.transpose();
+                }
+                covariance /= (float) numPoints;
 
-    //            eVectors.transposeInPlace();
+                // Compute eigenvectors for the covariance matrix
+                Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> solver(covariance);
+                Eigen::MatrixXf eVectors = solver.eigenvectors().real();
+                Eigen::VectorXf eValues = solver.eigenvalues().real();
 
-    //            std::cout << "Eigen vectors: " << eVectors.rows() << "x" << eVectors.cols() << std::endl;
-    //            //// Print eigen vectors
-    //            //for (int i = 0; i < eVectors.rows(); i++)
-    //            //{
-    //            //    if (eVectors.row(i).norm() < 0.9)
-    //            //    {
-    //            //        std::cout << "Vec: norm: " << eVectors.row(i).norm() << " : ";
-    //            //        for (int d = 0; d < numDimensions; d++)
-    //            //        {
-    //            //            float v = eVectors.coeff(i, d);
-    //            //            std::cout << v << " ";
-    //            //        }
-    //            //        std::cout << std::endl;
-    //            //    }
-    //            //}
+                eVectors.transposeInPlace();
 
-    //            //// Extract to glm vectors
-    //            //std::vector<glm::vec3> eigenVectors(3);
-    //            //eigenVectors[0] = glm::vec3(eVectors.col(0).x(), eVectors.col(0).y(), eVectors.col(0).z());
-    //            //eigenVectors[1] = glm::vec3(eVectors.col(1).x(), eVectors.col(1).y(), eVectors.col(1).z());
-    //            //eigenVectors[2] = glm::vec3(eVectors.col(2).x(), eVectors.col(2).y(), eVectors.col(2).z());
-    //            //glm::vec3 eigenValues = glm::vec3(eValues.x(), eValues.y(), eValues.z());
+                std::cout << "Eigen vectors: " << eVectors.rows() << "x" << eVectors.cols() << std::endl;
+                //// Print eigen vectors
+                //for (int i = 0; i < eVectors.rows(); i++)
+                //{
+                //    if (eVectors.row(i).norm() < 0.9)
+                //    {
+                //        std::cout << "Vec: norm: " << eVectors.row(i).norm() << " : ";
+                //        for (int d = 0; d < numDimensions; d++)
+                //        {
+                //            float v = eVectors.coeff(i, d);
+                //            std::cout << v << " ";
+                //        }
+                //        std::cout << std::endl;
+                //    }
+                //}
 
-    //            // Sort eigenvectors and eigenvalues
-    //            std::vector<int> sortedIndices(eValues.size());
-    //            std::iota(sortedIndices.begin(), sortedIndices.end(), 0);
-    //            std::vector<float> sortedEigenValues(eValues.size());
-    //            for (int i = 0; i < eValues.size(); i++)
-    //                sortedEigenValues[i] = eValues[i];
-    //            std::sort(std::begin(sortedIndices), std::end(sortedIndices), [&](int i1, int i2) { return sortedEigenValues[i1] > sortedEigenValues[i2]; });
+                //// Extract to glm vectors
+                //std::vector<glm::vec3> eigenVectors(3);
+                //eigenVectors[0] = glm::vec3(eVectors.col(0).x(), eVectors.col(0).y(), eVectors.col(0).z());
+                //eigenVectors[1] = glm::vec3(eVectors.col(1).x(), eVectors.col(1).y(), eVectors.col(1).z());
+                //eigenVectors[2] = glm::vec3(eVectors.col(2).x(), eVectors.col(2).y(), eVectors.col(2).z());
+                //glm::vec3 eigenValues = glm::vec3(eValues.x(), eValues.y(), eValues.z());
 
-    //            std::cout << "Covariance Matrix: " << std::endl;
-    //            //std::cout << covariance << std::endl;
+                // Sort eigenvectors and eigenvalues
+                std::vector<int> sortedIndices(eValues.size());
+                std::iota(sortedIndices.begin(), sortedIndices.end(), 0);
+                std::vector<float> sortedEigenValues(eValues.size());
+                for (int i = 0; i < eValues.size(); i++)
+                    sortedEigenValues[i] = eValues[i];
+                std::sort(std::begin(sortedIndices), std::end(sortedIndices), [&](int i1, int i2) { return sortedEigenValues[i1] > sortedEigenValues[i2]; });
 
-    //            std::cout << "Eigenvalues: " << std::endl;
-    //            std::cout << sortedEigenValues[sortedIndices[0]] << " " << sortedEigenValues[sortedIndices[1]] << " " << sortedEigenValues[sortedIndices[2]] << std::endl;
-    //            std::cout << sortedIndices[0] << " " << sortedIndices[1] << " " << sortedIndices[2] << std::endl;
+                std::cout << "Covariance Matrix: " << std::endl;
+                //std::cout << covariance << std::endl;
 
-    //            float totalEigenValue = 0;
-    //            for (int i = 0; i < sortedEigenValues.size(); i++)
-    //            {
-    //                totalEigenValue += sortedEigenValues[i];
-    //            }
+                std::cout << "Eigenvalues: " << std::endl;
+                std::cout << sortedEigenValues[sortedIndices[0]] << " " << sortedEigenValues[sortedIndices[1]] << " " << sortedEigenValues[sortedIndices[2]] << std::endl;
+                std::cout << sortedIndices[0] << " " << sortedIndices[1] << " " << sortedIndices[2] << std::endl;
 
-    //            float eigenValueSum = 0;
-    //            int lastIndex = 0;
-    //            for (int i = 0; i < sortedIndices.size(); i++)
-    //            {
-    //                eigenValueSum += sortedEigenValues[sortedIndices[i]];
-    //                if (eigenValueSum / totalEigenValue > 0.9)
-    //                {
-    //                    lastIndex = i;
-    //                    break;
-    //                }
-    //            }
+                float totalEigenValue = 0;
+                for (int i = 0; i < sortedEigenValues.size(); i++)
+                {
+                    totalEigenValue += sortedEigenValues[i];
+                }
 
-    //            std::cout << eVectors.rows() << " " << eVectors.cols() << std::endl;
-    //            std::cout << "Number of eigenvectors needed to explain 90% of variance: " << lastIndex << std::endl;
+                float eigenValueSum = 0;
+                int lastIndex = 0;
+                for (int i = 0; i < sortedIndices.size(); i++)
+                {
+                    eigenValueSum += sortedEigenValues[sortedIndices[i]];
+                    if (eigenValueSum / totalEigenValue > 0.9)
+                    {
+                        lastIndex = i;
+                        break;
+                    }
+                }
 
-    //            std::vector<std::vector<float>> eigenVectors(lastIndex, std::vector<float>(numDimensions));
+                std::cout << eVectors.rows() << " " << eVectors.cols() << std::endl;
+                std::cout << "Number of eigenvectors needed to explain 90% of variance: " << lastIndex << std::endl;
 
-    //            for (int i = 0; i < lastIndex; i++)
-    //            {
-    //                int index = sortedIndices[i];
-    //                for (int d = 0; d < numDimensions; d++)
-    //                {
-    //                    eigenVectors[i][d] = eVectors.coeff(index, d);
-    //                }
-    //            }
-    //            std::cout << "Copied eigen vectors" << std::endl;
+                std::vector<std::vector<float>> eigenVectors(lastIndex, std::vector<float>(numDimensions));
 
-    //            //// Normalize the eigen vectors
-    //            //for (int i = 0; i < eigenVectors.size(); i++)
-    //            //{
-    //            //    std::vector<float>& eigenVector = eigenVectors[i];
-    //            //    float length = 0;
-    //            //    for (int d = 0; d < numDimensions; d++)
-    //            //    {
-    //            //        length += eigenVector[d] * eigenVector[d];
-    //            //    }
-    //            //    length = sqrt(length);
-    //            //    for (int d = 0; d < numDimensions; d++)
-    //            //    {
-    //            //        eigenVector[d] /= length;
-    //            //    }
-    //            //}
-    //            //std::cout << "Normalized eigen vectors" << std::endl;
+                for (int i = 0; i < lastIndex; i++)
+                {
+                    int index = sortedIndices[i];
+                    for (int d = 0; d < numDimensions; d++)
+                    {
+                        eigenVectors[i][d] = eVectors.coeff(index, d);
+                    }
+                }
+                std::cout << "Copied eigen vectors" << std::endl;
 
-    //            std::vector<float> pixels(numDimensions, 0);
-    //            for (int i = 0; i < eigenVectors.size(); i++)
-    //            {
-    //                const std::vector<float>& eigenVector = eigenVectors[i];
-    //                float factor = sortedEigenValues[sortedIndices[i]] / eigenValueSum;
+                //// Normalize the eigen vectors
+                //for (int i = 0; i < eigenVectors.size(); i++)
+                //{
+                //    std::vector<float>& eigenVector = eigenVectors[i];
+                //    float length = 0;
+                //    for (int d = 0; d < numDimensions; d++)
+                //    {
+                //        length += eigenVector[d] * eigenVector[d];
+                //    }
+                //    length = sqrt(length);
+                //    for (int d = 0; d < numDimensions; d++)
+                //    {
+                //        eigenVector[d] /= length;
+                //    }
+                //}
+                //std::cout << "Normalized eigen vectors" << std::endl;
 
-    //                for (int d = 0; d < numDimensions; d++)
-    //                {
-    //                    pixels[d] += eigenVector[d] * factor;
-    //                }
-    //            }
-    //            QImage image(28, 28, QImage::Format::Format_ARGB32);
+                std::vector<float> pixels(numDimensions, 0);
+                for (int i = 0; i < eigenVectors.size(); i++)
+                {
+                    const std::vector<float>& eigenVector = eigenVectors[i];
+                    float factor = sortedEigenValues[sortedIndices[i]] / eigenValueSum;
 
-    //            for (int d = 0; d < numDimensions; d++)
-    //            {
-    //                int value = (int)(fabs(pixels[d]) * 4096);
-    //                image.setPixel(d % 28, d / 28, qRgba(value, value, value, 255));
-    //            }
-    //            image.save(QString("eigImage%1.png").arg(0));
-    //            //////////////////
-    //            //std::vector<float> pixels(numDimensions, 0);
-    //            //for (int i = 0; i < eigenVectors.size(); i++)
-    //            //{
-    //            //    const std::vector<float>& eigenVector = eigenVectors[i];
-    //            //    
-    //            //    QImage image(28, 28, QImage::Format::Format_ARGB32);
-    //            //    for (int d = 0; d < numDimensions; d++)
-    //            //    {
-    //            //        int value = (int) (fabs(eigenVector[d]) * 255 * (sortedEigenValues[sortedIndices[i]] / eigenValueSum) * 10);
-    //            //        image.setPixel(d % 28, d / 28, qRgba(value, value, value, 255));
-    //            //    }
-    //            //    image.save(QString("eigImage%1.png").arg(i));
-    //            //}
-    //            std::cout << "Saved eigen vectors" << std::endl;
+                    for (int d = 0; d < numDimensions; d++)
+                    {
+                        pixels[d] += eigenVector[d] * factor;
+                    }
+                }
+                QImage image(28, 28, QImage::Format::Format_ARGB32);
+
+                for (int d = 0; d < numDimensions; d++)
+                {
+                    int value = (int)(fabs(pixels[d]) * 4096);
+                    image.setPixel(d % 28, d / 28, qRgba(value, value, value, 255));
+                }
+
+                _explanationWidget->getImageWidget().setImage(image);
+
+                //image.save(QString("eigImage%1.png").arg(0));
+                //////////////////
+                //std::vector<float> pixels(numDimensions, 0);
+                //for (int i = 0; i < eigenVectors.size(); i++)
+                //{
+                //    const std::vector<float>& eigenVector = eigenVectors[i];
+                //    
+                //    QImage image(28, 28, QImage::Format::Format_ARGB32);
+                //    for (int d = 0; d < numDimensions; d++)
+                //    {
+                //        int value = (int) (fabs(eigenVector[d]) * 255 * (sortedEigenValues[sortedIndices[i]] / eigenValueSum) * 10);
+                //        image.setPixel(d % 28, d / 28, qRgba(value, value, value, 255));
+                //    }
+                //    image.save(QString("eigImage%1.png").arg(i));
+                //}
+                std::cout << "Saved eigen vectors" << std::endl;
             }
         }
     }
@@ -639,16 +642,53 @@ void ScatterplotPlugin::positionDatasetChanged()
     // Compute explanations
     _explanation.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
 
-    Eigen::ArrayXXi dimRanking;
-    _explanation.computeDimensionRanking(dimRanking);
+    Eigen::ArrayXXf dimRanking;
+    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::EUCLIDEAN);
     
-    // Build float vector of top ranked dimensions
-    Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
-    std::vector<float> topRankedDims(dimRanking.rows());
+    // Build vector of top ranked dimensions
+    //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
+    std::vector<int> topRankedDims(dimRanking.rows());
+    for (int i = 0; i < dimRanking.rows(); i++)
+    {
+        std::vector<int> indices(dimRanking.cols());
+        std::iota(indices.begin(), indices.end(), 0); //Initializing
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
+        topRankedDims[i] = indices[0];
+
+        //std::cout << "R: ";
+        //for (int j = 0; j < dimRanking.cols(); j++)
+        //{
+        //    std::cout << dimRanking(i, j) << " ";
+        //}
+        //std::cout << std::endl;
+
+        //std::cout << "I: ";
+        //for (int j = 0; j < dimRanking.cols(); j++)
+        //{
+        //    std::cout << indices[j] << " ";
+        //}
+        //std::cout << std::endl;
+    }
+
+    //rankingDataset->setData(topRankedDims.data(), dimRanking.rows(), 1);
+    //_core->notifyDataAdded(rankingDataset);
+
+    // Color points in widget
+    std::vector<QColor> colors(23);
+    const char* kelly_colors[] = { "#31a09a", "#222222", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+
+    for (int i = 0; i < colors.size(); i++)
+    {
+        colors[i].setNamedColor(kelly_colors[i]);
+    }
+
+    std::vector<Vector3f> colorData(topRankedDims.size());
     for (int i = 0; i < topRankedDims.size(); i++)
-        topRankedDims[i] = dimRanking(i, 0);
-    rankingDataset->setData(topRankedDims.data(), dimRanking.rows(), 1);
-    _core->notifyDataAdded(rankingDataset);
+    {
+        QColor color = colors[topRankedDims[i]];
+        colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
+    }
+    _scatterPlotWidget->setColors(colorData);
 
     //_explanationWidget->setRanking(dimRanking);
 
