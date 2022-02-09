@@ -169,15 +169,11 @@ void computeDimensionRanking(Dataset<Points> dataset, Dataset<Points> projection
     {
         //float x = projection->getValueAt(i * 2 + 0);
         //float y = projection->getValueAt(i * 2 + 1);
-        std::cout << "Computing neighbourhood.." << std::endl;
-        std::vector<int> neighbourhood;
-        findNeighbourhood(projection, i, 3, neighbourhood); // TODO get radius from projection range
-        std::cout << "Dim ranks.." << std::endl;
         std::vector<float> dimRanks;
         for (int j = 0; j < dataset->getNumDimensions(); j++)
         {
             //std::cout << "Dim rank: " << j << std::endl;
-            float dimRank = dimensionRank(dataset, i, j, neighbourhood, globalDistContribs);
+            float dimRank = dimensionRank(dataset, i, j, V[i], globalDistContribs);
             dimRanks.push_back(dimRank);
         }
 
@@ -185,7 +181,7 @@ void computeDimensionRanking(Dataset<Points> dataset, Dataset<Points> projection
         std::iota(indices.begin(), indices.end(), 0); //Initializing
         std::sort(indices.begin(), indices.end(), [&](int i, int j) {return dimRanks[i] < dimRanks[j]; });
 
-        std::cout << "Most important dimension: " << indices[0] << std::endl;
+        //std::cout << "Most important dimension: " << indices[0] << std::endl;
         dimRanking[i] = indices[0];
     }
 }
