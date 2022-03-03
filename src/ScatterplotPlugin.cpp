@@ -512,8 +512,14 @@ void ScatterplotPlugin::positionDatasetChanged()
     std::vector<Vector3f> colorData(topRankedDims.size());
     for (int i = 0; i < topRankedDims.size(); i++)
     {
-        QColor color = colors[topRankedDims[i]];
-        colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
+        int dim = topRankedDims[i];
+        if (dim < 22)
+        {
+            QColor color = colors[topRankedDims[i]];
+            colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
+        }
+        else
+            colorData[i] = Vector3f(0.2f, 0.2f, 0.2f);
     }
     _scatterPlotWidget->setColors(colorData);
 
@@ -739,8 +745,6 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         if (!_positionDataset.isValid())
             return QObject::eventFilter(target, event);
 
-        qDebug() << mouseEvent->x();
-
         // Get smart pointer to the position selection dataset
         auto selectionSet = _positionDataset->getSelection<Points>();
 
@@ -792,8 +796,6 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     case QEvent::Wheel:
     {
         auto wheelEvent = static_cast<QWheelEvent*>(event);
-
-        qDebug() << wheelEvent->angleDelta().y();
 
         _selectionRadius += wheelEvent->angleDelta().y() > 0 ? 2 : -2;
         if (_selectionRadius < 2) _selectionRadius = 2;
