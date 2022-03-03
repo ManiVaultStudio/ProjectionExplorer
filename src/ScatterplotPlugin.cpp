@@ -173,6 +173,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     });
 
     _scatterPlotWidget->installEventFilter(this);
+
+    connect(_explanationWidget->getRadiusSlider(), &QSlider::valueChanged, this, &ScatterplotPlugin::neighbourhoodRadiusValueChanged);
 }
 
 ScatterplotPlugin::~ScatterplotPlugin()
@@ -296,6 +298,48 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
             }
         }
     }
+}
+
+void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
+{
+    _explanation.updatePrecomputations(value / 100.0f);
+
+    Eigen::ArrayXXf dimRanking;
+    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
+
+    // Build vector of top ranked dimensions
+    //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
+    std::vector<int> topRankedDims(dimRanking.rows());
+    for (int i = 0; i < dimRanking.rows(); i++)
+    {
+        std::vector<int> indices(dimRanking.cols());
+        std::iota(indices.begin(), indices.end(), 0); //Initializing
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
+        topRankedDims[i] = indices[0];
+    }
+
+    // Color points in widget
+    std::vector<QColor> colors(23);
+    const char* kelly_colors[] = { "#31a09a", "#222222", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+
+    for (int i = 0; i < colors.size(); i++)
+    {
+        colors[i].setNamedColor(kelly_colors[i]);
+    }
+
+    std::vector<Vector3f> colorData(topRankedDims.size());
+    for (int i = 0; i < topRankedDims.size(); i++)
+    {
+        int dim = topRankedDims[i];
+        if (dim < 22)
+        {
+            QColor color = colors[topRankedDims[i]];
+            colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
+        }
+        else
+            colorData[i] = Vector3f(0.2f, 0.2f, 0.2f);
+    }
+    _scatterPlotWidget->setColors(colorData);
 }
 
 void ScatterplotPlugin::loadData(const Datasets& datasets)
@@ -467,6 +511,8 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     // Compute explanations
     _explanation.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
+    _explanation.updatePrecomputations(0.1f);
+
     _explanationWidget->getBarchart().setDataset(_positionDataset->getSourceDataset<Points>());
 
     Eigen::ArrayXXf dimRanking;

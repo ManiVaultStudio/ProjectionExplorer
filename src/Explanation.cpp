@@ -1,200 +1,224 @@
 #include "Explanation.h"
 
-void findNeighbourhood(const Eigen::ArrayXXf& projection, int centerId, float radius, std::vector<int>& neighbourhood)
+namespace
 {
-    float x = projection(centerId, 0);
-    float y = projection(centerId, 1);
-
-    float radSquared = radius * radius;
-
-    neighbourhood.clear();
-    for (int i = 0; i < projection.rows(); i++)
+    float sqrMag(const Eigen::ArrayXXf& dataset, int a, int b)
     {
-        if (i == centerId) continue;
+        int numDims = dataset.cols();
 
-        float xi = projection(i, 0);
-        float yi = projection(i, 1);
-
-        float xd = xi - x;
-        float yd = yi - y;
-
-        float magSquared = xd * xd + yd * yd;
-
-        if (magSquared > radSquared)
-            continue;
-
-        neighbourhood.push_back(i);
+        float dist = 0;
+        for (int i = 0; i < numDims; i++)
+        {
+            float d = dataset(a, i) - dataset(b, i);
+            dist += d * d;
+        }
+        return dist;
     }
-}
 
-float sqrMag(const Eigen::ArrayXXf& dataset, int a, int b)
-{
-    int numDims = dataset.cols();
-
-    float dist = 0;
-    for (int i = 0; i < numDims; i++)
+    float sqrMag(const Eigen::ArrayXXf& dataset, const std::vector<float>& a, int b)
     {
-        float d = dataset(a, i) - dataset(b, i);
-        dist += d * d;
+        int numDims = dataset.cols();
+
+        float dist = 0;
+        for (int i = 0; i < numDims; i++)
+        {
+            float d = a[i] - dataset(b, i);
+            dist += d * d;
+        }
+        return dist;
     }
-    return dist;
-}
 
-float sqrMag(const Eigen::ArrayXXf& dataset, const std::vector<float>& a, int b)
-{
-    int numDims = dataset.cols();
-
-    float dist = 0;
-    for (int i = 0; i < numDims; i++)
+    float distance(const Eigen::ArrayXXf& dataset, int a, int b)
     {
-        float d = a[i] - dataset(b, i);
-        dist += d * d;
+        return sqrt(sqrMag(dataset, a, b));
     }
-    return dist;
-}
 
-float distance(const Eigen::ArrayXXf& dataset, int a, int b)
-{
-    return sqrt(sqrMag(dataset, a, b));
-}
-
-float distContrib(const Eigen::ArrayXXf& dataset, int p, int r, int dim)
-{
-    int numDims = dataset.cols();
-    float dimDistSquared = dataset(p, dim) - dataset(r, dim);
-    dimDistSquared *= dimDistSquared;
-
-    float totalDistSquared = sqrMag(dataset, p, r);
-    return dimDistSquared / totalDistSquared;
-}
-
-float distContrib(const Eigen::ArrayXXf& dataset, const std::vector<float>& p, int r, int dim)
-{
-    int numDims = dataset.cols();
-    float dimDistSquared = p[dim] - dataset(r, dim);
-    dimDistSquared *= dimDistSquared;
-
-    float totalDistSquared = sqrMag(dataset, p, r);
-    return dimDistSquared / totalDistSquared;
-}
-
-float localDistContrib(const Eigen::ArrayXXf& dataset, int p, int dim, const std::vector<int>& neighbourhood)
-{
-    float localDistContrib = 0;
-    for (int i = 0; i < neighbourhood.size(); i++)
+    float distContrib(const Eigen::ArrayXXf& dataset, int p, int r, int dim)
     {
-        localDistContrib += distContrib(dataset, p, neighbourhood[i], dim);
+        int numDims = dataset.cols();
+        float dimDistSquared = dataset(p, dim) - dataset(r, dim);
+        dimDistSquared *= dimDistSquared;
+
+        float totalDistSquared = sqrMag(dataset, p, r);
+        return dimDistSquared / totalDistSquared;
     }
-    return localDistContrib / neighbourhood.size();
-}
 
-std::vector<float> computeNDCentroid(const Eigen::ArrayXXf& dataset)
-{
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
-    std::vector<float> centroid(numDimensions, 0);
-
-    for (int i = 0; i < numPoints; i++)
+    float distContrib(const Eigen::ArrayXXf& dataset, const std::vector<float>& p, int r, int dim)
     {
+        int numDims = dataset.cols();
+        float dimDistSquared = p[dim] - dataset(r, dim);
+        dimDistSquared *= dimDistSquared;
+
+        float totalDistSquared = sqrMag(dataset, p, r);
+        return dimDistSquared / totalDistSquared;
+    }
+
+    float localDistContrib(const Eigen::ArrayXXf& dataset, int p, int dim, const std::vector<int>& neighbourhood)
+    {
+        float localDistContrib = 0;
+        for (int i = 0; i < neighbourhood.size(); i++)
+        {
+            localDistContrib += distContrib(dataset, p, neighbourhood[i], dim);
+        }
+        return localDistContrib / neighbourhood.size();
+    }
+
+    std::vector<float> computeNDCentroid(const Eigen::ArrayXXf& dataset)
+    {
+        int numPoints = dataset.rows();
+        int numDimensions = dataset.cols();
+        std::vector<float> centroid(numDimensions, 0);
+
+        for (int i = 0; i < numPoints; i++)
+        {
+            for (int j = 0; j < numDimensions; j++)
+            {
+                centroid[j] += dataset(i, j);
+            }
+        }
         for (int j = 0; j < numDimensions; j++)
         {
-            centroid[j] += dataset(i, j);
+            centroid[j] /= numPoints;
         }
-    }
-    for (int j = 0; j < numDimensions; j++)
-    {
-        centroid[j] /= numPoints;
-    }
-    return centroid;
-}
-
-float globalDistContrib(const Eigen::ArrayXXf& dataset, const std::vector<float>& centroid, int dim)
-{
-    float globalDistContrib = 0;
-    for (int i = 0; i < dataset.rows(); i++)
-    {
-        globalDistContrib += distContrib(dataset, centroid, i, dim);
-    }
-    return globalDistContrib / dataset.rows();
-}
-
-float dimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, const std::vector<int>& neighbourhood, const std::vector<float>& globalDistContribs)
-{
-    float sum = 0;
-    for (int j = 0; j < dataset.cols(); j++)
-    {
-        sum += localDistContrib(dataset, p, j, neighbourhood) / globalDistContribs[dim];
-    }
-    return (localDistContrib(dataset, p, dim, neighbourhood) / globalDistContribs[dim]) / sum;
-}
-
-float euclideanDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
-{
-    float sum = 0;
-    for (int j = 0; j < dataset.cols(); j++)
-    {
-        sum += localDistContribs(p, j) / globalDistContribs[j];
-    }
-    return (localDistContribs(p, dim) / globalDistContribs[dim]) / sum;
-}
-
-float varianceDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localVariances, const std::vector<float>& globalVariance)
-{
-    float sum = 0;
-    for (int j = 0; j < dataset.cols(); j++)
-    {
-        sum += localVariances(p, j) / globalVariance[j];
-    }
-    return (localVariances(p, dim) / globalVariance[dim]) / sum;
-}
-
-void computeDimensionRanking(const Eigen::ArrayXXf& dataset, const Eigen::ArrayXXf& projection, std::vector<float>& dimRanking)
-{
-    int numProjDims = 2;
-
-    // Precompute neighbourhoods
-    std::cout << "Precomputing neighbourhood matrix.." << std::endl;
-    std::vector<std::vector<int>> V;
-    for (int i = 0; i < dataset.rows(); i++)
-    {
-        std::vector<int> neighbourhood;
-        findNeighbourhood(projection, i, 3, neighbourhood);
-        V.push_back(neighbourhood);
-        std::cout << i << std::endl;
+        return centroid;
     }
 
-    // Precompute dist contribs
-    std::cout << "Precomputing distance contributions.." << std::endl;
-    std::vector<float> globalDistContribs;
-
-    std::cout << "Computing centroid" << std::endl;
-    std::vector<float> centroid = computeNDCentroid(dataset);
-
-    for (int dim = 0; dim < dataset.cols(); dim++)
+    float globalDistContrib(const Eigen::ArrayXXf& dataset, const std::vector<float>& centroid, int dim)
     {
-        std::cout << "Dim: " << dim << std::endl;
-        globalDistContribs.push_back(globalDistContrib(dataset, centroid, dim));
+        float globalDistContrib = 0;
+        for (int i = 0; i < dataset.rows(); i++)
+        {
+            globalDistContrib += distContrib(dataset, centroid, i, dim);
+        }
+        return globalDistContrib / dataset.rows();
     }
 
-    dimRanking.resize(dataset.rows());
-    for (int i = 0; i < dataset.rows(); i++)
+    float dimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, const std::vector<int>& neighbourhood, const std::vector<float>& globalDistContribs)
     {
-        //float x = projection->getValueAt(i * 2 + 0);
-        //float y = projection->getValueAt(i * 2 + 1);
-        std::vector<float> dimRanks;
+        float sum = 0;
         for (int j = 0; j < dataset.cols(); j++)
         {
-            //std::cout << "Dim rank: " << j << std::endl;
-            float dimRank = dimensionRank(dataset, i, j, V[i], globalDistContribs);
-            dimRanks.push_back(dimRank);
+            sum += localDistContrib(dataset, p, j, neighbourhood) / globalDistContribs[dim];
+        }
+        return (localDistContrib(dataset, p, dim, neighbourhood) / globalDistContribs[dim]) / sum;
+    }
+
+    float euclideanDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localDistContribs, const std::vector<float>& globalDistContribs)
+    {
+        float sum = 0;
+        for (int j = 0; j < dataset.cols(); j++)
+        {
+            sum += localDistContribs(p, j) / globalDistContribs[j];
+        }
+        return (localDistContribs(p, dim) / globalDistContribs[dim]) / sum;
+    }
+
+    float varianceDimensionRank(const Eigen::ArrayXXf& dataset, int p, int dim, Eigen::ArrayXXf& localVariances, const std::vector<float>& globalVariance)
+    {
+        float sum = 0;
+        for (int j = 0; j < dataset.cols(); j++)
+        {
+            sum += localVariances(p, j) / globalVariance[j];
+        }
+        return (localVariances(p, dim) / globalVariance[dim]) / sum;
+    }
+
+    float computeProjectionDiameter(const Eigen::ArrayXXf& projection)
+    {
+        float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
+        float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
+        for (int i = 0; i < projection.rows(); i++)
+        {
+            float x = projection(i, 0);
+            float y = projection(i, 1);
+
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+        float rangeX = maxX - minX;
+        float rangeY = maxY - minY;
+
+        float diameter = rangeX > rangeY ? rangeX : rangeY;
+        return diameter;
+    }
+
+    void findNeighbourhood(const Eigen::ArrayXXf& projection, int centerId, float radius, std::vector<int>& neighbourhood)
+    {
+        float x = projection(centerId, 0);
+        float y = projection(centerId, 1);
+
+        float radSquared = radius * radius;
+
+        neighbourhood.clear();
+        for (int i = 0; i < projection.rows(); i++)
+        {
+            if (i == centerId) continue;
+
+            float xi = projection(i, 0);
+            float yi = projection(i, 1);
+
+            float xd = xi - x;
+            float yd = yi - y;
+
+            float magSquared = xd * xd + yd * yd;
+
+            if (magSquared > radSquared)
+                continue;
+
+            neighbourhood.push_back(i);
+        }
+    }
+
+    void computeDimensionRanking(const Eigen::ArrayXXf& dataset, const Eigen::ArrayXXf& projection, std::vector<float>& dimRanking)
+    {
+        int numProjDims = 2;
+
+        // Precompute neighbourhoods
+        std::cout << "Precomputing neighbourhood matrix.." << std::endl;
+        std::vector<std::vector<int>> V;
+        for (int i = 0; i < dataset.rows(); i++)
+        {
+            std::vector<int> neighbourhood;
+            findNeighbourhood(projection, i, 3, neighbourhood);
+            V.push_back(neighbourhood);
+            std::cout << i << std::endl;
         }
 
-        std::vector<int> indices(dataset.cols());
-        std::iota(indices.begin(), indices.end(), 0); //Initializing
-        std::sort(indices.begin(), indices.end(), [&](int i, int j) {return dimRanks[i] < dimRanks[j]; });
+        // Precompute dist contribs
+        std::cout << "Precomputing distance contributions.." << std::endl;
+        std::vector<float> globalDistContribs;
 
-        //std::cout << "Most important dimension: " << indices[0] << std::endl;
-        dimRanking[i] = indices[0];
+        std::cout << "Computing centroid" << std::endl;
+        std::vector<float> centroid = computeNDCentroid(dataset);
+
+        for (int dim = 0; dim < dataset.cols(); dim++)
+        {
+            std::cout << "Dim: " << dim << std::endl;
+            globalDistContribs.push_back(globalDistContrib(dataset, centroid, dim));
+        }
+
+        dimRanking.resize(dataset.rows());
+        for (int i = 0; i < dataset.rows(); i++)
+        {
+            //float x = projection->getValueAt(i * 2 + 0);
+            //float y = projection->getValueAt(i * 2 + 1);
+            std::vector<float> dimRanks;
+            for (int j = 0; j < dataset.cols(); j++)
+            {
+                //std::cout << "Dim rank: " << j << std::endl;
+                float dimRank = dimensionRank(dataset, i, j, V[i], globalDistContribs);
+                dimRanks.push_back(dimRank);
+            }
+
+            std::vector<int> indices(dataset.cols());
+            std::iota(indices.begin(), indices.end(), 0); //Initializing
+            std::sort(indices.begin(), indices.end(), [&](int i, int j) {return dimRanks[i] < dimRanks[j]; });
+
+            //std::cout << "Most important dimension: " << indices[0] << std::endl;
+            dimRanking[i] = indices[0];
+        }
     }
 }
 
@@ -220,23 +244,8 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
     }
 
     // Compute projection diameter
-    float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
-    float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
-    for (int i = 0; i < _projection.rows(); i++)
-    {
-        float x = _projection(i, 0);
-        float y = _projection(i, 1);
-
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-    }
-    float rangeX = maxX - minX;
-    float rangeY = maxY - minY;
-
-    float diameter = rangeX > rangeY ? rangeX : rangeY;
-    std::cout << "Diameter: " << diameter << std::endl;
+    _projectionDiameter = computeProjectionDiameter(_projection);
+    std::cout << "Diameter: " << _projectionDiameter << std::endl;
 
     // Norm dataset
     _normDataset = _dataset;
@@ -255,16 +264,16 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
         float stddev = sqrt(variance);
         _normDataset.col(j) /= stddev;
     }
+}
 
-    computeNeighbourhoodMatrix(diameter * 0.2f);
+void Explanation::updatePrecomputations(float neighbourhoodRadius)
+{
+    computeNeighbourhoodMatrix(_projectionDiameter * neighbourhoodRadius);
     //computeCentroid();
     //computeGlobalContribs();
     //computeLocalContribs();
     computeGlobalVariances();
     computeLocalVariances();
-
-    //std::cout << "Standardized" << std::endl;
-    //std::cout << _normDataset << std::endl;
 }
 
 void Explanation::computeNeighbourhoodMatrix(float radius)

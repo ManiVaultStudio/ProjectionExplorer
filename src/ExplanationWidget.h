@@ -7,6 +7,7 @@
 #include <QPainter>
 #include <QColor>
 #include <QImage>
+#include <QSlider>
 
 #include <Eigen/Eigen>
 
@@ -79,9 +80,11 @@ public:
 
     BarChart& getBarchart() { return *_barChart; }
     ImageViewWidget& getImageWidget() { return *_imageViewWidget; }
+    QSlider* getRadiusSlider() { return _radiusSlider; }
 
 private:
     QLabel* _rankLabel;
     BarChart* _barChart;
     ImageViewWidget* _imageViewWidget;
+    QSlider* _radiusSlider;
 };

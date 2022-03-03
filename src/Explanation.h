@@ -25,6 +25,7 @@ public:
     };
 
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
+    void updatePrecomputations(float neighbourhoodRadius);
 
     void computeDimensionRanking(Eigen::ArrayXXi& dimRanking, std::vector<unsigned int> selection);
     void computeDimensionRanking(Eigen::ArrayXXi& dimRanking);
@@ -47,6 +48,7 @@ private:
     Eigen::ArrayXXf _projection;
 
     Eigen::ArrayXXf _normDataset;
+    float _projectionDiameter;
 
     // Precomputed values
     std::vector<std::vector<int>> _neighbourhoodMatrix;

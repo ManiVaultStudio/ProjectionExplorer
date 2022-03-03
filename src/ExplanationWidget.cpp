@@ -265,10 +265,14 @@ ExplanationWidget::ExplanationWidget()
     //layout->addWidget(_rankLabel);
     QPushButton* varianceSortButton = new QPushButton("Variance Sort");
     QPushButton* valueSortButton = new QPushButton("Value Sort");
+    _radiusSlider = new QSlider(Qt::Orientation::Horizontal);
+    _radiusSlider->setRange(0, 100);
+    _radiusSlider->setValue(10);
     connect(varianceSortButton, &QPushButton::pressed, _barChart, &BarChart::sortByVariance);
     connect(valueSortButton, &QPushButton::pressed, _barChart, &BarChart::sortByValue);
     layout->addWidget(varianceSortButton);
     layout->addWidget(valueSortButton);
+    layout->addWidget(_radiusSlider);
 
     setLayout(layout);
 

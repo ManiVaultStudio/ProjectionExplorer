@@ -48,6 +48,9 @@ public:
     /** Get number of points in the position dataset */
     std::uint32_t getNumberOfPoints() const;
 
+protected slots:
+    void neighbourhoodRadiusValueChanged(int value);
+
 public:
     void createSubset(const bool& fromSourceData = false, const QString& name = "");
 
@@ -104,6 +107,7 @@ private:
     void updateSelection();
 
     bool eventFilter(QObject* target, QEvent* event);
+    //void selectPoints
 
 private:
     Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
