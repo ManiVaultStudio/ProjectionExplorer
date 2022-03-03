@@ -35,7 +35,7 @@ public:
 
 private:
     // Precomputation
-    void computeNeighbourhoodMatrix();
+    void computeNeighbourhoodMatrix(float radius);
     void computeCentroid();
     void computeGlobalContribs();
     void computeLocalContribs();

@@ -7,6 +7,7 @@ void findNeighbourhood(const Eigen::ArrayXXf& projection, int centerId, float ra
 
     float radSquared = radius * radius;
 
+    neighbourhood.clear();
     for (int i = 0; i < projection.rows(); i++)
     {
         if (i == centerId) continue;
@@ -218,12 +219,24 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
             _projection(i, j) = result[i];
     }
 
-    computeNeighbourhoodMatrix();
-    computeCentroid();
-    computeGlobalContribs();
-    computeLocalContribs();
-    computeGlobalVariances();
-    computeLocalVariances();
+    // Compute projection diameter
+    float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
+    for (int i = 0; i < _projection.rows(); i++)
+    {
+        float x = _projection(i, 0);
+        float y = _projection(i, 1);
+
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+    float rangeX = maxX - minX;
+    float rangeY = maxY - minY;
+
+    float diameter = rangeX > rangeY ? rangeX : rangeY;
+    std::cout << "Diameter: " << diameter << std::endl;
 
     // Norm dataset
     _normDataset = _dataset;
@@ -242,18 +255,26 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
         float stddev = sqrt(variance);
         _normDataset.col(j) /= stddev;
     }
+
+    computeNeighbourhoodMatrix(diameter * 0.2f);
+    //computeCentroid();
+    //computeGlobalContribs();
+    //computeLocalContribs();
+    computeGlobalVariances();
+    computeLocalVariances();
+
     //std::cout << "Standardized" << std::endl;
     //std::cout << _normDataset << std::endl;
 }
 
-void Explanation::computeNeighbourhoodMatrix()
+void Explanation::computeNeighbourhoodMatrix(float radius)
 {
     _neighbourhoodMatrix.clear();
+    _neighbourhoodMatrix.resize(_dataset.rows());
     for (int i = 0; i < _dataset.rows(); i++)
     {
-        std::vector<int> neighbourhood;
-        findNeighbourhood(_projection, i, 3, neighbourhood);
-        _neighbourhoodMatrix.push_back(neighbourhood);
+        findNeighbourhood(_projection, i, radius, _neighbourhoodMatrix[i]);
+
         if (i % 1000 == 0) std::cout << i << std::endl;
     }
 }
@@ -331,7 +352,8 @@ void Explanation::computeGlobalVariances()
         float variance = 0;
         for (int i = 0; i < numPoints; i++)
         {
-            variance += (_dataset(i, j) - mean) * (_dataset(i, j) - mean);
+            float x = _dataset(i, j) - mean;
+            variance += x * x;
         }
         variance /= numPoints;
 
@@ -363,7 +385,8 @@ void Explanation::computeLocalVariances()
             float variance = 0;
             for (int n = 0; n < neighbourhood.size(); n++)
             {
-                variance += (_dataset(neighbourhood[n], j) - mean) * (_dataset(neighbourhood[n], j) - mean);
+                float x = _dataset(neighbourhood[n], j) - mean;
+                variance += x * x;
             }
             variance /= neighbourhood.size();
 
@@ -411,14 +434,11 @@ void Explanation::computeDimensionRanking(Eigen::ArrayXXi& dimRanking)
 
 void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int>& selection, Metric metric)
 {
-    int numProjDims = 2;
-
     dimRanking.resize(selection.size(), _dataset.cols());
     for (int i = 0; i < selection.size(); i++)
     {
         int si = selection[i];
 
-        std::vector<float> dimRanks(_dataset.cols());
         for (int j = 0; j < _dataset.cols(); j++)
         {
             float dimRank = 0;
