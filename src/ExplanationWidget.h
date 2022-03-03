@@ -43,8 +43,10 @@ private:
     std::vector<float> _importantDims;
     std::vector<int> _sortIndices;
     std::vector<float> _averageValues;
+    std::vector<float> _variances;
     std::vector<float> _minRanges;
     std::vector<float> _maxRanges;
+    std::vector<unsigned int> _selection;
 
     SortingType _sortingType = SortingType::VARIANCE;
 
