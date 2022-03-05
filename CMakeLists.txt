@@ -24,8 +24,15 @@ set(PLUGIN
     src/Common.h
     src/ScatterplotPlugin.h
     src/ScatterplotPlugin.cpp
-    src/Explanation.h
-    src/Explanation.cpp
+)
+
+set(EXPLANATION
+    src/Explanation/Explanation.h
+    src/Explanation/Explanation.cpp
+    src/Explanation/SilvaEuclidean.h
+    src/Explanation/SilvaEuclidean.cpp
+    src/Explanation/SilvaVariance.h
+    src/Explanation/SilvaVariance.cpp
 )
 
 set(UI
@@ -87,9 +94,10 @@ set(AUX
     src/ScatterplotPlugin.json
 )
 
-set(SOURCES ${PLUGIN} ${UI} ${Actions} ${Models})
+set(SOURCES ${PLUGIN} ${EXPLANATION} ${UI} ${Actions} ${Models})
 
 source_group(Plugin FILES ${PLUGIN})
+source_group(Explanation FILES ${EXPLANATION})
 source_group(UI FILES ${UI})
 source_group(Actions FILES ${Actions})
 source_group(Models FILES ${Models})

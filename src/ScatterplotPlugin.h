@@ -3,7 +3,7 @@
 #include <ViewPlugin.h>
 
 #include "util/PixelSelectionTool.h"
-#include "Explanation.h"
+#include "Explanation/Explanation.h"
 #include "ExplanationWidget.h"
 
 #include "Common.h"

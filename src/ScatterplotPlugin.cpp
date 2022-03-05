@@ -5,7 +5,7 @@
 
 #include "util/PixelSelectionTool.h"
 
-#include "Explanation.h"
+#include "Explanation/Explanation.h"
 
 #include "PointData.h"
 #include "ClusterData.h"
@@ -31,7 +31,7 @@
 #include <vector>
 #include <iostream>
 
-Q_PLUGIN_METADATA(IID "nl.tudelft.ScatterplotPlugin")
+Q_PLUGIN_METADATA(IID "nl.uu.ExplanationScatterplot")
 
 using namespace hdps;
 using namespace hdps::util;
