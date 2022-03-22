@@ -517,17 +517,23 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     Eigen::ArrayXXf dimRanking;
     _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
+
+    std::vector<float> confidences = _explanation.computeConfidences(dimRanking);
     
+    Eigen::ArrayXXf confidenceMatrix;
+    _explanation.computeConfidences2(dimRanking, confidenceMatrix);
+
     // Build vector of top ranked dimensions
     //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
     std::vector<int> topRankedDims(dimRanking.rows());
+    std::vector<float> confidences2(dimRanking.rows());
     for (int i = 0; i < dimRanking.rows(); i++)
     {
         std::vector<int> indices(dimRanking.cols());
         std::iota(indices.begin(), indices.end(), 0); //Initializing
         std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
         topRankedDims[i] = indices[0];
-
+        confidences2[i] = confidenceMatrix(i, indices[0]);
         //std::cout << "R: ";
         //for (int j = 0; j < dimRanking.cols(); j++)
         //{
@@ -548,7 +554,7 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     // Color points in widget
     std::vector<QColor> colors(23);
-    const char* kelly_colors[] = { "#31a09a", "#222222", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
 
     for (int i = 0; i < colors.size(); i++)
     {
@@ -559,13 +565,16 @@ void ScatterplotPlugin::positionDatasetChanged()
     for (int i = 0; i < topRankedDims.size(); i++)
     {
         int dim = topRankedDims[i];
+        float confidence = confidences2[i];
+        std::cout << "Confidence: " << confidence << std::endl;
+
         if (dim < 22)
         {
             QColor color = colors[topRankedDims[i]];
-            colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
+            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
         }
         else
-            colorData[i] = Vector3f(0.2f, 0.2f, 0.2f);
+            colorData[i] = Vector3f(0.2f * confidence, 0.2f * confidence, 0.2f * confidence);
     }
     _scatterPlotWidget->setColors(colorData);
 

@@ -99,19 +99,20 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
 
 void Explanation::updatePrecomputations(float neighbourhoodRadius)
 {
-    computeNeighbourhoodMatrix(_projectionDiameter * neighbourhoodRadius);
+    computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
+    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.5f);
     
     //_euclideanMetric.recompute(_dataset, _neighbourhoodMatrix);
-    _varianceMetric.recompute(_dataset, _neighbourhoodMatrix);
+    _varianceMetric.recompute(_dataset, _neighbourhoodMatrix, _confidenceNeighbourhoodMatrix);
 }
 
-void Explanation::computeNeighbourhoodMatrix(float radius)
+void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius)
 {
-    _neighbourhoodMatrix.clear();
-    _neighbourhoodMatrix.resize(_dataset.rows());
+    neighbourhoodMatrix.clear();
+    neighbourhoodMatrix.resize(_dataset.rows());
     for (int i = 0; i < _dataset.rows(); i++)
     {
-        findNeighbourhood(_projection, i, radius, _neighbourhoodMatrix[i]);
+        findNeighbourhood(_projection, i, radius, neighbourhoodMatrix[i]);
 
         if (i % 1000 == 0) std::cout << i << std::endl;
     }
@@ -144,6 +145,106 @@ void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric
     std::iota(selection.begin(), selection.end(), 0);
 
     computeDimensionRanks(dimRanks, selection, metric);
+}
+
+std::vector<float> Explanation::computeConfidences(const Eigen::ArrayXXf& dimRanks)
+{
+    int numPoints = dimRanks.rows();
+    int numDimensions = dimRanks.cols();
+
+    // Compute sorted rankings
+    Eigen::ArrayXXi sortingIndices;
+    sortingIndices.resize(numPoints, numDimensions);
+
+    for (int i = 0; i < numPoints; i++)
+    {
+        // Sort the rankings
+        std::vector<int> indices(numDimensions);
+        std::iota(indices.begin(), indices.end(), 0); //Initializing
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanks(i, a) < dimRanks(i, b); });
+
+        for (int j = 0; j < numDimensions; j++)
+            sortingIndices(i, j) = indices[j];
+    }
+
+    std::vector<float> confidences(numPoints);
+    for (int i = 0; i < numPoints; i++)
+    {
+        // Compute sorted top ranking
+        std::vector<float> topRankings(numDimensions, 0);
+        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
+        {
+            int ni = _confidenceNeighbourhoodMatrix[i][n];
+
+            for (int j = 0; j < 1; j++)
+            {
+                float rank = dimRanks(ni, sortingIndices(ni, j));
+                topRankings[sortingIndices(ni, j)] += rank;
+            }
+        }
+        for (int j = 0; j < 1; j++)
+        {
+            float rank = dimRanks(i, sortingIndices(i, j));
+            topRankings[sortingIndices(i, j)] += rank;
+        }
+
+        // Compute total ranking
+        Eigen::ArrayXf totalRanking = dimRanks.row(i);
+        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
+        {
+            int ni = _confidenceNeighbourhoodMatrix[i][n];
+            totalRanking += dimRanks.row(ni);
+        }
+
+        // Divide all rankings by total rank values to get confidences
+        float topRanking = topRankings[sortingIndices(i, 0)];
+        float totalRank = totalRanking[sortingIndices(i, 0)];
+        confidences[i] = topRanking /= totalRank;
+
+        if (totalRank == 0)
+            confidences[i] = 0;
+        //confidences[i] = topRankings[sortingIndices(i, 0)] /= totalRanking[sortingIndices(i, 0)];
+    }
+    return confidences;
+}
+
+void Explanation::computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::ArrayXXf& confidenceMatrix)
+{
+    int numPoints = dimRanks.rows();
+    int numDimensions = dimRanks.cols();
+
+    // Build confidence matrix
+    confidenceMatrix.resize(numPoints, numDimensions);
+
+    for (int i = 0; i < numPoints; i++)
+    {
+        // Compute summed rankings over neighbouring points
+        std::vector<float> summedRankings(numDimensions, 0);
+        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
+        {
+            int ni = _confidenceNeighbourhoodMatrix[i][n];
+
+            for (int j = 0; j < numDimensions; j++)
+            {
+                float rank = dimRanks(ni, j);
+                summedRankings[j] += rank;
+            }
+        }
+
+        // Compute total ranking normalization factor
+        float totalRanking = 0;
+        for (int j = 0; j < numDimensions; j++)
+        {
+            totalRanking += summedRankings[j];
+        }
+        
+        for (int j = 0; j < numDimensions; j++)
+        {
+            summedRankings[j] /= totalRanking;
+
+            confidenceMatrix(i, j) = 1 - summedRankings[j];
+        }
+    }
 }
 
 QImage Explanation::computeEigenImage(std::vector<unsigned int>& selection, std::vector<float>& importantDims)

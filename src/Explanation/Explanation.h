@@ -15,8 +15,6 @@
 
 using namespace hdps;
 
-void computeEigenImage();
-
 class Explanation
 {
 public:
@@ -32,11 +30,14 @@ public:
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, std::vector<unsigned int>& selection, Metric metric = Metric::VARIANCE);
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric = Metric::VARIANCE);
 
+    std::vector<float> computeConfidences(const Eigen::ArrayXXf& dimRanks);
+    void computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::ArrayXXf& confidenceMatrix);
+
     QImage computeEigenImage(std::vector<unsigned int>& selection, std::vector<float>& importantDims);
 
 private:
     // Precomputation
-    void computeNeighbourhoodMatrix(float radius);
+    void computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius);
 
 private:
     Eigen::ArrayXXf _dataset;
@@ -47,6 +48,7 @@ private:
 
     // Precomputed values
     std::vector<std::vector<int>> _neighbourhoodMatrix;
+    std::vector<std::vector<int>> _confidenceNeighbourhoodMatrix;
 
     EuclideanMetric _euclideanMetric;
     VarianceMetric _varianceMetric;

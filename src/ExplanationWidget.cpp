@@ -16,8 +16,10 @@ BarChart::BarChart()
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumHeight(270);
     setMinimumWidth(460);
-    _colors.resize(10);
-    const char* kelly_colors[] = { "#31a09a", "#FFFFFF", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#9B3D96", "#A13237" };
+    _colors.resize(22);
+    //const char* kelly_colors[] = { "#31a09a", "#FFFFFF", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#9B3D96", "#A13237" };
+    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+
     const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
 
     for (int i = 0; i < _colors.size(); i++)
@@ -159,6 +161,7 @@ void BarChart::paintEvent(QPaintEvent* event)
         // Draw PCP
         int alpha = std::max<int>(255.0f / _selection.size(), 1);
         painter.setPen(QColor(0, 255, 0, 50));
+        
         for (const unsigned int& si : _selection)
         {
             for (int j = 0; j < numDimensions - 1; j++)
@@ -178,7 +181,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             int sortIndex = _sortIndices[i];
 
             QColor color(180, 180, 180, 255);
-            if (i < 10)
+            if (i < 22)
                 color = _colors[sortIndex];
 
             painter.fillRect(10, 10 + 16 * i, 14, 14, color);
@@ -210,7 +213,8 @@ void BarChart::paintEvent(QPaintEvent* event)
             painter.drawLine(RANGE_OFFSET + mean * RANGE_WIDTH, 10 + 16 * i, RANGE_OFFSET + mean * RANGE_WIDTH, 10 + 16 * i + 16);
             // Draw variance
             painter.setPen(QColor(255, 255, 255, 255));
-            painter.drawLine(RANGE_OFFSET + (mean - _variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, RANGE_OFFSET + (mean - _variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i + 16);
+            painter.drawRect(RANGE_OFFSET + (mean - _variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, 2 * _variances[sortIndex] * RANGE_WIDTH, 16);
+            //painter.drawLine(RANGE_OFFSET + (mean - _variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, RANGE_OFFSET + (mean - _variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i + 16);
 
             //painter.drawEllipse(300 + _averageValues[sortIndex] * 150, 10 + 16 * i, 14, 14);//(400, 10 + 16 * i, (int) (normalizedValue * 200), 14, QColor(255, 255, 255));
         }

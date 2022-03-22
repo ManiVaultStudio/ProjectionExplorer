@@ -2,10 +2,10 @@
 
 #include <iostream>
 
-void VarianceMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix, std::vector<std::vector<int>>& confidenceNeighbourhoodMatrix)
 {
     precomputeGlobalVariances(dataset);
-    precomputeLocalVariances(dataset, neighbourhoodMatrix);
+    precomputeLocalVariances(_localVariances, dataset, neighbourhoodMatrix);
 }
 
 float VarianceMetric::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
@@ -48,12 +48,12 @@ void VarianceMetric::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
     }
 }
 
-void VarianceMetric::precomputeLocalVariances(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMetric::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
 
-    _localVariances.resize(numPoints, numDimensions);
+    localVariance.resize(numPoints, numDimensions);
     for (int i = 0; i < numPoints; i++)
     {
         const std::vector<int>& neighbourhood = neighbourhoodMatrix[i];
@@ -77,7 +77,7 @@ void VarianceMetric::precomputeLocalVariances(const Eigen::ArrayXXf& dataset, st
             }
             variance /= neighbourhood.size();
 
-            _localVariances(i, j) = variance;
+            localVariance(i, j) = variance;
         }
         if (i % 1000 == 0)
             std::cout << "Local var: " << i << std::endl;
