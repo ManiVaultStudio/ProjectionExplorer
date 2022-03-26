@@ -147,6 +147,41 @@ void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric
     computeDimensionRanks(dimRanks, selection, metric);
 }
 
+void Explanation::computeValueRanks(Eigen::ArrayXXf& valueRanks)
+{
+    int numPoints = _dataset.rows();
+    int numDimensions = _dataset.cols();
+
+    // Compute ranges
+    std::vector<float> minRanges(numDimensions, std::numeric_limits<float>::max());
+    std::vector<float> maxRanges(numDimensions, -std::numeric_limits<float>::max());
+
+    for (int j = 0; j < numDimensions; j++)
+    {
+        for (int i = 0; i < numPoints; i++)
+        {
+            float value = _dataset(i, j);
+
+            if (value < minRanges[j]) minRanges[j] = value;
+            if (value > maxRanges[j]) maxRanges[j] = value;
+        }
+    }
+
+    // Compute average values
+    valueRanks.resize(numPoints, numDimensions);
+
+    for (int j = 0; j < numDimensions; j++)
+    {
+        float range = maxRanges[j] - minRanges[j];
+        float minRange = minRanges[j];
+
+        for (int i = 0; i < numPoints; i++)
+        {
+            valueRanks(i, j) =  (_dataset(i, j) - minRange) / range;
+        }
+    }
+}
+
 std::vector<float> Explanation::computeConfidences(const Eigen::ArrayXXf& dimRanks)
 {
     int numPoints = dimRanks.rows();

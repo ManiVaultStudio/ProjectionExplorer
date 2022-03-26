@@ -29,6 +29,7 @@ public:
 
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, std::vector<unsigned int>& selection, Metric metric = Metric::VARIANCE);
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric = Metric::VARIANCE);
+    void computeValueRanks(Eigen::ArrayXXf& valueRanks);
 
     std::vector<float> computeConfidences(const Eigen::ArrayXXf& dimRanks);
     void computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::ArrayXXf& confidenceMatrix);
