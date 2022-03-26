@@ -7,9 +7,8 @@
 class VarianceMetric
 {
 public:
-    void recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix, std::vector<std::vector<int>>& confidenceNeighbourhoodMatrix);
+    void recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix);
     float computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j);
-    float computeConfidence(const Eigen::ArrayXXf& dataset, int i, int j);
 
 private:
     void precomputeGlobalVariances(const Eigen::ArrayXXf& dataset);

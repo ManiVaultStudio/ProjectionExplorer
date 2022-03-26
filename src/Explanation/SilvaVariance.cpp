@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-void VarianceMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix, std::vector<std::vector<int>>& confidenceNeighbourhoodMatrix)
+void VarianceMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     precomputeGlobalVariances(dataset);
     precomputeLocalVariances(_localVariances, dataset, neighbourhoodMatrix);
