@@ -50,6 +50,8 @@ public:
 
 protected slots:
     void neighbourhoodRadiusValueChanged(int value);
+    void colorByVariance();
+    void colorByValue();
 
 public:
     void createSubset(const bool& fromSourceData = false, const QString& name = "");
@@ -125,6 +127,11 @@ protected:
     ExplanationWidget*          _explanationWidget;
 
     float _selectionRadius;
+
+    bool _lockSelection;
+    std::vector<unsigned int>   _lockedSelection;
+
+    QPoint _lastMousePos;
 };
 
 // =============================================================================

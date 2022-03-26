@@ -13,12 +13,22 @@
 
 #include <vector>
 
+class DataMetrics
+{
+public:
+    void compute(const hdps::Dataset<Points>& dataset, const std::vector<unsigned int>& selection, const std::vector<float>& minRanges, const std::vector<float>& maxRanges);
+
+    std::vector<float> averageValues;
+    std::vector<float> variances;
+};
+
 class BarChart : public QWidget
 {
     Q_OBJECT
 public:
     enum class SortingType
     {
+        NONE,
         VARIANCE,
         VALUE
     };
@@ -27,9 +37,13 @@ public:
 
     void setDataset(hdps::Dataset<Points> dataset);
     void setRanking(Eigen::ArrayXXf& ranking, const std::vector<unsigned int>& selection);
+    void computeOldMetrics(const std::vector<unsigned int>& oldSelection);
     void setImportantDims(const std::vector<float>& importantDims);
 
+    void showDifferentialValues(bool on) { _differentialRanking = on; }
+
 public slots:
+    void sortByDefault();
     void sortByVariance();
     void sortByValue();
 
@@ -43,13 +57,17 @@ private:
     float _maxValue;
     std::vector<float> _importantDims;
     std::vector<int> _sortIndices;
-    std::vector<float> _averageValues;
-    std::vector<float> _variances;
+
+    DataMetrics _newMetrics;
+    DataMetrics _oldMetrics;
+
     std::vector<float> _minRanges;
     std::vector<float> _maxRanges;
     std::vector<unsigned int> _selection;
 
-    SortingType _sortingType = SortingType::VARIANCE;
+    bool _differentialRanking = false;
+
+    SortingType _sortingType = SortingType::NONE;
 
     std::vector<QColor> _colors;
 };
@@ -81,10 +99,15 @@ public:
     BarChart& getBarchart() { return *_barChart; }
     ImageViewWidget& getImageWidget() { return *_imageViewWidget; }
     QSlider* getRadiusSlider() { return _radiusSlider; }
+    QPushButton* getVarianceColoringButton() { return _varianceColoringButton; }
+    QPushButton* getValueColoringButton() { return _valueColoringButton; }
 
 private:
     QLabel* _rankLabel;
     BarChart* _barChart;
     ImageViewWidget* _imageViewWidget;
     QSlider* _radiusSlider;
+
+    QPushButton* _varianceColoringButton;
+    QPushButton* _valueColoringButton;
 };

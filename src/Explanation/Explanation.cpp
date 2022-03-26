@@ -35,7 +35,7 @@ namespace
         neighbourhood.clear();
         for (int i = 0; i < projection.rows(); i++)
         {
-            if (i == centerId) continue;
+            //if (i == centerId) continue;
 
             float xi = projection(i, 0);
             float yi = projection(i, 1);
@@ -100,10 +100,10 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
 void Explanation::updatePrecomputations(float neighbourhoodRadius)
 {
     computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
-    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.5f);
+    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
     
     //_euclideanMetric.recompute(_dataset, _neighbourhoodMatrix);
-    _varianceMetric.recompute(_dataset, _neighbourhoodMatrix, _confidenceNeighbourhoodMatrix);
+    _varianceMetric.recompute(_dataset, _neighbourhoodMatrix);
 }
 
 void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius)
@@ -250,7 +250,7 @@ void Explanation::computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::Ar
 
     // Build confidence matrix
     confidenceMatrix.resize(numPoints, numDimensions);
-
+    //qDebug() << "CONF SIZE: " << _confidenceNeighbourhoodMatrix[0].size();
     for (int i = 0; i < numPoints; i++)
     {
         // Compute summed rankings over neighbouring points
@@ -272,12 +272,21 @@ void Explanation::computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::Ar
         {
             totalRanking += summedRankings[j];
         }
+        if (i == 1000)
+        {
+            for (int j = 0; j < numDimensions; j++)
+            {
+                std::cout << "Sum: " << j << " " << summedRankings[j] << std::endl;
+            }
+
+            std::cout << "Total ranking: " << totalRanking << std::endl;
+        }
         
         for (int j = 0; j < numDimensions; j++)
         {
             summedRankings[j] /= totalRanking;
 
-            confidenceMatrix(i, j) = 1 - summedRankings[j];
+            confidenceMatrix(i, j) = (1 - summedRankings[j]);
         }
     }
 }

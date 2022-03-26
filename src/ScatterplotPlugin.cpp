@@ -46,7 +46,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _explanationWidget(new ExplanationWidget()),
     _dropWidget(nullptr),
     _settingsAction(this),
-    _selectionRadius(30)
+    _selectionRadius(30),
+    _lockSelection(false)
 {
     setObjectName("Scatterplot");
 
@@ -175,6 +176,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _scatterPlotWidget->installEventFilter(this);
 
     connect(_explanationWidget->getRadiusSlider(), &QSlider::valueChanged, this, &ScatterplotPlugin::neighbourhoodRadiusValueChanged);
+    connect(_explanationWidget->getVarianceColoringButton(), &QPushButton::pressed, this, &ScatterplotPlugin::colorByVariance);
+    connect(_explanationWidget->getValueColoringButton(), &QPushButton::pressed, this, &ScatterplotPlugin::colorByValue);
 }
 
 ScatterplotPlugin::~ScatterplotPlugin()
@@ -272,12 +275,7 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 //QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
 
                 _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
-                //_explanationWidget->getBarchart().setImportantDims(importantDims);
                 //_explanationWidget->getImageWidget().setImage(image);
-
-                ////////////////////////////////////////
-
-                //
 
                 //image.save(QString("eigImage%1.png").arg(0));
                 //////////////////
@@ -294,7 +292,7 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 //    }
                 //    image.save(QString("eigImage%1.png").arg(i));
                 //}
-                std::cout << "Saved eigen vectors" << std::endl;
+                //std::cout << "Saved eigen vectors" << std::endl;
             }
         }
     }
@@ -304,24 +302,61 @@ void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
 {
     _explanation.updatePrecomputations(value / 100.0f);
 
+    colorByVariance();
+}
+
+void ScatterplotPlugin::colorByVariance()
+{
+    _scatterPlotWidget->setColoringMode(false);
+
     Eigen::ArrayXXf dimRanking;
     _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
 
+    std::vector<float> confidences = _explanation.computeConfidences(dimRanking);
+
+    Eigen::ArrayXXf confidenceMatrix;
+    _explanation.computeConfidences2(dimRanking, confidenceMatrix);
+
     // Build vector of top ranked dimensions
-    //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
     std::vector<int> topRankedDims(dimRanking.rows());
+    std::vector<float> confidences2(dimRanking.rows());
     for (int i = 0; i < dimRanking.rows(); i++)
     {
         std::vector<int> indices(dimRanking.cols());
         std::iota(indices.begin(), indices.end(), 0); //Initializing
         std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
         topRankedDims[i] = indices[0];
+
+        confidences2[i] = confidenceMatrix(i, indices[0]);
+
+        if (i == 1000)
+        {
+
+            std::cout << "Top rank: " << dimRanking(i, topRankedDims[i]) << " " << topRankedDims[i] << std::endl;
+            for (int j = 0; j < dimRanking.cols(); j++)
+            {
+                std::cout << "Confs: " << j << " "  << confidenceMatrix(i, j) << std::endl;
+            }
+            std::cout << "Chosen conf: " << confidences2[i] << std::endl;
+        }
     }
 
-    // Color points in widget
-    std::vector<QColor> colors(23);
-    const char* kelly_colors[] = { "#31a09a", "#222222", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+    // Normalize confidences2
+    float minVal = std::numeric_limits<float>::max();
+    float maxVal = -std::numeric_limits<float>::max();
+    for (int i = 0; i < confidences2.size(); i++)
+    {
+        if (confidences2[i] < minVal) minVal = confidences2[i];
+        if (confidences2[i] > maxVal) maxVal = confidences2[i];
+    }
+    std::cout << "Min val: " << minVal << " Max val: " << maxVal << std::endl;
+    for (int i = 0; i < confidences2.size(); i++)
+    {
+        confidences2[i] = (confidences2[i] - minVal) / (maxVal - minVal);
+    }
 
+    std::vector<QColor> colors(23);
+    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
     for (int i = 0; i < colors.size(); i++)
     {
         colors[i].setNamedColor(kelly_colors[i]);
@@ -331,14 +366,59 @@ void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
     for (int i = 0; i < topRankedDims.size(); i++)
     {
         int dim = topRankedDims[i];
+        float confidence = confidences2[i];
+        if (i == 1000) std::cout << "Confidence: " << confidence << std::endl;
+
         if (dim < 22)
         {
-            QColor color = colors[topRankedDims[i]];
+            QColor color = colors[dim];
+            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
+        }
+        else
+            colorData[i] = Vector3f(0.2f * confidence, 0.2f * confidence, 0.2f * confidence);
+    }
+
+    _scatterPlotWidget->setColors(colorData);
+}
+
+void ScatterplotPlugin::colorByValue()
+{
+    _scatterPlotWidget->setColoringMode(true);
+
+    Eigen::ArrayXXf valueRanking;
+    _explanation.computeValueRanks(valueRanking);
+
+    // Compute value ranking
+    std::vector<int> topValueRanks(valueRanking.rows());
+    for (int i = 0; i < valueRanking.rows(); i++)
+    {
+        std::vector<int> indices(valueRanking.cols());
+        std::iota(indices.begin(), indices.end(), 0); //Initializing
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return valueRanking(i, a) > valueRanking(i, b); });
+        topValueRanks[i] = indices[0];
+    }
+
+    std::vector<QColor> colors(23);
+    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+    for (int i = 0; i < colors.size(); i++)
+    {
+        colors[i].setNamedColor(kelly_colors[i]);
+    }
+
+    std::vector<Vector3f> colorData(topValueRanks.size());
+    for (int i = 0; i < topValueRanks.size(); i++)
+    {
+        int dim = topValueRanks[i];
+
+        if (dim < 22)
+        {
+            QColor color = colors[topValueRanks[i]];
             colorData[i] = Vector3f(color.redF(), color.greenF(), color.blueF());
         }
         else
             colorData[i] = Vector3f(0.2f, 0.2f, 0.2f);
     }
+
     _scatterPlotWidget->setColors(colorData);
 }
 
@@ -502,7 +582,7 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     // Enable pixel selection if the point positions dataset is valid
     _scatterPlotWidget->getPixelSelectionTool().setEnabled(_positionDataset.isValid());
-    
+
     // Do not show the drop indicator if there is a valid point positions dataset
     _dropWidget->setShowDropIndicator(!_positionDataset.isValid());
 
@@ -515,68 +595,7 @@ void ScatterplotPlugin::positionDatasetChanged()
 
     _explanationWidget->getBarchart().setDataset(_positionDataset->getSourceDataset<Points>());
 
-    Eigen::ArrayXXf dimRanking;
-    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VARIANCE);
-
-    std::vector<float> confidences = _explanation.computeConfidences(dimRanking);
-    
-    Eigen::ArrayXXf confidenceMatrix;
-    _explanation.computeConfidences2(dimRanking, confidenceMatrix);
-
-    // Build vector of top ranked dimensions
-    //Dataset<Points> rankingDataset = _core->addDataset("Points", "Ranking");
-    std::vector<int> topRankedDims(dimRanking.rows());
-    std::vector<float> confidences2(dimRanking.rows());
-    for (int i = 0; i < dimRanking.rows(); i++)
-    {
-        std::vector<int> indices(dimRanking.cols());
-        std::iota(indices.begin(), indices.end(), 0); //Initializing
-        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
-        topRankedDims[i] = indices[0];
-        confidences2[i] = confidenceMatrix(i, indices[0]);
-        //std::cout << "R: ";
-        //for (int j = 0; j < dimRanking.cols(); j++)
-        //{
-        //    std::cout << dimRanking(i, j) << " ";
-        //}
-        //std::cout << std::endl;
-
-        //std::cout << "I: ";
-        //for (int j = 0; j < dimRanking.cols(); j++)
-        //{
-        //    std::cout << indices[j] << " ";
-        //}
-        //std::cout << std::endl;
-    }
-
-    //rankingDataset->setData(topRankedDims.data(), dimRanking.rows(), 1);
-    //_core->notifyDataAdded(rankingDataset);
-
-    // Color points in widget
-    std::vector<QColor> colors(23);
-    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
-
-    for (int i = 0; i < colors.size(); i++)
-    {
-        colors[i].setNamedColor(kelly_colors[i]);
-    }
-
-    std::vector<Vector3f> colorData(topRankedDims.size());
-    for (int i = 0; i < topRankedDims.size(); i++)
-    {
-        int dim = topRankedDims[i];
-        float confidence = confidences2[i];
-        std::cout << "Confidence: " << confidence << std::endl;
-
-        if (dim < 22)
-        {
-            QColor color = colors[topRankedDims[i]];
-            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
-        }
-        else
-            colorData[i] = Vector3f(0.2f * confidence, 0.2f * confidence, 0.2f * confidence);
-    }
-    _scatterPlotWidget->setColors(colorData);
+    colorByVariance();
 
     //_explanationWidget->setRanking(dimRanking);
 
@@ -737,6 +756,37 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     {
         // Get key that was pressed
         auto keyEvent = static_cast<QKeyEvent*>(event);
+
+        if (keyEvent->key() == Qt::Key_Control)
+        {
+            _lockSelection = true;
+
+            if (_positionDataset.isValid())
+            {
+                _explanationWidget->getBarchart().computeOldMetrics(_positionDataset->getSelection()->getSelectionIndices());
+
+                _explanationWidget->getBarchart().showDifferentialValues(true);
+
+                // Draw little circle
+                _scatterPlotWidget->setOldPosition(_lastMousePos, _selectionRadius);
+                _scatterPlotWidget->drawOldSelection(true);
+            }
+        }
+
+        break;
+    }
+    case QEvent::KeyRelease:
+    {
+        // Get key that was pressed
+        auto keyEvent = static_cast<QKeyEvent*>(event);
+
+        if (keyEvent->key() == Qt::Key_Control)
+        {
+            _lockSelection = false;
+            _explanationWidget->getBarchart().showDifferentialValues(false);
+            _scatterPlotWidget->drawOldSelection(false);
+        }
+
         break;
     }
 
@@ -796,6 +846,10 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     case QEvent::MouseMove:
     {
         auto mouseEvent = static_cast<QMouseEvent*>(event);
+
+        _lastMousePos = QPoint(mouseEvent->x(), mouseEvent->y());
+
+        _scatterPlotWidget->setCurrentPosition(_lastMousePos, _selectionRadius);
 
         if (!_positionDataset.isValid())
             return QObject::eventFilter(target, event);

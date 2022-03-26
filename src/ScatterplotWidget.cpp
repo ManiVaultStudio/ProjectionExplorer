@@ -472,6 +472,34 @@ void ScatterplotWidget::paintGL()
             painter.drawPixmap(rect(), _pixelSelectionTool.getAreaPixmap());
             painter.drawPixmap(rect(), _pixelSelectionTool.getShapePixmap());
         }
+
+        // Draw coloring mode
+        painter.setFont(QFont("Open Sans", 14, QFont::ExtraBold));
+        if (_globalColor)
+            painter.drawText(width() / 2 - 80, 40, "Color by Value");
+        else
+            painter.drawText(width() / 2 - 80, 40, "Color by Variance");
+
+        // Draw differential stuff
+        if (_drawOldSelection)
+        {
+            QPen pen;
+            pen.setColor(QColor(255, 0, 0, 255));
+            pen.setStyle(Qt::DashDotLine);
+            painter.setPen(pen);
+            QBrush brush;
+            brush.setColor(QColor(255, 0, 0, 128));
+            brush.setStyle(Qt::Dense3Pattern);
+            painter.setBrush(brush);
+            painter.drawEllipse(_oldSelectionPoint.x() - _oldSelectionRadius, _oldSelectionPoint.y() - _oldSelectionRadius, _oldSelectionRadius*2, _oldSelectionRadius*2);
+        }
+
+        QPen pen;
+        pen.setColor(QColor(255, 0, 0, 255));
+        pen.setStyle(Qt::SolidLine);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(_currentPoint.x() - _currentRadius, _currentPoint.y() - _currentRadius, _currentRadius * 2, _currentRadius * 2);
         
         painter.end();
     }

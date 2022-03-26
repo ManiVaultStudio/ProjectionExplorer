@@ -88,6 +88,11 @@ public:
     void setPointScaling(hdps::gui::PointScaling scalingMode);
     void setSigma(const float sigma);
 
+    void drawOldSelection(bool drawOldSelection) { _drawOldSelection = drawOldSelection; }
+    void setOldPosition(QPoint pos, float radius) { _oldSelectionPoint = pos; _oldSelectionRadius = radius; }
+    void setCurrentPosition(QPoint pos, float radius) { _currentPoint = pos; _currentRadius = radius; }
+    void setColoringMode(bool value) { _globalColor = value; }
+
     Bounds getBounds() const {
         return _dataBounds;
     }
@@ -162,4 +167,11 @@ private:
     Bounds                  _dataBounds;                        /** Bounds of the loaded data */
     QImage                  _colorMapImage;
     PixelSelectionTool      _pixelSelectionTool;
+
+    QPoint                  _oldSelectionPoint;
+    float                   _oldSelectionRadius;
+    bool                    _drawOldSelection;
+    QPoint                  _currentPoint;
+    float                   _currentRadius;
+    bool                    _globalColor = false;
 };
