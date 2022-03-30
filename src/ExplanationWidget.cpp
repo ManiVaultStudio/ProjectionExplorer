@@ -348,7 +348,7 @@ ExplanationWidget::ExplanationWidget()
     layout->addWidget(varianceSortButton);
     layout->addWidget(valueSortButton);
     layout->addWidget(_radiusSlider);
-    layout->addStretch();
+    //layout->addStretch();
     layout->addWidget(_varianceColoringButton);
     layout->addWidget(_valueColoringButton);
 

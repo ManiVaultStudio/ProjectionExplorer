@@ -35,8 +35,6 @@ namespace
         neighbourhood.clear();
         for (int i = 0; i < projection.rows(); i++)
         {
-            //if (i == centerId) continue;
-
             float xi = projection(i, 0);
             float yi = projection(i, 1);
 

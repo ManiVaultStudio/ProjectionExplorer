@@ -319,7 +319,7 @@ void ScatterplotPlugin::colorByVariance()
 
     // Build vector of top ranked dimensions
     std::vector<int> topRankedDims(dimRanking.rows());
-    std::vector<float> confidences2(dimRanking.rows());
+    //std::vector<float> confidences(dimRanking.rows());
     for (int i = 0; i < dimRanking.rows(); i++)
     {
         std::vector<int> indices(dimRanking.cols());
@@ -327,7 +327,7 @@ void ScatterplotPlugin::colorByVariance()
         std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) < dimRanking(i, b); });
         topRankedDims[i] = indices[0];
 
-        confidences2[i] = confidenceMatrix(i, indices[0]);
+        //confidences[i] = confidenceMatrix(i, indices[0]);
 
         if (i == 1000)
         {
@@ -337,22 +337,22 @@ void ScatterplotPlugin::colorByVariance()
             {
                 std::cout << "Confs: " << j << " "  << confidenceMatrix(i, j) << std::endl;
             }
-            std::cout << "Chosen conf: " << confidences2[i] << std::endl;
+            std::cout << "Chosen conf: " << confidences[i] << std::endl;
         }
     }
 
     // Normalize confidences2
     float minVal = std::numeric_limits<float>::max();
     float maxVal = -std::numeric_limits<float>::max();
-    for (int i = 0; i < confidences2.size(); i++)
+    for (int i = 0; i < confidences.size(); i++)
     {
-        if (confidences2[i] < minVal) minVal = confidences2[i];
-        if (confidences2[i] > maxVal) maxVal = confidences2[i];
+        if (confidences[i] < minVal) minVal = confidences[i];
+        if (confidences[i] > maxVal) maxVal = confidences[i];
     }
     std::cout << "Min val: " << minVal << " Max val: " << maxVal << std::endl;
-    for (int i = 0; i < confidences2.size(); i++)
+    for (int i = 0; i < confidences.size(); i++)
     {
-        confidences2[i] = (confidences2[i] - minVal) / (maxVal - minVal);
+        confidences[i] = (confidences[i] - minVal) / (maxVal - minVal);
     }
 
     std::vector<QColor> colors(23);
@@ -366,7 +366,7 @@ void ScatterplotPlugin::colorByVariance()
     for (int i = 0; i < topRankedDims.size(); i++)
     {
         int dim = topRankedDims[i];
-        float confidence = confidences2[i];
+        float confidence = confidences[i];
         if (i == 1000) std::cout << "Confidence: " << confidence << std::endl;
 
         if (dim < 22)
