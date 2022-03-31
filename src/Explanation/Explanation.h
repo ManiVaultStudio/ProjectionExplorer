@@ -9,6 +9,7 @@
 
 #include "SilvaVariance.h"
 #include "SilvaEuclidean.h"
+#include "ValueRanking.h"
 #include <Eigen/Eigen>
 
 #include <QImage>
@@ -21,7 +22,8 @@ public:
     enum class Metric
     {
         EUCLIDEAN,
-        VARIANCE
+        VARIANCE,
+        VALUE
     };
 
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
@@ -53,4 +55,5 @@ private:
 
     EuclideanMetric _euclideanMetric;
     VarianceMetric _varianceMetric;
+    ValueRanking _valueMetric;
 };

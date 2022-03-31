@@ -33,6 +33,8 @@ set(EXPLANATION
     src/Explanation/SilvaEuclidean.cpp
     src/Explanation/SilvaVariance.h
     src/Explanation/SilvaVariance.cpp
+    src/Explanation/ValueRanking.h
+    src/Explanation/ValueRanking.cpp
 )
 
 set(UI

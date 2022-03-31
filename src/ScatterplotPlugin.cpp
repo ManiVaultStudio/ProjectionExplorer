@@ -385,16 +385,16 @@ void ScatterplotPlugin::colorByValue()
 {
     _scatterPlotWidget->setColoringMode(true);
 
-    Eigen::ArrayXXf valueRanking;
-    _explanation.computeValueRanks(valueRanking);
+    Eigen::ArrayXXf dimRanking;
+    _explanation.computeDimensionRanks(dimRanking, Explanation::Metric::VALUE);
 
     // Compute value ranking
-    std::vector<int> topValueRanks(valueRanking.rows());
-    for (int i = 0; i < valueRanking.rows(); i++)
+    std::vector<int> topValueRanks(dimRanking.rows());
+    for (int i = 0; i < dimRanking.rows(); i++)
     {
-        std::vector<int> indices(valueRanking.cols());
+        std::vector<int> indices(dimRanking.cols());
         std::iota(indices.begin(), indices.end(), 0); //Initializing
-        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return valueRanking(i, a) > valueRanking(i, b); });
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) > dimRanking(i, b); });
         topValueRanks[i] = indices[0];
     }
 

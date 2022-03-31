@@ -53,9 +53,11 @@ namespace
 
 void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection)
 {
+    int numDimensions = dataset->getNumDimensions();
+
     // Store dataset and projection as eigen arrays
-    _dataset.resize(dataset->getNumPoints(), dataset->getNumDimensions());
-    for (int j = 0; j < dataset->getNumDimensions(); j++)
+    _dataset.resize(dataset->getNumPoints(), numDimensions);
+    for (int j = 0; j < numDimensions; j++)
     {
         std::vector<float> result;
         dataset->extractDataForDimension(result, j);
@@ -102,6 +104,7 @@ void Explanation::updatePrecomputations(float neighbourhoodRadius)
     
     //_euclideanMetric.recompute(_dataset, _neighbourhoodMatrix);
     _varianceMetric.recompute(_dataset, _neighbourhoodMatrix);
+    _valueMetric.recompute(_dataset, _neighbourhoodMatrix);
 }
 
 void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius)
@@ -131,6 +134,8 @@ void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector
                 dimRank = _euclideanMetric.computeDimensionRank(_dataset, si, j);
             if (metric == Metric::VARIANCE)
                 dimRank = _varianceMetric.computeDimensionRank(_dataset, si, j);
+            if (metric == Metric::VALUE)
+                dimRank = _valueMetric.computeDimensionRank(_dataset, si, j);
 
             dimRanking(i, j) = dimRank;
         }
