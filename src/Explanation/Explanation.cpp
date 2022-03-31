@@ -190,58 +190,48 @@ std::vector<float> Explanation::computeConfidences(const Eigen::ArrayXXf& dimRan
     int numPoints = dimRanks.rows();
     int numDimensions = dimRanks.cols();
 
-    // Compute sorted rankings
-    Eigen::ArrayXXi sortingIndices;
-    sortingIndices.resize(numPoints, numDimensions);
-
+    // Compute the top-ranked dimension for every point
+    std::vector<int> topDimensions(numPoints);
     for (int i = 0; i < numPoints; i++)
     {
-        // Sort the rankings
-        std::vector<int> indices(numDimensions);
-        std::iota(indices.begin(), indices.end(), 0); //Initializing
-        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanks(i, a) < dimRanks(i, b); });
-
+        float minRank = std::numeric_limits<float>::max();
+        int topRank = 0;
         for (int j = 0; j < numDimensions; j++)
-            sortingIndices(i, j) = indices[j];
+        {
+            float rank = dimRanks(i, j);
+            if (rank < minRank) { minRank = rank; topRank = j; }
+        }
+        topDimensions[i] = topRank;
     }
-
+    
+    // Compute confidences
     std::vector<float> confidences(numPoints);
     for (int i = 0; i < numPoints; i++)
     {
-        // Compute sorted top ranking
-        std::vector<float> topRankings(numDimensions, 0);
-        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
-        {
-            int ni = _confidenceNeighbourhoodMatrix[i][n];
+        const std::vector<int>& neighbourhood = _neighbourhoodMatrix[i];
 
-            for (int j = 0; j < 1; j++)
-            {
-                float rank = dimRanks(ni, sortingIndices(ni, j));
-                topRankings[sortingIndices(ni, j)] += rank;
-            }
-        }
-        for (int j = 0; j < 1; j++)
+        // Add top-1 rankings over all neighbouring points in vector
+        std::vector<float> topRankings(numDimensions, 0);
+        for (const int ni : neighbourhood)
         {
-            float rank = dimRanks(i, sortingIndices(i, j));
-            topRankings[sortingIndices(i, j)] += rank;
+            int topDim = topDimensions[ni];
+
+            topRankings[topDim] += dimRanks(ni, topDim);
         }
 
         // Compute total ranking
-        Eigen::ArrayXf totalRanking = dimRanks.row(i);
-        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
-        {
-            int ni = _confidenceNeighbourhoodMatrix[i][n];
-            totalRanking += dimRanks.row(ni);
-        }
+        int topDim = topDimensions[i];
+        float totalRank = 0;
+        for (const int ni : neighbourhood)
+            totalRank += dimRanks(ni, topDim);
 
         // Divide all rankings by total rank values to get confidences
-        float topRanking = topRankings[sortingIndices(i, 0)];
-        float totalRank = totalRanking[sortingIndices(i, 0)];
-        confidences[i] = topRanking /= totalRank;
+        float topRanking = topRankings[topDim];
+
+        confidences[i] = topRanking / totalRank;
 
         if (totalRank == 0)
             confidences[i] = 0;
-        //confidences[i] = topRankings[sortingIndices(i, 0)] /= totalRanking[sortingIndices(i, 0)];
     }
     return confidences;
 }
