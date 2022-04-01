@@ -33,13 +33,11 @@ namespace
         float radSquared = radius * radius;
 
         neighbourhood.clear();
+
         for (int i = 0; i < projection.rows(); i++)
         {
-            float xi = projection(i, 0);
-            float yi = projection(i, 1);
-
-            float xd = xi - x;
-            float yd = yi - y;
+            float xd = projection(i, 0) - x;
+            float yd = projection(i, 1) - y;
 
             float magSquared = xd * xd + yd * yd;
 
@@ -110,13 +108,16 @@ void Explanation::updatePrecomputations(float neighbourhoodRadius)
 void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius)
 {
     neighbourhoodMatrix.clear();
-    neighbourhoodMatrix.resize(_dataset.rows());
-    for (int i = 0; i < _dataset.rows(); i++)
+    neighbourhoodMatrix.resize(_projection.rows());
+
+#pragma omp parallel for
+    for (int i = 0; i < _projection.rows(); i++)
     {
         findNeighbourhood(_projection, i, radius, neighbourhoodMatrix[i]);
 
-        if (i % 1000 == 0) std::cout << i << std::endl;
+        if (i % 10000 == 0) std::cout << "Computing neighbourhood for points: [" << i << "/" << _projection.rows() << "]" << std::endl;
     }
+
 }
 
 void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int>& selection, Metric metric)
