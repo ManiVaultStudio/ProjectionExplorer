@@ -54,25 +54,31 @@ void VarianceMetric::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, co
     int numDimensions = dataset.cols();
 
     localVariance.resize(numPoints, numDimensions);
+
+#pragma omp parallel for
     for (int i = 0; i < numPoints; i++)
     {
         const std::vector<int>& neighbourhood = neighbourhoodMatrix[i];
 
+        //auto subdata = dataset(neighbourhood, Eigen::all);
+        //auto variances = ((subdata.rowwise() - subdata.colwise().mean()).pow(2).colwise().sum()) / neighbourhood.size();
+        //localVariance.row(i) = variances;
+        
         for (int j = 0; j < numDimensions; j++)
         {
             // Compute mean
             float mean = 0;
-            for (int n = 0; n < neighbourhood.size(); n++)
+            for (const int ni : neighbourhood)
             {
-                mean += dataset(neighbourhood[n], j);
+                mean += dataset(ni, j);
             }
             mean /= neighbourhood.size();
 
             // Compute variance
             float variance = 0;
-            for (int n = 0; n < neighbourhood.size(); n++)
+            for (const int ni : neighbourhood)
             {
-                float x = dataset(neighbourhood[n], j) - mean;
+                float x = dataset(ni, j) - mean;
                 variance += x * x;
             }
             variance /= neighbourhood.size();
