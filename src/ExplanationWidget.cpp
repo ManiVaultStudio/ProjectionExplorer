@@ -12,9 +12,9 @@
 #define RANGE_WIDTH 200
 #define TOP_MARGIN 30
 
-void DataMetrics::compute(const hdps::Dataset<Points>& dataset, const std::vector<unsigned int>& selection, const std::vector<float>& minRanges, const std::vector<float>& maxRanges)
+void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataMatrix& dataRanges)
 {
-    int numDimensions = dataset->getNumDimensions();
+    int numDimensions = dataset.cols();
 
     // Compute average values
     averageValues.clear();
@@ -25,7 +25,7 @@ void DataMetrics::compute(const hdps::Dataset<Points>& dataset, const std::vecto
         {
             int si = selection[i];
 
-            averageValues[j] += dataset->getValueAt(si * numDimensions + j);
+            averageValues[j] += dataset(si, j);
         }
 
         averageValues[j] /= selection.size();
@@ -39,7 +39,7 @@ void DataMetrics::compute(const hdps::Dataset<Points>& dataset, const std::vecto
         for (int i = 0; i < selection.size(); i++)
         {
             int si = selection[i];
-            float x = dataset->getValueAt(si * numDimensions + j) - averageValues[j];
+            float x = dataset(si, j) - averageValues[j];
             variances[j] += x * x;
         }
         variances[j] /= selection.size();
@@ -49,63 +49,35 @@ void DataMetrics::compute(const hdps::Dataset<Points>& dataset, const std::vecto
     // Normalization
     for (int j = 0; j < numDimensions; j++)
     {
-        float normalizedValue = (averageValues[j] - minRanges[j]) / (maxRanges[j] - minRanges[j]);
+        float normalizedValue = (averageValues[j] - dataRanges(0, j)) / (dataRanges(1, j) - dataRanges(0, j));
         averageValues[j] = normalizedValue;
-        float normalizedStddev = variances[j] / (maxRanges[j] - minRanges[j]);
+        float normalizedStddev = variances[j] / (dataRanges(1, j) - dataRanges(0, j));
         variances[j] = normalizedStddev;
 
         //std::cout << "Dim: " << j << " Min ranges: " << minRanges[j] << " Max ranges: " << maxRanges[j] << std::endl;
     }
 }
 
-BarChart::BarChart()
+BarChart::BarChart(ExplanationModel& explanationModel) :
+    _explanationModel(explanationModel),
+    _differentialRanking(false),
+    _sortingType(SortingType::NONE),
+    _sortingDirection(SortingDirection::LOW_TO_HIGH)
 {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumHeight(270);
     setMinimumWidth(460);
-    _colors.resize(22);
-    //const char* kelly_colors[] = { "#31a09a", "#FFFFFF", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#9B3D96", "#A13237" };
-    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
 
-    const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
-
-    for (int i = 0; i < _colors.size(); i++)
-    {
-        _colors[i].setNamedColor(kelly_colors[i]);
-    }
+    //const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
 }
 
-void BarChart::setDataset(hdps::Dataset<Points> dataset)
-{
-    _dataset = dataset;
-
-    // Compute ranges per dimension
-    _minRanges.resize(dataset->getNumDimensions());
-    _maxRanges.resize(dataset->getNumDimensions());
-
-    for (int j = 0; j < dataset->getNumDimensions(); j++)
-    {
-        _minRanges[j] = std::numeric_limits<float>::max();
-        _maxRanges[j] = -std::numeric_limits<float>::max();
-
-        for (int i = 0; i < dataset->getNumPoints(); i++)
-        {
-            float value = dataset->getValueAt(i * dataset->getNumDimensions() + j);
-
-            if (value < _minRanges[j]) _minRanges[j] = value;
-            if (value > _maxRanges[j]) _maxRanges[j] = value;
-        }
-    }
-}
-
-void BarChart::setRanking(Eigen::ArrayXXf& ranking, const std::vector<unsigned int>& selection)
+void BarChart::setRanking(DataMatrix& ranking, const std::vector<unsigned int>& selection)
 {
     int numPoints = ranking.rows();
     int numDimensions = ranking.cols();
 
     _selection = selection;
 
-    //std::cout << "Ranking: " << numPoints << "numdims: " << numDimensions << std::endl;
     if (numPoints == 0)
     {
         _dimAggregation.clear();
@@ -124,11 +96,10 @@ void BarChart::setRanking(Eigen::ArrayXXf& ranking, const std::vector<unsigned i
     {
         dimAggregation[i] /= (float) numPoints;
     }
+    _dimAggregation = dimAggregation;
 
     // Compute metrics on current selection
-    _newMetrics.compute(_dataset, _selection, _minRanges, _maxRanges);
-
-    _dimAggregation = dimAggregation;
+    _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataRanges());
 
     // Compute sorting
     _sortIndices.resize(dimAggregation.size());
@@ -138,17 +109,11 @@ void BarChart::setRanking(Eigen::ArrayXXf& ranking, const std::vector<unsigned i
     else if (_sortingType == SortingType::VALUE)
         std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return _newMetrics.averageValues[i] > _newMetrics.averageValues[j]; });
     else if (_sortingType == SortingType::NONE) {}
-        
 }
 
 void BarChart::computeOldMetrics(const std::vector<unsigned int>& oldSelection)
 {
-    _oldMetrics.compute(_dataset, oldSelection, _minRanges, _maxRanges);
-}
-
-void BarChart::setImportantDims(const std::vector<float>& importantDims)
-{
-    _importantDims = importantDims;
+    _oldMetrics.compute(_explanationModel.getDataset(), oldSelection, _explanationModel.getDataRanges());
 }
 
 void BarChart::sortByDefault()
@@ -168,10 +133,15 @@ void BarChart::sortByValue()
 
 void BarChart::paintEvent(QPaintEvent* event)
 {
-    if (!_dataset.isValid())
+    if (!_explanationModel.hasDataset())
         return;
 
-    int numDimensions = _dataset->getNumDimensions();
+    const DataMatrix& dataset = _explanationModel.getDataset();
+    const DataMatrix& dataRanges = _explanationModel.getDataRanges();
+
+    int numDimensions = dataset.cols();
+
+    const std::vector<QColor>& palette = _explanationModel.getPalette();
 
     QPainter painter(this);
     //painter.setRenderHint(QPainter::RenderHint::Antialiasing);
@@ -201,8 +171,8 @@ void BarChart::paintEvent(QPaintEvent* event)
                     int sortIndexA = _sortIndices[j];
                     int sortIndexB = _sortIndices[j + 1];
 
-                    float normValueA = (_dataset->getValueAt(si * numDimensions + sortIndexA) - _minRanges[sortIndexA]) / (_maxRanges[sortIndexA] - _minRanges[sortIndexA]);
-                    float normValueB = (_dataset->getValueAt(si * numDimensions + sortIndexB) - _minRanges[sortIndexB]) / (_maxRanges[sortIndexB] - _minRanges[sortIndexB]);
+                    float normValueA = (dataset(si, sortIndexA) - dataRanges(0, sortIndexA)) / (dataRanges(1, sortIndexA) - dataRanges(0, sortIndexA));
+                    float normValueB = (dataset(si, sortIndexB) - dataRanges(0, sortIndexB)) / (dataRanges(1, sortIndexB) - dataRanges(0, sortIndexB));
 
                     painter.drawLine(RANGE_OFFSET + normValueA * RANGE_WIDTH, TOP_MARGIN + 16 * j + 8, RANGE_OFFSET + normValueB * RANGE_WIDTH, TOP_MARGIN + 16 * (j + 1) + 8);
                 }
@@ -214,20 +184,15 @@ void BarChart::paintEvent(QPaintEvent* event)
             int sortIndex = _sortIndices[i];
 
             QColor color(180, 180, 180, 255);
-            if (i < 22)
-                color = _colors[sortIndex];
+            if (i < palette.size())
+                color = palette[sortIndex];
 
             painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
             painter.setPen(color);
-            if (_dataset->getDimensionNames().size() > 0)
-            {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _dataset->getDimensionNames()[sortIndex]);
-            }
-            else
-            {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, QString::number(sortIndex));
-            }
-            
+
+            // Draw dimension names
+            painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[sortIndex]);
+
             //float normalizedValue = (_averageValues[sortIndex] - _minRanges[sortIndex]) / (_maxRanges[sortIndex] - _minRanges[sortIndex]);
 
             //painter.fillRect(180, 10 + 16 * i, std::max(0.0f, 0.166f - _dimAggregation[sortIndex]) * 600, 14, color);
@@ -283,24 +248,6 @@ void BarChart::paintEvent(QPaintEvent* event)
             }
         }
     }
-    else if (_dataset.isValid())
-    {
-        for (int i = 0; i < numDimensions; i++)
-        {
-            QColor color(180, 180, 180);
-
-            painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
-            painter.setPen(color);
-            if (_dataset->getDimensionNames().size() > 0)
-            {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _dataset->getDimensionNames()[i]);
-            }
-            else
-            {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, QString::number(i));
-            }
-        }
-    }
 }
 
 ImageViewWidget::ImageViewWidget() :
@@ -321,33 +268,49 @@ void ImageViewWidget::paintEvent(QPaintEvent* event)
     painter.drawImage(0, 0, _image);
 }
 
-ExplanationWidget::ExplanationWidget()
+ExplanationWidget::ExplanationWidget(ExplanationModel& explanationModel)
 {
     _rankLabel = new QLabel("No ranking");
-    _barChart = new BarChart();
+    _barChart = new BarChart(explanationModel);
     _imageViewWidget = new ImageViewWidget();
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(_barChart);
     //layout->addWidget(_imageViewWidget);
     //layout->addWidget(_rankLabel);
-    QPushButton* noSortButton = new QPushButton("No Sorting");
-    QPushButton* varianceSortButton = new QPushButton("Variance Sort");
-    QPushButton* valueSortButton = new QPushButton("Value Sort");
+    QPushButton* noSortButton = new QPushButton("No Ranking");
+    QPushButton* varianceSortButton = new QPushButton("Variance Ranking");
+    QPushButton* valueSortButton = new QPushButton("Value Ranking");
 
-    _varianceColoringButton = new QPushButton("Color by Variance");
-    _valueColoringButton = new QPushButton("Color by Value");
+    QPushButton* _varianceColoringButton = new QPushButton("Color by Variance Ranking");
+    QPushButton* _valueColoringButton = new QPushButton("Color by Value Ranking");
 
+    connect(_varianceColoringButton, &QPushButton::pressed, [&explanationModel](){
+        explanationModel.setExplanationMetric(Explanation::Metric::VARIANCE);
+    });
+    connect(_valueColoringButton, &QPushButton::pressed, [&explanationModel]() {
+        explanationModel.setExplanationMetric(Explanation::Metric::VALUE);
+    });
+
+    QLabel* radiusSliderLabel = new QLabel("Neighbourhood Size:");
     _radiusSlider = new QSlider(Qt::Orientation::Horizontal);
-    _radiusSlider->setRange(0, 100);
+    _radiusSlider->setRange(0, 50);
     _radiusSlider->setValue(10);
+
+    _rankingCombobox = new QComboBox();
+    _rankingCombobox->addItem("No Ranking");
+    _rankingCombobox->addItem("Variance Ranking");
+    _rankingCombobox->addItem("Value Ranking");
+
     connect(noSortButton, &QPushButton::pressed, _barChart, &BarChart::sortByDefault);
     connect(varianceSortButton, &QPushButton::pressed, _barChart, &BarChart::sortByVariance);
     connect(valueSortButton, &QPushButton::pressed, _barChart, &BarChart::sortByValue);
-    layout->addWidget(noSortButton);
-    layout->addWidget(varianceSortButton);
-    layout->addWidget(valueSortButton);
+    //layout->addWidget(noSortButton);
+    //layout->addWidget(varianceSortButton);
+    //layout->addWidget(valueSortButton);
+    layout->addWidget(radiusSliderLabel);
     layout->addWidget(_radiusSlider);
+    layout->addWidget(_rankingCombobox);
     //layout->addStretch();
     layout->addWidget(_varianceColoringButton);
     layout->addWidget(_valueColoringButton);
@@ -366,32 +329,4 @@ void ExplanationWidget::update()
 {
     _barChart->repaint();
     _imageViewWidget->repaint();
-}
-
-void ExplanationWidget::setRanking(Eigen::ArrayXXf& ranking)
-{
-    //if (ranking.rows() == 0)
-    //    return;
-
-    //std::string rankText;
-
-    //std::vector<float> dimAggregation(ranking.cols(), 0);
-    //for (int i = 0; i < ranking.rows(); i++)
-    //{
-    //    for (int j = 0; j < ranking.cols(); j++)
-    //    {
-    //        dimAggregation[j] += ranking(i, j);
-    //    }
-    //}
-    //for (int i = 0; i < dimAggregation.size(); i++)
-    //{
-    //    dimAggregation[i] /= (float)ranking.rows();
-    //}
-
-    //for (int i = 0; i < dimAggregation.size(); i++)
-    //    rankText += std::to_string(dimAggregation[i]) + " ";
-
-    //_rankLabel->setText(rankText.c_str());
-
-    //_barChart->setRanking(ranking);
 }

@@ -95,18 +95,25 @@ void Explanation::setDataset(Dataset<Points> dataset, Dataset<Points> projection
     }
 }
 
-void Explanation::updatePrecomputations(float neighbourhoodRadius)
+void Explanation::recomputeNeighbourhood(float neighbourhoodRadius)
 {
     computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
-    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
-    
-    //_euclideanMetric.recompute(_dataset, _neighbourhoodMatrix);
-    _varianceMetric.recompute(_dataset, _neighbourhoodMatrix);
-    _valueMetric.recompute(_dataset, _neighbourhoodMatrix);
+}
+
+void Explanation::recomputeMetrics(Metric metric)
+{
+    switch (metric)
+    {
+    case Metric::EUCLIDEAN: _euclideanMetric.recompute(_dataset, _neighbourhoodMatrix); break;
+    case Metric::VARIANCE: _varianceMetric.recompute(_dataset, _neighbourhoodMatrix); break;
+    case Metric::VALUE: _valueMetric.recompute(_dataset, _neighbourhoodMatrix); break;
+    }
 }
 
 void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neighbourhoodMatrix, float radius)
 {
+    auto start = std::chrono::high_resolution_clock::now();
+
     neighbourhoodMatrix.clear();
     neighbourhoodMatrix.resize(_projection.rows());
 
@@ -118,6 +125,9 @@ void Explanation::computeNeighbourhoodMatrix(std::vector<std::vector<int>>& neig
         if (i % 10000 == 0) std::cout << "Computing neighbourhood for points: [" << i << "/" << _projection.rows() << "]" << std::endl;
     }
 
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Neighbourhood Elapsed time : " << elapsed.count() << " s\n";
 }
 
 void Explanation::computeDimensionRanks(Eigen::ArrayXXf& dimRanking, std::vector<unsigned int>& selection, Metric metric)
@@ -190,6 +200,7 @@ std::vector<float> Explanation::computeConfidences(const Eigen::ArrayXXf& dimRan
 {
     int numPoints = dimRanks.rows();
     int numDimensions = dimRanks.cols();
+    auto start = std::chrono::high_resolution_clock::now();
 
     // Compute the top-ranked dimension for every point
     std::vector<int> topDimensions(numPoints);
@@ -234,6 +245,9 @@ std::vector<float> Explanation::computeConfidences(const Eigen::ArrayXXf& dimRan
         if (totalRank == 0)
             confidences[i] = 0;
     }
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Confidence Elapsed time: " << elapsed.count() << " s\n";
     return confidences;
 }
 
@@ -249,9 +263,9 @@ void Explanation::computeConfidences2(const Eigen::ArrayXXf& dimRanks, Eigen::Ar
     {
         // Compute summed rankings over neighbouring points
         std::vector<float> summedRankings(numDimensions, 0);
-        for (int n = 0; n < _confidenceNeighbourhoodMatrix[i].size(); n++)
+        for (int n = 0; n < _neighbourhoodMatrix[i].size(); n++)
         {
-            int ni = _confidenceNeighbourhoodMatrix[i][n];
+            int ni = _neighbourhoodMatrix[i][n];
 
             for (int j = 0; j < numDimensions; j++)
             {

@@ -27,14 +27,17 @@ set(PLUGIN
 )
 
 set(EXPLANATION
-    src/Explanation/Explanation.h
-    src/Explanation/Explanation.cpp
-    src/Explanation/SilvaEuclidean.h
-    src/Explanation/SilvaEuclidean.cpp
-    src/Explanation/SilvaVariance.h
-    src/Explanation/SilvaVariance.cpp
-    src/Explanation/ValueRanking.h
-    src/Explanation/ValueRanking.cpp
+    src/Explanation/ExplanationModel.h
+    src/Explanation/ExplanationModel.cpp
+    #src/Explanation/Explanation.h
+    #src/Explanation/Explanation.cpp
+    src/Explanation/Methods/ExplanationMethod.h
+    src/Explanation/Methods/SilvaEuclidean.h
+    src/Explanation/Methods/SilvaEuclidean.cpp
+    src/Explanation/Methods/SilvaVariance.h
+    src/Explanation/Methods/SilvaVariance.cpp
+    src/Explanation/Methods/ValueRanking.h
+    src/Explanation/Methods/ValueRanking.cpp
 )
 
 set(UI
@@ -129,6 +132,10 @@ target_link_libraries(${PROJECT} Qt5::WebEngineWidgets)
 target_link_libraries(${PROJECT} "${HDPS_LINK_LIBRARY}")
 target_link_libraries(${PROJECT} "${POINTDATA_LINK_LIBRARY}")
 target_link_libraries(${PROJECT} "${CLUSTERDATA_LINK_LIBRARY}")
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT} OpenMP::OpenMP_CXX)
+endif()
 
 install(TARGETS ${PROJECT}
    RUNTIME DESTINATION Plugins COMPONENT SHAREDLIB

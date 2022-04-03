@@ -501,6 +501,16 @@ void ScatterplotWidget::paintGL()
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(_currentPoint.x() - _currentRadius, _currentPoint.y() - _currentRadius, _currentRadius * 2, _currentRadius * 2);
         
+        if (_drawNeighbourhoodRadius)
+        {
+            pen.setColor(QColor(255, 0, 255, 255));
+
+            int size = width() < height() ? width() : height();
+            float radius = _neighbourhoodRadius * size * 0.9090f;
+            painter.drawEllipse(width() / 2 - radius, height() / 2 - radius, radius * 2, radius * 2);
+            qDebug() << "Beep drawing " << _neighbourhoodRadius;
+        }
+
         painter.end();
     }
     catch (std::exception& e)

@@ -1,14 +1,15 @@
 #include "SilvaVariance.h"
 
 #include <iostream>
+#include <chrono>
 
-void VarianceMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     precomputeGlobalVariances(dataset);
     precomputeLocalVariances(_localVariances, dataset, neighbourhoodMatrix);
 }
 
-float VarianceMetric::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
+float VarianceMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
 {
     float sum = 0;
     for (int k = 0; k < dataset.cols(); k++)
@@ -18,8 +19,10 @@ float VarianceMetric::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i
     return (_localVariances(i, j) / _globalVariances[j]) / sum;
 }
 
-void VarianceMetric::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
+void VarianceMethod::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
 {
+    auto start = std::chrono::high_resolution_clock::now();
+
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
 
@@ -46,12 +49,17 @@ void VarianceMetric::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
 
         _globalVariances[j] = variance;
     }
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Global Elapsed time : " << elapsed.count() << " s\n";
 }
 
-void VarianceMetric::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMethod::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
+    auto start = std::chrono::high_resolution_clock::now();
 
     localVariance.resize(numPoints, numDimensions);
 
@@ -88,4 +96,8 @@ void VarianceMetric::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, co
         if (i % 10000 == 0)
             std::cout << "Local var: " << i << std::endl;
     }
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Local Variance Elapsed time: " << elapsed.count() << " s\n";
 }

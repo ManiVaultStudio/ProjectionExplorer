@@ -93,6 +93,9 @@ public:
     void setCurrentPosition(QPoint pos, float radius) { _currentPoint = pos; _currentRadius = radius; }
     void setColoringMode(bool value) { _globalColor = value; }
 
+    void drawNeighbourhoodRadius(bool on) { _drawNeighbourhoodRadius = on; update(); }
+    void setNeighbourhoodRadius(float radius) { _neighbourhoodRadius = radius; update(); }
+
     Bounds getBounds() const {
         return _dataBounds;
     }
@@ -174,4 +177,7 @@ private:
     QPoint                  _currentPoint;
     float                   _currentRadius;
     bool                    _globalColor = false;
+
+    bool                    _drawNeighbourhoodRadius = false;
+    float                   _neighbourhoodRadius = 10;
 };

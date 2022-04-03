@@ -3,7 +3,7 @@
 #include <ViewPlugin.h>
 
 #include "util/PixelSelectionTool.h"
-#include "Explanation/Explanation.h"
+#include "Explanation/ExplanationModel.h"
 #include "ExplanationWidget.h"
 
 #include "Common.h"
@@ -48,10 +48,13 @@ public:
     /** Get number of points in the position dataset */
     std::uint32_t getNumberOfPoints() const;
 
+    void colorPointsByRanking();
+
 protected slots:
     void neighbourhoodRadiusValueChanged(int value);
-    void colorByVariance();
-    void colorByValue();
+    void neighbourhoodRadiusSliderPressed();
+    void neighbourhoodRadiusSliderReleased();
+    void explanationMetricChanged();
 
 public:
     void createSubset(const bool& fromSourceData = false, const QString& name = "");
@@ -123,7 +126,7 @@ protected:
     hdps::gui::DropWidget*      _dropWidget;
     SettingsAction              _settingsAction;
 
-    Explanation                 _explanation;
+    ExplanationModel            _explanationModel;
     ExplanationWidget*          _explanationWidget;
 
     float _selectionRadius;

@@ -108,14 +108,14 @@ namespace
     }
 }
 
-void EuclideanMetric::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void EuclideanMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     computeCentroid(dataset);
     computeGlobalContribs(dataset);
     computeLocalContribs(dataset, neighbourhoodMatrix);
 }
 
-float EuclideanMetric::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
+float EuclideanMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
 {
     float sum = 0;
     for (int k = 0; k < dataset.cols(); k++)
@@ -125,7 +125,7 @@ float EuclideanMetric::computeDimensionRank(const Eigen::ArrayXXf& dataset, int 
     return (_localDistContribs(i, j) / _globalDistContribs[j]) / sum;
 }
 
-void EuclideanMetric::computeCentroid(const Eigen::ArrayXXf& dataset)
+void EuclideanMethod::computeCentroid(const Eigen::ArrayXXf& dataset)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
@@ -146,7 +146,7 @@ void EuclideanMetric::computeCentroid(const Eigen::ArrayXXf& dataset)
     }
 }
 
-void EuclideanMetric::computeGlobalContribs(const Eigen::ArrayXXf& dataset)
+void EuclideanMethod::computeGlobalContribs(const Eigen::ArrayXXf& dataset)
 {
     std::cout << "Precomputing global distance contributions.." << std::endl;
     int numDimensions = dataset.cols();
@@ -160,7 +160,7 @@ void EuclideanMetric::computeGlobalContribs(const Eigen::ArrayXXf& dataset)
     }
 }
 
-void EuclideanMetric::computeLocalContribs(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void EuclideanMethod::computeLocalContribs(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     std::cout << "Precomputing local distance contributions.." << std::endl;
 

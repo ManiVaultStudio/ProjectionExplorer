@@ -21,13 +21,17 @@ class Explanation
 public:
     enum class Metric
     {
+        NONE,
         EUCLIDEAN,
         VARIANCE,
         VALUE
     };
 
+    float getProjectionDiameter() { return _projectionDiameter; }
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
-    void updatePrecomputations(float neighbourhoodRadius);
+
+    void recomputeNeighbourhood(float neighbourhoodRadius);
+    void recomputeMetrics(Metric metric = Metric::VARIANCE);
 
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, std::vector<unsigned int>& selection, Metric metric = Metric::VARIANCE);
     void computeDimensionRanks(Eigen::ArrayXXf& dimRanks, Metric metric = Metric::VARIANCE);

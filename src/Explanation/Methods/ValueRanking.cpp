@@ -1,14 +1,15 @@
 #include "ValueRanking.h"
 
 #include <iostream>
+#include <chrono>
 
-void ValueRanking::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     precomputeGlobalValues(dataset);
     precomputeLocalValues(dataset, neighbourhoodMatrix);
 }
 
-float ValueRanking::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
+float ValueMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
 {
     float sum = 0;
     for (int k = 0; k < dataset.cols(); k++)
@@ -18,7 +19,7 @@ float ValueRanking::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, 
     return (_localValues(i, j) / _globalValues[j]) / sum;
 }
 
-void ValueRanking::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)
+void ValueMethod::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
@@ -39,12 +40,15 @@ void ValueRanking::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)
     }
 }
 
-void ValueRanking::precomputeLocalValues(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::precomputeLocalValues(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
+    auto start = std::chrono::high_resolution_clock::now();
+
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
 
     _localValues.resize(numPoints, numDimensions);
+#pragma omp parallel for
     for (int i = 0; i < numPoints; i++)
     {
         const std::vector<int>& neighbourhood = neighbourhoodMatrix[i];
@@ -64,4 +68,8 @@ void ValueRanking::precomputeLocalValues(const Eigen::ArrayXXf& dataset, std::ve
         if (i % 1000 == 0)
             std::cout << "Local var: " << i << std::endl;
     }
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+    std::cout << "Local Value Elapsed time: " << elapsed.count() << " s\n";
 }

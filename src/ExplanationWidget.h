@@ -2,12 +2,15 @@
 
 #include <PointData.h>
 
+#include "Explanation/ExplanationModel.h"
+
 #include <QWidget>
 #include <QLabel>
 #include <QPainter>
 #include <QColor>
 #include <QImage>
 #include <QSlider>
+#include <QComboBox>
 
 #include <Eigen/Eigen>
 
@@ -16,7 +19,7 @@
 class DataMetrics
 {
 public:
-    void compute(const hdps::Dataset<Points>& dataset, const std::vector<unsigned int>& selection, const std::vector<float>& minRanges, const std::vector<float>& maxRanges);
+    void compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataMatrix& dataRanges);
 
     std::vector<float> averageValues;
     std::vector<float> variances;
@@ -33,12 +36,16 @@ public:
         VALUE
     };
 
-    BarChart();
+    enum class SortingDirection
+    {
+        LOW_TO_HIGH,
+        HIGH_TO_LOW,
+    };
 
-    void setDataset(hdps::Dataset<Points> dataset);
-    void setRanking(Eigen::ArrayXXf& ranking, const std::vector<unsigned int>& selection);
+    BarChart(ExplanationModel& explanationModel);
+
+    void setRanking(DataMatrix& ranking, const std::vector<unsigned int>& selection);
     void computeOldMetrics(const std::vector<unsigned int>& oldSelection);
-    void setImportantDims(const std::vector<float>& importantDims);
 
     void showDifferentialValues(bool on) { _differentialRanking = on; }
 
@@ -51,25 +58,20 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
-    //QPainter painter;
-    hdps::Dataset<Points> _dataset;
+    ExplanationModel& _explanationModel;
+
     std::vector<float> _dimAggregation;
-    float _maxValue;
-    std::vector<float> _importantDims;
     std::vector<int> _sortIndices;
 
     DataMetrics _newMetrics;
     DataMetrics _oldMetrics;
 
-    std::vector<float> _minRanges;
-    std::vector<float> _maxRanges;
     std::vector<unsigned int> _selection;
 
-    bool _differentialRanking = false;
+    bool _differentialRanking;
 
-    SortingType _sortingType = SortingType::NONE;
-
-    std::vector<QColor> _colors;
+    SortingType _sortingType;
+    SortingDirection _sortingDirection;
 };
 
 class ImageViewWidget : public QWidget
@@ -90,24 +92,22 @@ class ExplanationWidget : public QWidget
 {
     Q_OBJECT
 public:
-    ExplanationWidget();
+    ExplanationWidget(ExplanationModel& explanationModel);
     ~ExplanationWidget();
 
     void update();
-    void setRanking(Eigen::ArrayXXf& ranking);
 
     BarChart& getBarchart() { return *_barChart; }
     ImageViewWidget& getImageWidget() { return *_imageViewWidget; }
     QSlider* getRadiusSlider() { return _radiusSlider; }
-    QPushButton* getVarianceColoringButton() { return _varianceColoringButton; }
-    QPushButton* getValueColoringButton() { return _valueColoringButton; }
+    QComboBox* getRankingComboBox() { return _rankingCombobox; }
 
 private:
     QLabel* _rankLabel;
     BarChart* _barChart;
     ImageViewWidget* _imageViewWidget;
-    QSlider* _radiusSlider;
 
-    QPushButton* _varianceColoringButton;
-    QPushButton* _valueColoringButton;
+    // UI Elements
+    QSlider* _radiusSlider;
+    QComboBox* _rankingCombobox;
 };
