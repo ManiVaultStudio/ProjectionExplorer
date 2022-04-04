@@ -91,8 +91,8 @@ ExplanationModel::ExplanationModel() :
     _explanationMetric(Explanation::Metric::VARIANCE)
 {
     // Initialize color palette
-    _palette.resize(23);
-    const char* kelly_colors[] = { "#31a09a", "#59a14f", "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#848482", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26", "#A13237" };
+    _palette.resize(20); // "#31a09a", "#59a14f", "#A13237"
+    const char* kelly_colors[] = { "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#59a14f", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26" };
     for (int i = 0; i < _palette.size(); i++)
     {
         _palette[i].setNamedColor(kelly_colors[i]);
@@ -142,6 +142,14 @@ void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> proje
         }
     }
 
+    // Create color mapping
+    _colorMapping.resize(_dataset.cols());
+    for (int i = 0; i < _colorMapping.size(); i++)
+    {
+        QColor color = (i < _palette.size()) ? _palette[i] : QColor(180, 180, 180);
+        _colorMapping[i] = color;
+    }
+
     _hasDataset = true;
 }
 
@@ -156,6 +164,54 @@ void ExplanationModel::recomputeMetrics()
 
     if (explanationMethod != nullptr)
         explanationMethod->recompute(_dataset, _neighbourhoodMatrix);
+}
+
+void ExplanationModel::recomputeColorMapping(DataMatrix& dimRanks)
+{
+    bool lowRankBest = currentMetric() == Explanation::Metric::VARIANCE ? true : false;
+
+    // Compute top ranked dimensions to assign colors to
+    std::vector<int> topCount(dimRanks.cols(), 0);
+
+    for (int i = 0; i < dimRanks.rows(); i++)
+    {
+        float topRank = lowRankBest ? std::numeric_limits<float>::max() : -std::numeric_limits<float>::max();
+
+        for (int j = 0; j < dimRanks.cols(); j++)
+        {
+            float rank = dimRanks(i, j);
+
+            if (lowRankBest) { if (rank < topRank) { topRank = rank; } }
+            else             { if (rank > topRank) { topRank = rank; } }
+        }
+
+        // Count every dimension that has the same rank
+        for (int j = 0; j < dimRanks.cols(); j++)
+        {
+            float rank = dimRanks(i, j);
+            if (lowRankBest) { if (rank <= topRank) topCount[j]++; }
+            else             { if (rank >= topRank) topCount[j]++; }
+        }
+    }
+    for (int i = 0; i < topCount.size(); i++)
+    {
+        std::cout << "Top count: " << i << " " << topCount[i] << std::endl;
+    }
+    std::vector<int> indices(topCount.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), [&](int a, int b) {return topCount[a] > topCount[b]; });
+
+    std::vector<QColor> newMapping(topCount.size());
+    for (int i = 0; i < newMapping.size(); i++)
+    {
+        newMapping[i] = QColor(180, 180, 180);
+    }
+    int numTopDimensions = std::min(_palette.size(), newMapping.size());
+    for (int i = 0; i < numTopDimensions; i++)
+    {
+        newMapping[indices[i]] = _palette[i];
+    }
+    _colorMapping = newMapping;
 }
 
 void ExplanationModel::setExplanationMetric(Explanation::Metric metric)

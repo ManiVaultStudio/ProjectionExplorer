@@ -25,11 +25,12 @@ public:
     const std::vector<QString>& getDataNames() { return _dimensionNames; }
 
     Explanation::Metric currentMetric() { return _explanationMetric; }
-    const std::vector<QColor>& getPalette() { return _palette; }
+    const std::vector<QColor>& getColorMapping() { return _colorMapping; }
 
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
     void recomputeNeighbourhood(float neighbourhoodRadius);
     void recomputeMetrics();
+    void recomputeColorMapping(DataMatrix& dimRanks);
 
     void setExplanationMetric(Explanation::Metric metric);
     void computeDimensionRanks(DataMatrix& dimRanks, std::vector<unsigned int>& selection);
@@ -59,6 +60,7 @@ private:
     std::vector<QString>    _dimensionNames;
 
     std::vector<QColor>     _palette;
+    std::vector<QColor>     _colorMapping;
 
     /** Largest extent of the projection */
     float                   _projectionDiameter;

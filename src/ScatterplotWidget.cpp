@@ -32,11 +32,12 @@ namespace
     }
 }
 
-ScatterplotWidget::ScatterplotWidget() :
+ScatterplotWidget::ScatterplotWidget(ExplanationModel& explanationModel) :
     _densityRenderer(DensityRenderer::RenderMode::DENSITY),
     _backgroundColor(1, 1, 1),
     _pointRenderer(),
-    _pixelSelectionTool(this)
+    _pixelSelectionTool(this),
+    _explanationModel(explanationModel)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);
@@ -475,7 +476,7 @@ void ScatterplotWidget::paintGL()
 
         // Draw coloring mode
         painter.setFont(QFont("Open Sans", 14, QFont::ExtraBold));
-        if (_globalColor)
+        if (_explanationModel.currentMetric() == Explanation::Metric::VALUE)
             painter.drawText(width() / 2 - 80, 40, "Color by Value");
         else
             painter.drawText(width() / 2 - 80, 40, "Color by Variance");
@@ -503,12 +504,16 @@ void ScatterplotWidget::paintGL()
         
         if (_drawNeighbourhoodRadius)
         {
-            pen.setColor(QColor(255, 0, 255, 255));
+            pen.setColor(QColor(255, 0, 0, 255));
+            painter.setPen(pen);
+            QBrush brush;
+            brush.setColor(QColor(255, 0, 0, 32));
+            brush.setStyle(Qt::DiagCrossPattern);
+            painter.setBrush(brush);
 
             int size = width() < height() ? width() : height();
             float radius = _neighbourhoodRadius * size * 0.9090f;
             painter.drawEllipse(width() / 2 - radius, height() / 2 - radius, radius * 2, radius * 2);
-            qDebug() << "Beep drawing " << _neighbourhoodRadius;
         }
 
         painter.end();

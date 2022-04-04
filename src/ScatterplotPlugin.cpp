@@ -40,7 +40,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _positionSourceDataset(),
     _positions(),
     _numPoints(0),
-    _scatterPlotWidget(new ScatterplotWidget()),
+    _scatterPlotWidget(new ScatterplotWidget(_explanationModel)),
     _explanationWidget(new ExplanationWidget(_explanationModel)),
     _dropWidget(nullptr),
     _settingsAction(this),
@@ -302,7 +302,7 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
 
 void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
 {
-    //_scatterPlotWidget->setNeighbourhoodRadius(value / 100.0f);
+    _scatterPlotWidget->setNeighbourhoodRadius(value / 100.0f);
     _explanationModel.recomputeNeighbourhood(value / 100.0f);
 
     colorPointsByRanking();
@@ -330,6 +330,12 @@ void ScatterplotPlugin::colorPointsByRanking()
     Eigen::ArrayXXf dimRanking;
     _explanationModel.computeDimensionRanks(dimRanking);
 
+    _explanationModel.recomputeColorMapping(dimRanking);
+
+    hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+    hdps::Dataset<Points> selection = sourceDataset->getSelection();
+    _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+
     std::vector<float> confidences = _explanationModel.computeConfidences(dimRanking);
 
     // Build vector of top ranked dimensions
@@ -349,7 +355,7 @@ void ScatterplotPlugin::colorPointsByRanking()
     }
 
     // Color points by dimension ranking
-    const std::vector<QColor>& palette = _explanationModel.getPalette();
+    const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping();
 
     std::vector<Vector3f> colorData(topRankedDims.size());
     for (int i = 0; i < topRankedDims.size(); i++)
@@ -357,13 +363,13 @@ void ScatterplotPlugin::colorPointsByRanking()
         int dim = topRankedDims[i];
         float confidence = confidences[i];
 
-        if (dim < palette.size())
+        if (dim < colorMapping.size())
         {
-            QColor color = palette[dim];
+            QColor color = colorMapping[dim];
             colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
         }
         else
-            colorData[i] = Vector3f(0.2f * confidence, 0.2f * confidence, 0.2f * confidence);
+            colorData[i] = Vector3f(1.0f * confidence, 0.2f * confidence, 0.2f * confidence);
     }
 
     _scatterPlotWidget->setColors(colorData);

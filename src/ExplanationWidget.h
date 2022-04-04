@@ -102,12 +102,16 @@ public:
     QSlider* getRadiusSlider() { return _radiusSlider; }
     QComboBox* getRankingComboBox() { return _rankingCombobox; }
 
+public slots:
+    void neighbourhoodRadiusValueChanged(int value);
+
 private:
     QLabel* _rankLabel;
     BarChart* _barChart;
     ImageViewWidget* _imageViewWidget;
 
     // UI Elements
+    QLabel* _radiusSliderValueLabel;
     QSlider* _radiusSlider;
     QComboBox* _rankingCombobox;
 };

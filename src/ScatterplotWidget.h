@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Explanation/ExplanationModel.h"
 #include "renderers/PointRenderer.h"
 #include "renderers/DensityRenderer.h"
 #include "util/PixelSelectionTool.h"
@@ -38,7 +39,7 @@ public:
     };
 
 public:
-    ScatterplotWidget();
+    ScatterplotWidget(ExplanationModel& explanationModel);
     ~ScatterplotWidget();
 
     /** Returns true when the widget was initialized and is ready to be used. */
@@ -171,6 +172,8 @@ private:
     QImage                  _colorMapImage;
     PixelSelectionTool      _pixelSelectionTool;
 
+    ExplanationModel&       _explanationModel;
+
     QPoint                  _oldSelectionPoint;
     float                   _oldSelectionRadius;
     bool                    _drawOldSelection;
@@ -179,5 +182,5 @@ private:
     bool                    _globalColor = false;
 
     bool                    _drawNeighbourhoodRadius = false;
-    float                   _neighbourhoodRadius = 10;
+    float                   _neighbourhoodRadius = 0.1f;
 };
