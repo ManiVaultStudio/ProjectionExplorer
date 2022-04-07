@@ -19,7 +19,7 @@
 class DataMetrics
 {
 public:
-    void compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataMatrix& dataRanges);
+    void compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats);
 
     std::vector<float> averageValues;
     std::vector<float> variances;

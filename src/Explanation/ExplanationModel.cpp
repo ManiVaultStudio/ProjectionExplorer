@@ -40,25 +40,50 @@ namespace
         return diameter;
     }
 
-    void computeDatasetRanges(const DataMatrix& dataset, DataMatrix& dataRanges)
+    void computeDatasetStats(const DataMatrix& dataset, DataStatistics& dataStats)
     {
-        // Store dimension minimums in row 0 and maximums in row 1
-        dataRanges.resize(2, dataset.cols());
-        dataRanges.row(0).setConstant(std::numeric_limits<float>::max());
-        dataRanges.row(1).setConstant(-std::numeric_limits<float>::max());
+        int numPoints = dataset.rows();
+        int numDimensions = dataset.cols();
 
-        for (int j = 0; j < dataset.cols(); j++)
+        dataStats.means.clear();
+        dataStats.variances.clear();
+        dataStats.minRange.clear();
+        dataStats.maxRange.clear();
+
+        dataStats.means.resize(numDimensions);
+        dataStats.variances.resize(numDimensions);
+        dataStats.minRange.resize(numDimensions, std::numeric_limits<float>::max());
+        dataStats.maxRange.resize(numDimensions, -std::numeric_limits<float>::max());
+
+        for (int j = 0; j < numDimensions; j++)
         {
-            for (int i = 0; i < dataset.rows(); i++)
+            // Compute mean
+            float mean = 0;
+            for (int i = 0; i < numPoints; i++)
             {
                 float value = dataset(i, j);
 
-                if (value < dataRanges(0, j)) dataRanges(0, j) = value;
-                if (value > dataRanges(1, j)) dataRanges(1, j) = value;
+                if (value < dataStats.minRange[j]) dataStats.minRange[j] = value;
+                if (value > dataStats.maxRange[j]) dataStats.maxRange[j] = value;
+                mean += value;
             }
+            mean /= numPoints;
+            dataStats.means[j] = mean;
+
+            // Compute variance
+            float variance = 0;
+            for (int i = 0; i < numPoints; i++)
+            {
+                float x = dataset(i, j) - mean;
+                variance += x * x;
+            }
+            variance /= numPoints;
+            dataStats.variances[j] = variance;
         }
-        const Eigen::IOFormat fmt(2, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
-        std::cout << dataRanges.row(0).transpose().format(fmt) << "\t|" << dataRanges.row(1).transpose().format(fmt) << std::endl;
+        for (int j = 0; j < numDimensions; j++)
+        {
+            std::cout << j << ": " << "Means : " << dataStats.means[j] << " Variances : " << dataStats.variances[j] << " Min range : " << dataStats.minRange[j] << " Max range : " << dataStats.maxRange[j] << std::endl;
+        }
     }
 
     void findNeighbourhood(const Eigen::ArrayXXf& projection, int centerId, float radius, std::vector<int>& neighbourhood)

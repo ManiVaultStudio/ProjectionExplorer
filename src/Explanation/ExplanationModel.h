@@ -13,6 +13,15 @@
 
 using namespace hdps;
 
+class DataStatistics
+{
+public:
+    std::vector<float> means;
+    std::vector<float> variances;
+    std::vector<float> minRange;
+    std::vector<float> maxRange;
+};
+
 class ExplanationModel : public QObject
 {
     Q_OBJECT
@@ -21,7 +30,7 @@ public:
 
     bool hasDataset() { return _hasDataset; }
     const DataMatrix& getDataset() { return _dataset; }
-    const DataMatrix& getDataRanges() { return _dataRanges; }
+    const DataStatistics& getDataStatistics() { return _dataStats; }
     const std::vector<QString>& getDataNames() { return _dimensionNames; }
 
     Explanation::Metric currentMetric() { return _explanationMetric; }
@@ -56,7 +65,7 @@ private:
     DataMatrix              _dataset;
     DataMatrix              _normDataset;
     DataMatrix              _projection;
-    DataMatrix              _dataRanges;
+    DataStatistics          _dataStats;
     std::vector<QString>    _dimensionNames;
 
     std::vector<QColor>     _palette;

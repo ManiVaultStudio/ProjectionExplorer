@@ -13,7 +13,7 @@
 #define RANGE_WIDTH 200
 #define TOP_MARGIN 30
 
-void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataMatrix& dataRanges)
+void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats)
 {
     int numDimensions = dataset.cols();
 
@@ -50,9 +50,10 @@ void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned 
     // Normalization
     for (int j = 0; j < numDimensions; j++)
     {
-        float normalizedValue = (averageValues[j] - dataRanges(0, j)) / (dataRanges(1, j) - dataRanges(0, j));
+        float range = dataStats.maxRange[j] - dataStats.minRange[j];
+        float normalizedValue = (averageValues[j] - dataStats.minRange[j]) / range;
         averageValues[j] = normalizedValue;
-        float normalizedStddev = variances[j] / (dataRanges(1, j) - dataRanges(0, j));
+        float normalizedStddev = variances[j] / range;
         variances[j] = normalizedStddev;
 
         //std::cout << "Dim: " << j << " Min ranges: " << minRanges[j] << " Max ranges: " << maxRanges[j] << std::endl;
@@ -100,7 +101,7 @@ void BarChart::setRanking(DataMatrix& ranking, const std::vector<unsigned int>& 
     _dimAggregation = dimAggregation;
 
     // Compute metrics on current selection
-    _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataRanges());
+    _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataStatistics());
 
     // Compute sorting
     _sortIndices.resize(numDimensions);
@@ -123,7 +124,7 @@ void BarChart::setRanking(DataMatrix& ranking, const std::vector<unsigned int>& 
 
 void BarChart::computeOldMetrics(const std::vector<unsigned int>& oldSelection)
 {
-    _oldMetrics.compute(_explanationModel.getDataset(), oldSelection, _explanationModel.getDataRanges());
+    _oldMetrics.compute(_explanationModel.getDataset(), oldSelection, _explanationModel.getDataStatistics());
 }
 
 void BarChart::sortByDefault()
@@ -147,7 +148,7 @@ void BarChart::paintEvent(QPaintEvent* event)
         return;
 
     const DataMatrix& dataset = _explanationModel.getDataset();
-    const DataMatrix& dataRanges = _explanationModel.getDataRanges();
+    const DataStatistics& dataStats = _explanationModel.getDataStatistics();
 
     int numDimensions = dataset.cols();
 
@@ -181,8 +182,8 @@ void BarChart::paintEvent(QPaintEvent* event)
                     int sortIndexA = _sortIndices[j];
                     int sortIndexB = _sortIndices[j + 1];
 
-                    float normValueA = (dataset(si, sortIndexA) - dataRanges(0, sortIndexA)) / (dataRanges(1, sortIndexA) - dataRanges(0, sortIndexA));
-                    float normValueB = (dataset(si, sortIndexB) - dataRanges(0, sortIndexB)) / (dataRanges(1, sortIndexB) - dataRanges(0, sortIndexB));
+                    float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / (dataStats.maxRange[sortIndexA] - dataStats.minRange[sortIndexA]);
+                    float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / (dataStats.maxRange[sortIndexB] - dataStats.minRange[sortIndexB]);
 
                     painter.drawLine(RANGE_OFFSET + normValueA * RANGE_WIDTH, TOP_MARGIN + 16 * j + 8, RANGE_OFFSET + normValueB * RANGE_WIDTH, TOP_MARGIN + 16 * (j + 1) + 8);
                 }
