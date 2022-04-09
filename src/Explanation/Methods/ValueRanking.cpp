@@ -5,6 +5,30 @@
 
 void ValueMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
+    int numPoints = dataset.rows();
+    int numDimensions = dataset.cols();
+
+    _dataRanges.clear();
+    _dataRanges.resize(numDimensions);
+    std::vector<float> minRanges(numDimensions, std::numeric_limits<float>::max());
+    std::vector<float> maxRanges(numDimensions, -std::numeric_limits<float>::max());
+
+    for (int j = 0; j < numDimensions; j++)
+    {
+        // Compute mean
+        float mean = 0;
+        for (int i = 0; i < numPoints; i++)
+        {
+            float value = dataset(i, j);
+
+            if (value < minRanges[j]) minRanges[j] = value;
+            if (value > maxRanges[j]) maxRanges[j] = value;
+            mean += value;
+        }
+        mean /= numPoints;
+        _dataRanges[j] = maxRanges[j] - minRanges[j];
+    }
+
     precomputeGlobalValues(dataset);
     precomputeLocalValues(dataset, neighbourhoodMatrix);
 }
@@ -14,9 +38,9 @@ float ValueMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, i
     float sum = 0;
     for (int k = 0; k < dataset.cols(); k++)
     {
-        sum += _localValues(i, k) / _globalValues[k];
+        sum += abs((_localValues(i, k) - _globalValues[k]) / _dataRanges[k]); //_localValues(i, k) / _globalValues[k];
     }
-    return (_localValues(i, j) / _globalValues[j]) / sum;
+    return ((_localValues(i, j) - _globalValues[j]) / _dataRanges[j]) / sum;
 }
 
 void ValueMethod::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)

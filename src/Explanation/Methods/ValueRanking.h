@@ -15,4 +15,6 @@ private:
     std::vector<float> _globalValues;
 
     DataMatrix _localValues;
+
+    std::vector<float> _dataRanges;
 };
