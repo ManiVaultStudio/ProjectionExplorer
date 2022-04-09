@@ -170,6 +170,8 @@ void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> proje
 void ExplanationModel::recomputeNeighbourhood(float neighbourhoodRadius)
 {
     computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
+
+    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.25f);
 }
 
 void ExplanationModel::recomputeMetrics()
@@ -253,11 +255,20 @@ std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRan
     for (int i = 0; i < numPoints; i++)
     {
         float minRank = std::numeric_limits<float>::max();
+        float maxRank = -std::numeric_limits<float>::max();
         int topRank = 0;
         for (int j = 0; j < numDimensions; j++)
         {
             float rank = dimRanks(i, j);
-            if (rank < minRank) { minRank = rank; topRank = j; }
+
+            if (currentMetric() == Explanation::Metric::VARIANCE)
+            {
+                if (rank < minRank) { minRank = rank; topRank = j; }
+            }
+            else if (currentMetric() == Explanation::Metric::VALUE)
+            {
+                if (rank > maxRank) { maxRank = rank; topRank = j; }
+            }
         }
         topDimensions[i] = topRank;
     }
@@ -266,29 +277,42 @@ std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRan
     std::vector<float> confidences(numPoints);
     for (int i = 0; i < numPoints; i++)
     {
-        const std::vector<int>& neighbourhood = _neighbourhoodMatrix[i];
+        const std::vector<int>& neighbourhood = _confidenceNeighbourhoodMatrix[i];
 
-        // Add top-1 rankings over all neighbouring points in vector
-        std::vector<float> topRankings(numDimensions, 0);
+        //// Add top-1 rankings over all neighbouring points in vector
+        //std::vector<float> topRankings(numDimensions, 0);
+        //for (const int ni : neighbourhood)
+        //{
+        //    int topDim = topDimensions[ni];
+
+        //    topRankings[topDim] += abs(dimRanks(ni, topDim));
+        //}
+
+        //// Compute total ranking
+        //int topDim = topDimensions[i];
+        //float totalRank = 0;
+        //for (const int ni : neighbourhood)
+        //    totalRank += abs(dimRanks(ni, topDim));
+
+        //// Divide all rankings by total rank values to get confidences
+        //float topRanking = topRankings[topDim];
+
+        //confidences[i] = topRanking / totalRank;
+
+        int topDim = topDimensions[i];
+
+        int count = 0;
         for (const int ni : neighbourhood)
         {
-            int topDim = topDimensions[ni];
+            int nTopDim = topDimensions[ni];
 
-            topRankings[topDim] += dimRanks(ni, topDim);
+            if (nTopDim == topDim) count++;
         }
 
-        // Compute total ranking
-        int topDim = topDimensions[i];
-        float totalRank = 0;
-        for (const int ni : neighbourhood)
-            totalRank += dimRanks(ni, topDim);
+        confidences[i] = ((float)count) / neighbourhood.size();
 
-        // Divide all rankings by total rank values to get confidences
-        float topRanking = topRankings[topDim];
-
-        confidences[i] = topRanking / totalRank;
-
-        if (totalRank == 0)
+        //if (totalRank == 0)
+        if (neighbourhood.size() == 0)
             confidences[i] = 0;
     }
 

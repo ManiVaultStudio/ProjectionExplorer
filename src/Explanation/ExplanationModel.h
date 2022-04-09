@@ -79,6 +79,8 @@ private:
     /** Matrix of neighbourhood indices for every point in the projection */
     NeighbourhoodMatrix     _neighbourhoodMatrix;
 
+    NeighbourhoodMatrix     _confidenceNeighbourhoodMatrix;
+
     // Explanation metrics
     /** Enum of which method is currently selected */
     Explanation::Metric     _explanationMetric;
