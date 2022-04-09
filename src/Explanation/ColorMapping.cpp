@@ -31,9 +31,16 @@ void ColorMapping::recreate(const DataMatrix& dataset)
 
 void computeNewColorAssignment(const std::vector<int> oldMapping, const std::vector<int>& topDims, std::vector<int>& newMapping)
 {
-    std::unordered_set<int> topDimSet(topDims.begin(), topDims.end());
-
     int size = std::min(topDims.size(), oldMapping.size());
+
+    // Only consider top-K colors (K = min(size of palette, numDims)
+    std::vector<int> kTopDims(size);
+    for (int i = 0; i < size; i++)
+    {
+        kTopDims[i] = topDims[i];
+    }
+
+    std::unordered_set<int> topDimSet(kTopDims.begin(), kTopDims.end());
 
     std::vector<bool> dimsSet(size, false);
     for (int i = 0; i < size; i++)
@@ -49,7 +56,7 @@ void computeNewColorAssignment(const std::vector<int> oldMapping, const std::vec
     {
         if (!dimsSet[i])
         {
-            newMapping[i] = *topDims.begin();
+            newMapping[i] = *topDimSet.begin();
             topDimSet.erase(topDimSet.begin());
         }
     }
