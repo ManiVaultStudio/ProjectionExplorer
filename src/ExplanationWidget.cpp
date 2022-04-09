@@ -365,7 +365,7 @@ ExplanationWidget::ExplanationWidget(ExplanationModel& explanationModel)
     //layout->addWidget(varianceSortButton);
     //layout->addWidget(valueSortButton);
 
-    layout->addWidget(_rankingCombobox);
+    //layout->addWidget(_rankingCombobox);
     //layout->addStretch();
 
     // Neighbourhood slider UI
