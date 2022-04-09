@@ -21,7 +21,47 @@ float VarianceMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i
 
 void VarianceMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
 {
-    
+    int numDimensions = dataset.cols();
+
+    // Compute mean over selection
+    std::vector<float> localMeans(numDimensions, 0);
+    for (int j = 0; j < numDimensions; j++)
+    {
+        for (int i = 0; i < selection.size(); i++)
+        {
+            int si = selection[i];
+
+            localMeans[j] += dataset(si, j);
+        }
+
+        localMeans[j] /= selection.size();
+    }
+
+    // Compute variances
+    std::vector<float> localVariances(numDimensions, 0);
+    localVariances.resize(numDimensions, 0);
+    for (int j = 0; j < numDimensions; j++)
+    {
+        for (int i = 0; i < selection.size(); i++)
+        {
+            int si = selection[i];
+            float x = dataset(si, j) - localMeans[j];
+            localVariances[j] += x * x;
+        }
+        localVariances[j] /= selection.size();
+        //variances[j] = sqrt(variances[j]);
+    }
+
+    // Compute ranking
+    float sum = 0;
+    for (int k = 0; k < numDimensions; k++)
+    {
+        sum += localVariances[k] / _globalVariances[k];
+    }
+    for (int j = 0; j < numDimensions; j++)
+    {
+        dimRanking[j] = (localVariances[j] / _globalVariances[j]) / sum;
+    }
 }
 
 void VarianceMethod::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
