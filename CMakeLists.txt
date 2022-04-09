@@ -29,6 +29,8 @@ set(PLUGIN
 set(EXPLANATION
     src/Explanation/ExplanationModel.h
     src/Explanation/ExplanationModel.cpp
+    src/Explanation/ColorMapping.h
+    src/Explanation/ColorMapping.cpp
     #src/Explanation/Explanation.h
     #src/Explanation/Explanation.cpp
     src/Explanation/Methods/ExplanationMethod.h

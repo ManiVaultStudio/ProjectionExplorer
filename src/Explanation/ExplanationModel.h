@@ -6,6 +6,7 @@
 #include "PointData.h"
 
 #include "Methods/ExplanationMethod.h"
+#include "ColorMapping.h"
 
 #include "Methods/SilvaEuclidean.h"
 #include "Methods/SilvaVariance.h"
@@ -34,7 +35,7 @@ public:
     const std::vector<QString>& getDataNames() { return _dimensionNames; }
 
     Explanation::Metric currentMetric() { return _explanationMetric; }
-    const std::vector<QColor>& getColorMapping() { return _colorMapping; }
+    const std::vector<QColor>& getColorMapping() { return _colorMapping.getColors(); }
 
     void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
     void recomputeNeighbourhood(float neighbourhoodRadius);
@@ -68,8 +69,7 @@ private:
     DataStatistics          _dataStats;
     std::vector<QString>    _dimensionNames;
 
-    std::vector<QColor>     _palette;
-    std::vector<QColor>     _colorMapping;
+    ColorMapping            _colorMapping;
 
     /** Largest extent of the projection */
     float                   _projectionDiameter;
