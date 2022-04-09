@@ -275,6 +275,20 @@ void BarChart::paintEvent(QPaintEvent* event)
                 painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 14 + 16 * i);
                 painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 14 + 16 * i);
                 //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, 2 * _newMetrics.variances[sortIndex] * RANGE_WIDTH, 16);
+
+                // Draw global mean
+                float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / (dataStats.maxRange[sortIndex] - dataStats.minRange[sortIndex]);
+                painter.setPen(QColor(180, 180, 180, 255));
+                painter.drawLine(RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i, RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 16);
+
+                int oldMeanX = RANGE_OFFSET + globalMean * RANGE_WIDTH;
+                int newMeanX = RANGE_OFFSET + mean * RANGE_WIDTH;
+
+                QColor diffColor = newMeanX - oldMeanX >= 0 ? QColor(0, 255, 0, 128) : QColor(255, 0, 0, 128);
+                painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i, newMeanX - oldMeanX, 12, diffColor);
+
+                // Draw global variance
+
             }
             else
             {
