@@ -125,6 +125,11 @@ float EuclideanMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int 
     return (_localDistContribs(i, j) / _globalDistContribs[j]) / sum;
 }
 
+void EuclideanMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
+{
+
+}
+
 void EuclideanMethod::computeCentroid(const Eigen::ArrayXXf& dataset)
 {
     int numPoints = dataset.rows();

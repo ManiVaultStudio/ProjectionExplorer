@@ -122,6 +122,44 @@ void BarChart::setRanking(DataMatrix& ranking, const std::vector<unsigned int>& 
     //else if (_sortingType == SortingType::NONE) {}
 }
 
+void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vector<unsigned int>& selection)
+{
+    _selection = selection;
+
+    if (selection.size() == 0)
+    {
+        _dimAggregation.clear();
+        return;
+    }
+
+    int numDimensions = dimRanking.size();
+
+    // Print rankings
+    for (int j = 0; j < numDimensions; j++)
+    {
+        std::cout << "Dim selection rank 1: " << dimRanking[j];
+    }
+    std::cout << std::endl;
+
+    _dimAggregation = dimRanking;
+
+    // Compute metrics on current selection
+    _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataStatistics());
+
+    // Compute sorting
+    _sortIndices.resize(numDimensions);
+    std::iota(_sortIndices.begin(), _sortIndices.end(), 0);
+
+    switch (_explanationModel.currentMetric())
+    {
+    case Explanation::Metric::VARIANCE:
+        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return dimRanking[i] < dimRanking[j]; }); break;
+    case Explanation::Metric::VALUE:
+        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return dimRanking[i] > dimRanking[j]; }); break;
+    default: break;
+    }
+}
+
 void BarChart::computeOldMetrics(const std::vector<unsigned int>& oldSelection)
 {
     _oldMetrics.compute(_explanationModel.getDataset(), oldSelection, _explanationModel.getDataStatistics());

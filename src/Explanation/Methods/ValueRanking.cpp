@@ -3,7 +3,7 @@
 #include <iostream>
 #include <chrono>
 
-void ValueMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::recompute(const DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
@@ -33,7 +33,7 @@ void ValueMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vec
     precomputeLocalValues(dataset, neighbourhoodMatrix);
 }
 
-float ValueMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
+float ValueMethod::computeDimensionRank(const DataMatrix& dataset, int i, int j)
 {
     float sum = 0;
     for (int k = 0; k < dataset.cols(); k++)
@@ -43,7 +43,37 @@ float ValueMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, i
     return ((_localValues(i, j) - _globalValues[j]) / _dataRanges[j]) / sum;
 }
 
-void ValueMethod::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)
+void ValueMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
+{
+    int numDimensions = dataset.cols();
+
+    // Compute mean over selection
+    std::vector<float> localMeans(numDimensions, 0);
+    for (int j = 0; j < numDimensions; j++)
+    {
+        for (int i = 0; i < selection.size(); i++)
+        {
+            int si = selection[i];
+
+            localMeans[j] += dataset(si, j);
+        }
+
+        localMeans[j] /= selection.size();
+    }
+
+    // Compute ranking
+    float sum = 0;
+    for (int k = 0; k < numDimensions; k++)
+    {
+        sum += abs((localMeans[k] - _globalValues[k]) / _dataRanges[k]);
+    }
+    for (int j = 0; j < numDimensions; j++)
+    {
+        dimRanking[j] = ((localMeans[j] - _globalValues[j]) / _dataRanges[j]) / sum;
+    }
+}
+
+void ValueMethod::precomputeGlobalValues(const DataMatrix& dataset)
 {
     int numPoints = dataset.rows();
     int numDimensions = dataset.cols();
@@ -64,7 +94,7 @@ void ValueMethod::precomputeGlobalValues(const Eigen::ArrayXXf& dataset)
     }
 }
 
-void ValueMethod::precomputeLocalValues(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::precomputeLocalValues(const DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     auto start = std::chrono::high_resolution_clock::now();
 

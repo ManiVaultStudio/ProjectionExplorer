@@ -19,6 +19,11 @@ float VarianceMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i
     return (_localVariances(i, j) / _globalVariances[j]) / sum;
 }
 
+void VarianceMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
+{
+    
+}
+
 void VarianceMethod::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
 {
     auto start = std::chrono::high_resolution_clock::now();

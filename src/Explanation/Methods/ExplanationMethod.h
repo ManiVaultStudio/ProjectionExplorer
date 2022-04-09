@@ -23,5 +23,6 @@ namespace Explanation
     public:
         virtual void  recompute(const DataMatrix& dataset, NeighbourhoodMatrix& neighbourhoodMatrix) = 0;
         virtual float computeDimensionRank(const DataMatrix& dataset, int i, int j) = 0;
+        virtual void computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking) = 0;
     };
 }

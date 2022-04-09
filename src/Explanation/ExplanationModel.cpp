@@ -192,8 +192,42 @@ void ExplanationModel::setExplanationMetric(Explanation::Metric metric)
     emit explanationMetricChanged(metric);
 }
 
-void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking, std::vector<unsigned int>& selection)
+//void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking, std::vector<unsigned int>& selection)
+//{
+//    Explanation::Method* explanationMethod = getCurrentExplanationMethod();
+//
+//    dimRanking.resize(selection.size(), _dataset.cols());
+//    for (int i = 0; i < selection.size(); i++)
+//    {
+//        int si = selection[i];
+//
+//        for (int j = 0; j < _dataset.cols(); j++)
+//        {
+//            dimRanking(i, j) = explanationMethod->computeDimensionRank(_dataset, si, j);
+//        }
+//    }
+//}
+//
+//void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanks)
+//{
+//    std::vector<unsigned int> selection(_dataset.rows());
+//    std::iota(selection.begin(), selection.end(), 0);
+//
+//    computeDimensionRanks(dimRanks, selection);
+//}
+
+void ExplanationModel::computeDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection)
 {
+    Explanation::Method* explanationMethod = getCurrentExplanationMethod();
+
+    explanationMethod->computeDimensionRank(_dataset, selection, dimRanking);
+}
+
+void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking)
+{
+    std::vector<unsigned int> selection(_dataset.rows());
+    std::iota(selection.begin(), selection.end(), 0);
+
     Explanation::Method* explanationMethod = getCurrentExplanationMethod();
 
     dimRanking.resize(selection.size(), _dataset.cols());
@@ -206,14 +240,6 @@ void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking, std::vector
             dimRanking(i, j) = explanationMethod->computeDimensionRank(_dataset, si, j);
         }
     }
-}
-
-void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanks)
-{
-    std::vector<unsigned int> selection(_dataset.rows());
-    std::iota(selection.begin(), selection.end(), 0);
-
-    computeDimensionRanks(dimRanks, selection);
 }
 
 std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRanks)

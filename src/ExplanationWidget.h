@@ -45,6 +45,7 @@ public:
     BarChart(ExplanationModel& explanationModel);
 
     void setRanking(DataMatrix& ranking, const std::vector<unsigned int>& selection);
+    void setRanking(const std::vector<float>& dimRanking, const std::vector<unsigned int>& selection);
     void computeOldMetrics(const std::vector<unsigned int>& oldSelection);
 
     void showDifferentialValues(bool on) { _differentialRanking = on; }

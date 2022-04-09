@@ -270,13 +270,18 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
                 hdps::Dataset<Points> selection = sourceDataset->getSelection();
 
-                Eigen::ArrayXXf dimRanking;
-                _explanationModel.computeDimensionRanks(dimRanking, selection->indices);
+                std::vector<float> dimRanking(sourceDataset->getNumDimensions());
 
+                if (selection->indices.size() > 0)
+                {
+                    _explanationModel.computeDimensionRanks(dimRanking, selection->indices);
+                }
+
+                _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
                 //std::vector<float> importantDims;
                 //QImage image = _explanation.computeEigenImage(selection->indices, importantDims);
 
-                _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+                //_explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
                 //_explanationWidget->getImageWidget().setImage(image);
 
                 //image.save(QString("eigImage%1.png").arg(0));

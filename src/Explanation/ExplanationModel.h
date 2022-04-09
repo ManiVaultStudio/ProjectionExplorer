@@ -43,8 +43,10 @@ public:
     void recomputeColorMapping(DataMatrix& dimRanks);
 
     void setExplanationMetric(Explanation::Metric metric);
-    void computeDimensionRanks(DataMatrix& dimRanks, std::vector<unsigned int>& selection);
-    void computeDimensionRanks(DataMatrix& dimRanks);
+    //void computeDimensionRanks(DataMatrix& dimRanks, std::vector<unsigned int>& selection);
+    //void computeDimensionRanks(DataMatrix& dimRanks);
+    void computeDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection);
+    void computeDimensionRanks(DataMatrix& dimRanking);
 
     std::vector<float> computeConfidences(const DataMatrix& dimRanks);
 
