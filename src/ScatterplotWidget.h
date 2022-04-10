@@ -91,7 +91,7 @@ public:
 
     void drawOldSelection(bool drawOldSelection) { _drawOldSelection = drawOldSelection; }
     void setOldPosition(QPoint pos, float radius) { _oldSelectionPoint = pos; _oldSelectionRadius = radius; }
-    void setCurrentPosition(QPoint pos, float radius) { _currentPoint = pos; _currentRadius = radius; }
+    void setCurrentPosition(QPoint pos, float radius) { _currentPoint = pos; _currentRadius = radius; update(); }
     void setColoringMode(bool value) { _globalColor = value; }
 
     void drawNeighbourhoodRadius(bool on) { _drawNeighbourhoodRadius = on; update(); }

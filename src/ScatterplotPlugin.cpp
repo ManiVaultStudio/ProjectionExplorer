@@ -700,6 +700,43 @@ void ScatterplotPlugin::setYDimension(const std::int32_t& dimensionIndex)
     updateData();
 }
 
+void ScatterplotPlugin::computeLensSelection(std::vector<std::uint32_t>& targetSelectionIndices)
+{
+    // Get smart pointer to the position selection dataset
+    auto selectionSet = _positionDataset->getSelection<Points>();
+
+    // Reserve space for the indices
+    targetSelectionIndices.reserve(_positionDataset->getNumPoints());
+
+    // Mapping from local to global indices
+    std::vector<std::uint32_t> localGlobalIndices;
+
+    // Get global indices from the position dataset
+    _positionDataset->getGlobalIndices(localGlobalIndices);
+
+    const auto dataBounds = _scatterPlotWidget->getBounds();
+    const auto w = _scatterPlotWidget->width();
+    const auto h = _scatterPlotWidget->height();
+    const auto size = w < h ? w : h;
+
+    // Loop over all points and establish whether they are selected or not
+    for (std::uint32_t i = 0; i < _positions.size(); i++) {
+        const auto uvNormalized = QPointF((_positions[i].x - dataBounds.getLeft()) / dataBounds.getWidth(), (dataBounds.getTop() - _positions[i].y) / dataBounds.getHeight());
+        const auto uvOffset = QPoint((_scatterPlotWidget->width() - size) / 2.0f, (_scatterPlotWidget->height() - size) / 2.0f);
+        const auto uv = uvOffset + QPoint(uvNormalized.x() * size, uvNormalized.y() * size);
+
+        //// Add point if the corresponding pixel selection is on
+        //if (selectionAreaImage.pixelColor(uv).alpha() > 0)
+
+        //QPoint mouseUV((2 * mouseEvent->x() / _scatterPlotWidget->width()) - 1, (2 * mouseEvent->y() / _scatterPlotWidget->height()) - 1);
+        QPoint diff = QPoint(_lastMousePos.x(), _lastMousePos.y()) - uv;
+        //float len = sqrt(pow(diff.x(), 2) + pow(diff.y(), 2));
+        //qDebug() << mouseUV << uv << len;
+        if (sqrt(diff.x() * diff.x() + diff.y() * diff.y()) < _selectionRadius)
+            targetSelectionIndices.push_back(localGlobalIndices[i]);
+    }
+}
+
 bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 {
     auto shouldPaint = false;
@@ -765,6 +802,10 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 
         qDebug() << "Mouse button press";
 
+        _mousePressed = true;
+
+        break;
+
         //_mouseButtons = mouseEvent->buttons();
 
         //switch (_type)
@@ -794,12 +835,17 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     {
         auto mouseEvent = static_cast<QMouseEvent*>(event);
 
+        _mousePressed = false;
+
         break;
     }
 
     case QEvent::MouseMove:
     {
         auto mouseEvent = static_cast<QMouseEvent*>(event);
+
+        if (!_mousePressed)
+            break;
 
         _lastMousePos = QPoint(mouseEvent->x(), mouseEvent->y());
 
@@ -808,42 +854,9 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         if (!_positionDataset.isValid())
             return QObject::eventFilter(target, event);
 
-        // Get smart pointer to the position selection dataset
-        auto selectionSet = _positionDataset->getSelection<Points>();
-
         // Create vector for target selection indices
         std::vector<std::uint32_t> targetSelectionIndices;
-
-        // Reserve space for the indices
-        targetSelectionIndices.reserve(_positionDataset->getNumPoints());
-
-        // Mapping from local to global indices
-        std::vector<std::uint32_t> localGlobalIndices;
-
-        // Get global indices from the position dataset
-        _positionDataset->getGlobalIndices(localGlobalIndices);
-
-        const auto dataBounds = _scatterPlotWidget->getBounds();
-        const auto w = _scatterPlotWidget->width();
-        const auto h = _scatterPlotWidget->height();
-        const auto size = w < h ? w : h;
-
-        // Loop over all points and establish whether they are selected or not
-        for (std::uint32_t i = 0; i < _positions.size(); i++) {
-            const auto uvNormalized = QPointF((_positions[i].x - dataBounds.getLeft()) / dataBounds.getWidth(), (dataBounds.getTop() - _positions[i].y) / dataBounds.getHeight());
-            const auto uvOffset = QPoint((_scatterPlotWidget->width() - size) / 2.0f, (_scatterPlotWidget->height() - size) / 2.0f);
-            const auto uv = uvOffset + QPoint(uvNormalized.x() * size, uvNormalized.y() * size);
-
-            //// Add point if the corresponding pixel selection is on
-            //if (selectionAreaImage.pixelColor(uv).alpha() > 0)
-
-            //QPoint mouseUV((2 * mouseEvent->x() / _scatterPlotWidget->width()) - 1, (2 * mouseEvent->y() / _scatterPlotWidget->height()) - 1);
-            QPoint diff = QPoint(mouseEvent->x(), mouseEvent->y()) - uv;
-            //float len = sqrt(pow(diff.x(), 2) + pow(diff.y(), 2));
-            //qDebug() << mouseUV << uv << len;
-            if (sqrt(diff.x() * diff.x() + diff.y() * diff.y()) < _selectionRadius)
-                targetSelectionIndices.push_back(localGlobalIndices[i]);
-        }
+        computeLensSelection(targetSelectionIndices);
 
         // Apply the selection indices
         _positionDataset->setSelectionIndices(targetSelectionIndices);
@@ -862,6 +875,23 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 
         _selectionRadius += wheelEvent->angleDelta().y() > 0 ? 2 : -2;
         if (_selectionRadius < 2) _selectionRadius = 2;
+
+        _scatterPlotWidget->setCurrentPosition(_lastMousePos, _selectionRadius);
+
+        if (!_positionDataset.isValid())
+            return QObject::eventFilter(target, event);
+
+        // Create vector for target selection indices
+        std::vector<std::uint32_t> targetSelectionIndices;
+        computeLensSelection(targetSelectionIndices);
+
+        // Apply the selection indices
+        _positionDataset->setSelectionIndices(targetSelectionIndices);
+
+        // Notify others that the selection changed
+        _core->notifyDataSelectionChanged(_positionDataset);
+
+        _explanationWidget->update();
 
         break;
     }

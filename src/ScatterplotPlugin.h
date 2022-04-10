@@ -110,9 +110,9 @@ private:
     void updateData();
     void calculatePositions(const Points& points);
     void updateSelection();
+    void computeLensSelection(std::vector<std::uint32_t>& targetSelectionIndices);
 
     bool eventFilter(QObject* target, QEvent* event);
-    //void selectPoints
 
 private:
     Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
@@ -135,6 +135,8 @@ protected:
     std::vector<unsigned int>   _lockedSelection;
 
     QPoint _lastMousePos;
+
+    bool _mousePressed = false;
 };
 
 // =============================================================================
