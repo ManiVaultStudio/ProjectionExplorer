@@ -11,6 +11,7 @@
 #include <QImage>
 #include <QSlider>
 #include <QComboBox>
+#include <QPoint>
 
 #include <Eigen/Eigen>
 
@@ -57,6 +58,7 @@ public slots:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+    bool eventFilter(QObject* target, QEvent* event);
 
 private:
     ExplanationModel& _explanationModel;
@@ -73,6 +75,9 @@ private:
 
     SortingType _sortingType;
     SortingDirection _sortingDirection;
+
+    // Mouse events
+    QPoint _mousePos;
 };
 
 class ImageViewWidget : public QWidget

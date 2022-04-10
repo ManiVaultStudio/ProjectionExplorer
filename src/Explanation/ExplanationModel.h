@@ -14,6 +14,8 @@
 
 using namespace hdps;
 
+//class Data
+
 class DataStatistics
 {
 public:
@@ -42,9 +44,10 @@ public:
     void recomputeMetrics();
     void recomputeColorMapping(DataMatrix& dimRanks);
 
+    void excludeDimension(int dim);
+    bool isExcluded(int dim) { return _exclusionList[dim]; }
+
     void setExplanationMetric(Explanation::Metric metric);
-    //void computeDimensionRanks(DataMatrix& dimRanks, std::vector<unsigned int>& selection);
-    //void computeDimensionRanks(DataMatrix& dimRanks);
     void computeDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection);
     void computeDimensionRanks(DataMatrix& dimRanking);
 
@@ -66,6 +69,7 @@ private:
     bool                    _hasDataset;
 
     DataMatrix              _dataset;
+    DataMatrix              _standardizedDataset;
     DataMatrix              _normDataset;
     DataMatrix              _projection;
     DataStatistics          _dataStats;
@@ -90,4 +94,7 @@ private:
     VarianceMethod          _varianceMethod;
     /** Value-based explanation method */
     ValueMethod             _valueMethod;
+
+    /** List of dimensions to exclude from analysis */
+    std::vector<bool>       _exclusionList;
 };

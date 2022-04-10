@@ -99,6 +99,11 @@ void ColorMapping::recompute(const DataMatrix& dimRanking, Explanation::Metric m
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](int a, int b) {return topCount[a] > topCount[b]; });
 
+    for (int i = 0; i < numDimensions; i++)
+    {
+        std::cout << "Top indices: " << indices[i] << std::endl;
+    }
+
     computeNewColorAssignment(_dimAssignment, indices, _dimAssignment);
 
     std::vector<QColor> newMapping(numDimensions);

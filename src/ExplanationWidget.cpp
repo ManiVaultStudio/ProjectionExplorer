@@ -3,6 +3,8 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QGroupBox>
+#include <QEvent>
+#include <QMouseEvent>
 
 #include <string>
 #include <iostream>
@@ -12,6 +14,11 @@
 #define RANGE_OFFSET 250
 #define RANGE_WIDTH 200
 #define TOP_MARGIN 30
+
+bool isMouseOverBox(QPoint mousePos, int x, int y, int size)
+{
+    return mousePos.x() > x && mousePos.x() < x + size && mousePos.y() > y && mousePos.y() < y + size;
+}
 
 void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats)
 {
@@ -69,6 +76,9 @@ BarChart::BarChart(ExplanationModel& explanationModel) :
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumHeight(270);
     setMinimumWidth(460);
+
+    installEventFilter(this);
+    setMouseTracking(true);
 
     //const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
 }
@@ -198,15 +208,17 @@ void BarChart::paintEvent(QPaintEvent* event)
 
     painter.setPen(Qt::white);
     painter.setFont(QFont("Open Sans", 10, QFont::ExtraBold));
-    switch (_explanationModel.currentMetric())
-    {
-    case Explanation::Metric::VARIANCE: painter.drawText(10, 20, "Variance Sort"); break;
-    case Explanation::Metric::VALUE : painter.drawText(10, 20, "Value Sort"); break;
-    default: painter.drawText(10, 20, "No Sorting");
-    }
 
     if (_dimAggregation.size() > 0)
     {
+        // Draw sorting label
+        switch (_explanationModel.currentMetric())
+        {
+        case Explanation::Metric::VARIANCE: painter.drawText(10, 20, "Variance Sort"); break;
+        case Explanation::Metric::VALUE: painter.drawText(10, 20, "Value Sort"); break;
+        default: painter.drawText(10, 20, "No Sorting");
+        }
+
         if (!_differentialRanking)
         {
             // Draw PCP
@@ -236,10 +248,22 @@ void BarChart::paintEvent(QPaintEvent* event)
             if (sortIndex < colorMapping.size())
                 color = colorMapping[sortIndex];
 
-            painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
-            painter.setPen(color);
+            painter.setPen(Qt::red);
+            painter.drawEllipse(_mousePos.x() - 8, _mousePos.y() - 8, 16, 16);
+
+            // Draw colored legend boxes
+            // Check if mouse is over box, if so, draw a cross over it
+            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
+            {
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(180, 180, 180));
+            }
+            else
+            {
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
+            }
 
             // Draw dimension names
+            painter.setPen(color);
             painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[sortIndex]);
 
             //float normalizedValue = (_averageValues[sortIndex] - _minRanges[sortIndex]) / (_maxRanges[sortIndex] - _minRanges[sortIndex]);
@@ -319,6 +343,63 @@ void BarChart::paintEvent(QPaintEvent* event)
             }
         }
     }
+    else if (_explanationModel.hasDataset())
+    {
+        painter.drawText(10, 20, "No Sorting");
+
+        for (int i = 0; i < _explanationModel.getDataset().cols(); i++)
+        {
+            // Draw colored legend boxes
+            // Check if mouse is over box, if so, draw a cross over it
+            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
+            {
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(220, 220, 220));
+            }
+            else
+            {
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, colorMapping[i]);
+            }
+
+            painter.setPen(QColor(255, 255, 255));
+            if (_explanationModel.getDataNames().size() > 0)
+            {
+                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[i]);
+            }
+            else
+            {
+                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, QString::number(i));
+            }
+        }
+    }
+}
+
+bool BarChart::eventFilter(QObject* target, QEvent* event)
+{
+    switch (event->type())
+    {
+    case QEvent::MouseButtonPress:
+    {
+        auto mouseEvent = static_cast<QMouseEvent*>(event);
+
+        qDebug() << "Mouse button press";
+        break;
+    }
+    case QEvent::MouseMove:
+    {
+        auto mouseEvent = static_cast<QMouseEvent*>(event);
+
+
+        _mousePos = QPoint(mouseEvent->x(), mouseEvent->y());
+        update();
+
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    return QObject::eventFilter(target, event);
 }
 
 ImageViewWidget::ImageViewWidget() :

@@ -19,7 +19,7 @@ namespace
         }
     }
 
-    float computeProjectionDiameter(const Eigen::ArrayXXf& projection)
+    float computeProjectionDiameter(const DataMatrix& projection)
     {
         float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
         float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
@@ -86,7 +86,7 @@ namespace
         }
     }
 
-    void findNeighbourhood(const Eigen::ArrayXXf& projection, int centerId, float radius, std::vector<int>& neighbourhood)
+    void findNeighbourhood(const DataMatrix& projection, int centerId, float radius, std::vector<int>& neighbourhood)
     {
         float x = projection(centerId, 0);
         float y = projection(centerId, 1);
@@ -127,26 +127,42 @@ void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> proje
     // Compute projection diameter
     _projectionDiameter = computeProjectionDiameter(_projection);
     std::cout << "Diameter: " << _projectionDiameter << std::endl;
+    std::cout << "Before: " << _dataset(0, 0) << std::endl;
+    // Standardized dataset
+    _standardizedDataset = _dataset;
+    auto means = _standardizedDataset.colwise().mean();
+    _standardizedDataset.rowwise() -= means;
 
-    // Norm dataset
-    _normDataset = _dataset;
-    auto means = _normDataset.colwise().mean();
-    _normDataset.rowwise() -= means;
-
-    for (int j = 0; j < _normDataset.cols(); j++)
+    for (int j = 0; j < _standardizedDataset.cols(); j++)
     {
         float variance = 0;
-        for (int i = 0; i < _normDataset.rows(); i++)
+        for (int i = 0; i < _standardizedDataset.rows(); i++)
         {
-            variance += _normDataset(i, j) * _normDataset(i, j);
+            variance += _standardizedDataset(i, j) * _standardizedDataset(i, j);
         }
-        variance /= _normDataset.rows() - 1;
+        variance /= _standardizedDataset.rows() - 1;
         float stddev = sqrt(variance);
-        _normDataset.col(j) /= stddev;
+        _standardizedDataset.col(j) /= stddev;
     }
 
-    // Compute ranges per dimension
-    computeDatasetRanges(_dataset, _dataRanges);
+    // Compute global statistics on data
+    computeDatasetStats(_dataset, _dataStats);
+    std::cout << "After: " << _dataset(0, 0) << std::endl;
+    // Normalized dataset
+    _normDataset = _dataset;
+    std::vector<float> ranges(_dataset.cols());
+    for (int j = 0; j < ranges.size(); j++) ranges[j] = _dataStats.maxRange[j] - _dataStats.minRange[j];
+    for (int j = 0; j < _normDataset.cols(); j++)
+    {
+        for (int i = 0; i < _normDataset.rows(); i++)
+        {
+            _normDataset(i, j) = (_normDataset(i, j)) / ranges[j]; // - _dataStats.means[j]
+        }
+    }
+
+    //_dataset = _normDataset;
+
+    computeDatasetStats(_dataset, _dataStats);
 
     // Store dimension names
     if (dataset->getDimensionNames().size() > 0)
@@ -160,6 +176,9 @@ void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> proje
             _dimensionNames.push_back(QString("Dim " + QString::number(j)));
         }
     }
+
+    // Build exclusion list
+    _exclusionList.resize(_dataset.cols(), false);
 
     // Create color mapping
     _colorMapping.recreate(_dataset);
@@ -187,36 +206,17 @@ void ExplanationModel::recomputeColorMapping(DataMatrix& dimRanks)
     _colorMapping.recompute(dimRanks, currentMetric());
 }
 
+void ExplanationModel::excludeDimension(int dim)
+{
+    _exclusionList[dim] = true;
+}
+
 void ExplanationModel::setExplanationMetric(Explanation::Metric metric)
 {
     _explanationMetric = metric;
 
     emit explanationMetricChanged(metric);
 }
-
-//void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking, std::vector<unsigned int>& selection)
-//{
-//    Explanation::Method* explanationMethod = getCurrentExplanationMethod();
-//
-//    dimRanking.resize(selection.size(), _dataset.cols());
-//    for (int i = 0; i < selection.size(); i++)
-//    {
-//        int si = selection[i];
-//
-//        for (int j = 0; j < _dataset.cols(); j++)
-//        {
-//            dimRanking(i, j) = explanationMethod->computeDimensionRank(_dataset, si, j);
-//        }
-//    }
-//}
-//
-//void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanks)
-//{
-//    std::vector<unsigned int> selection(_dataset.rows());
-//    std::iota(selection.begin(), selection.end(), 0);
-//
-//    computeDimensionRanks(dimRanks, selection);
-//}
 
 void ExplanationModel::computeDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection)
 {
