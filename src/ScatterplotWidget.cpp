@@ -495,26 +495,24 @@ void ScatterplotWidget::paintGL()
             painter.drawEllipse(_oldSelectionPoint.x() - _oldSelectionRadius, _oldSelectionPoint.y() - _oldSelectionRadius, _oldSelectionRadius*2, _oldSelectionRadius*2);
         }
 
+        // Draw local neighbourhood circle
         QPen pen;
         pen.setColor(QColor(255, 0, 0, 255));
         pen.setStyle(Qt::SolidLine);
         painter.setPen(pen);
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(_currentPoint.x() - _currentRadius, _currentPoint.y() - _currentRadius, _currentRadius * 2, _currentRadius * 2);
-        
-        if (_drawNeighbourhoodRadius)
-        {
-            pen.setColor(QColor(255, 0, 0, 255));
-            painter.setPen(pen);
-            QBrush brush;
-            brush.setColor(QColor(255, 0, 0, 32));
-            brush.setStyle(Qt::DiagCrossPattern);
-            painter.setBrush(brush);
 
-            int size = width() < height() ? width() : height();
-            float radius = _neighbourhoodRadius * size * 0.9090f;
-            painter.drawEllipse(width() / 2 - radius, height() / 2 - radius, radius * 2, radius * 2);
-        }
+        // Draw global neighbourhood circle
+        pen.setColor(QColor(0, 0, 255, 128));
+        QVector<double> v;
+        v.append(6); v.append(6);
+        pen.setDashPattern(v);
+        pen.setStyle(Qt::CustomDashLine);
+        painter.setPen(pen);
+        int size = width() < height() ? width() : height();
+        float radius = _neighbourhoodRadius * size * 0.9090f;
+        painter.drawEllipse(_currentPoint.x() - radius, _currentPoint.y() - radius, radius * 2, radius * 2);
 
         painter.end();
     }
