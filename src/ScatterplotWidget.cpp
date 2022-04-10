@@ -36,7 +36,7 @@ ScatterplotWidget::ScatterplotWidget(ExplanationModel& explanationModel) :
     _densityRenderer(DensityRenderer::RenderMode::DENSITY),
     _backgroundColor(1, 1, 1),
     _pointRenderer(),
-    _pixelSelectionTool(this),
+    _pixelSelectionTool(new QWidget()),
     _explanationModel(explanationModel)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -48,13 +48,13 @@ ScatterplotWidget::ScatterplotWidget(ExplanationModel& explanationModel) :
     _pointRenderer.setPointScaling(Absolute);
 
     // Configure pixel selection tool
-    _pixelSelectionTool.setEnabled(true);
-    _pixelSelectionTool.setMainColor(QColor(Qt::black));
-    
-    QObject::connect(&_pixelSelectionTool, &PixelSelectionTool::shapeChanged, [this]() {
-        if (isInitialized())
-            update();
-    });
+    //_pixelSelectionTool.setEnabled(true);
+    //_pixelSelectionTool.setMainColor(QColor(Qt::black));
+    //
+    //QObject::connect(&_pixelSelectionTool, &PixelSelectionTool::shapeChanged, [this]() {
+    //    if (isInitialized())
+    //        update();
+    //});
 
     QSurfaceFormat surfaceFormat;
 
@@ -469,10 +469,10 @@ void ScatterplotWidget::paintGL()
         painter.endNativePainting();
         
         // Draw the pixel selection tool overlays if the pixel selection tool is enabled
-        if (_pixelSelectionTool.isEnabled()) {
-            painter.drawPixmap(rect(), _pixelSelectionTool.getAreaPixmap());
-            painter.drawPixmap(rect(), _pixelSelectionTool.getShapePixmap());
-        }
+        //if (_pixelSelectionTool.isEnabled()) {
+        //    painter.drawPixmap(rect(), _pixelSelectionTool.getAreaPixmap());
+        //    painter.drawPixmap(rect(), _pixelSelectionTool.getShapePixmap());
+        //}
 
         // Draw coloring mode
         painter.setFont(QFont("Open Sans", 14, QFont::ExtraBold));
