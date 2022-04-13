@@ -5,16 +5,13 @@
 
 #include "PointData.h"
 
+#include "DataTypes.h"
 #include "Methods/ExplanationMethod.h"
 #include "ColorMapping.h"
 
 #include "Methods/SilvaEuclidean.h"
 #include "Methods/SilvaVariance.h"
 #include "Methods/ValueRanking.h"
-
-using namespace hdps;
-
-//class Data
 
 class DataStatistics
 {
@@ -32,20 +29,19 @@ public:
     ExplanationModel();
 
     bool hasDataset() { return _hasDataset; }
-    const DataMatrix& getDataset() { return _dataset; }
+    const DataTable& getDataset() { return _dataset; }
     const DataStatistics& getDataStatistics() { return _dataStats; }
     const std::vector<QString>& getDataNames() { return _dimensionNames; }
 
     Explanation::Metric currentMetric() { return _explanationMetric; }
     const std::vector<QColor>& getColorMapping() { return _colorMapping.getColors(); }
 
-    void setDataset(Dataset<Points> dataset, Dataset<Points> projection);
+    void setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection);
     void recomputeNeighbourhood(float neighbourhoodRadius);
     void recomputeMetrics();
     void recomputeColorMapping(DataMatrix& dimRanks);
 
     void excludeDimension(int dim);
-    bool isExcluded(int dim) { return _exclusionList[dim]; }
 
     void setExplanationMetric(Explanation::Metric metric);
     void computeDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection);
@@ -56,7 +52,12 @@ public:
 signals:
     void explanationMetricChanged(Explanation::Metric metric);
 
+    void datasetDimensionsChanged();
+
 private:
+    /** Initialize model */
+    void initialize();
+
     /**
      * For every point in the projection compute the indices of the points
      * in its neighbourhood and add them to the matrix.
@@ -68,7 +69,7 @@ private:
 private:
     bool                    _hasDataset;
 
-    DataMatrix              _dataset;
+    DataTable               _dataset;
     DataMatrix              _standardizedDataset;
     DataMatrix              _normDataset;
     DataMatrix              _projection;
@@ -94,7 +95,4 @@ private:
     VarianceMethod          _varianceMethod;
     /** Value-based explanation method */
     ValueMethod             _valueMethod;
-
-    /** List of dimensions to exclude from analysis */
-    std::vector<bool>       _exclusionList;
 };

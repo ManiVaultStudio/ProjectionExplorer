@@ -20,7 +20,7 @@
 class DataMetrics
 {
 public:
-    void compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats);
+    void compute(const DataTable& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats);
 
     std::vector<float> averageValues;
     std::vector<float> variances;
@@ -55,6 +55,9 @@ public slots:
     void sortByDefault();
     void sortByVariance();
     void sortByValue();
+
+signals:
+    void dimensionExcluded(int dim);
 
 protected:
     void paintEvent(QPaintEvent* event) override;

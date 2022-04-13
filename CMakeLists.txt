@@ -27,6 +27,7 @@ set(PLUGIN
 )
 
 set(EXPLANATION
+    src/Explanation/DataTypes.h
     src/Explanation/ExplanationModel.h
     src/Explanation/ExplanationModel.cpp
     src/Explanation/ColorMapping.h
@@ -111,6 +112,7 @@ source_group(Models FILES ${Models})
 source_group(Shaders FILES ${SHADERS})
 source_group(Aux FILES ${AUX})
 
+include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories("${INSTALL_DIR}/$<CONFIGURATION>/include/")
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/Eigen/include)
 

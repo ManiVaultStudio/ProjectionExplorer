@@ -21,9 +21,9 @@ bool isMouseOverBox(QPoint mousePos, int x, int y, int size)
     return mousePos.x() > x && mousePos.x() < x + size && mousePos.y() > y && mousePos.y() < y + size;
 }
 
-void DataMetrics::compute(const DataMatrix& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats)
+void DataMetrics::compute(const DataTable& dataset, const std::vector<unsigned int>& selection, const DataStatistics& dataStats)
 {
-    int numDimensions = dataset.cols();
+    int numDimensions = dataset.numDimensions();
 
     // Compute average values
     averageValues.clear();
@@ -162,12 +162,24 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
     _sortIndices.resize(numDimensions);
     std::iota(_sortIndices.begin(), _sortIndices.end(), 0);
 
+    // Exclude dimensions
+    for (int j = 0; j < numDimensions; j++)
+    {
+        if (_explanationModel.getDataset().isExcluded(j))
+        {
+            if (_explanationModel.currentMetric() == Explanation::Metric::VARIANCE)
+                _dimAggregation[j] = std::numeric_limits<float>::max();
+            if (_explanationModel.currentMetric() == Explanation::Metric::VALUE)
+                _dimAggregation[j] = -std::numeric_limits<float>::max();
+        }
+    }
+
     switch (_explanationModel.currentMetric())
     {
     case Explanation::Metric::VARIANCE:
-        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return dimRanking[i] < dimRanking[j]; }); break;
+        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return _dimAggregation[i] < _dimAggregation[j]; }); break;
     case Explanation::Metric::VALUE:
-        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return dimRanking[i] > dimRanking[j]; }); break;
+        std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return _dimAggregation[i] > _dimAggregation[j]; }); break;
     default: break;
     }
 }
@@ -197,10 +209,10 @@ void BarChart::paintEvent(QPaintEvent* event)
     if (!_explanationModel.hasDataset())
         return;
 
-    const DataMatrix& dataset = _explanationModel.getDataset();
+    const DataTable& dataset = _explanationModel.getDataset();
     const DataStatistics& dataStats = _explanationModel.getDataStatistics();
 
-    int numDimensions = dataset.cols();
+    int numDimensions = dataset.numDimensions();
 
     const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping();
 
@@ -233,6 +245,9 @@ void BarChart::paintEvent(QPaintEvent* event)
                     int sortIndexA = _sortIndices[j];
                     int sortIndexB = _sortIndices[j + 1];
 
+                    bool excluded = _explanationModel.getDataset().isExcluded(sortIndexB);
+                    if (excluded) continue;
+
                     float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / (dataStats.maxRange[sortIndexA] - dataStats.minRange[sortIndexA]);
                     float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / (dataStats.maxRange[sortIndexB] - dataStats.minRange[sortIndexB]);
 
@@ -245,9 +260,13 @@ void BarChart::paintEvent(QPaintEvent* event)
         {
             int sortIndex = _sortIndices[i];
 
+            bool excluded = _explanationModel.getDataset().isExcluded(sortIndex);
+
             QColor color(180, 180, 180, 255);
             if (sortIndex < colorMapping.size())
                 color = colorMapping[sortIndex];
+            if (excluded)
+                color = QColor(255, 255, 255);
 
             painter.setPen(Qt::red);
             painter.drawEllipse(_mousePos.x() - 8, _mousePos.y() - 8, 16, 16);
@@ -266,6 +285,9 @@ void BarChart::paintEvent(QPaintEvent* event)
             // Draw dimension names
             painter.setPen(color);
             painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[sortIndex]);
+
+            if (excluded)
+                continue;
 
             //float normalizedValue = (_averageValues[sortIndex] - _minRanges[sortIndex]) / (_maxRanges[sortIndex] - _minRanges[sortIndex]);
 
@@ -357,13 +379,14 @@ void BarChart::paintEvent(QPaintEvent* event)
     {
         painter.drawText(10, 20, "No Sorting");
 
-        for (int i = 0; i < _explanationModel.getDataset().cols(); i++)
+        for (int i = 0; i < _explanationModel.getDataset().numDimensions(); i++)
         {
             // Draw colored legend boxes
             // Check if mouse is over box, if so, draw a cross over it
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
                 painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(220, 220, 220));
+                emit dimensionExcluded(i);
             }
             else
             {
@@ -460,6 +483,19 @@ bool BarChart::eventFilter(QObject* target, QEvent* event)
     case QEvent::MouseButtonPress:
     {
         auto mouseEvent = static_cast<QMouseEvent*>(event);
+
+        QPoint mousePos = mouseEvent->pos();
+
+        for (int j = 0; j < _explanationModel.getDataset().numDimensions(); j++)
+        {
+            if (isMouseOverBox(mousePos, 10, TOP_MARGIN + 16 * j, 14))
+            {
+                if (_sortIndices.size() > 0)
+                    emit dimensionExcluded(_sortIndices[j]);
+                else
+                    emit dimensionExcluded(j);
+            }
+        }
 
         qDebug() << "Mouse button press";
         break;

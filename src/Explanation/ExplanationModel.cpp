@@ -4,7 +4,7 @@
 
 namespace
 {
-    void convertToEigenMatrix(Dataset<Points> dataset, DataMatrix& dataMatrix)
+    void convertToEigenMatrix(hdps::Dataset<Points> dataset, DataMatrix& dataMatrix)
     {
         int numPoints = dataset->getNumPoints();
         int numDimensions = dataset->getNumDimensions();
@@ -40,10 +40,10 @@ namespace
         return diameter;
     }
 
-    void computeDatasetStats(const DataMatrix& dataset, DataStatistics& dataStats)
+    void computeDatasetStats(const DataTable& dataset, DataStatistics& dataStats)
     {
-        int numPoints = dataset.rows();
-        int numDimensions = dataset.cols();
+        int numPoints = dataset.numPoints();
+        int numDimensions = dataset.numDimensions();
 
         dataStats.means.clear();
         dataStats.variances.clear();
@@ -118,51 +118,15 @@ ExplanationModel::ExplanationModel() :
 
 }
 
-void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> projection)
+void ExplanationModel::setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection)
 {
     // Convert the dataset and projection to eigen matrices
-    convertToEigenMatrix(dataset, _dataset);
+    DataMatrix eigenDataMatrix;
+    convertToEigenMatrix(dataset, eigenDataMatrix);
+    _dataset.setData(eigenDataMatrix);
     convertToEigenMatrix(projection, _projection);
 
-    // Compute projection diameter
-    _projectionDiameter = computeProjectionDiameter(_projection);
-    std::cout << "Diameter: " << _projectionDiameter << std::endl;
-    std::cout << "Before: " << _dataset(0, 0) << std::endl;
-    // Standardized dataset
-    _standardizedDataset = _dataset;
-    auto means = _standardizedDataset.colwise().mean();
-    _standardizedDataset.rowwise() -= means;
-
-    for (int j = 0; j < _standardizedDataset.cols(); j++)
-    {
-        float variance = 0;
-        for (int i = 0; i < _standardizedDataset.rows(); i++)
-        {
-            variance += _standardizedDataset(i, j) * _standardizedDataset(i, j);
-        }
-        variance /= _standardizedDataset.rows() - 1;
-        float stddev = sqrt(variance);
-        _standardizedDataset.col(j) /= stddev;
-    }
-
-    // Compute global statistics on data
-    computeDatasetStats(_dataset, _dataStats);
-    std::cout << "After: " << _dataset(0, 0) << std::endl;
-    // Normalized dataset
-    _normDataset = _dataset;
-    std::vector<float> ranges(_dataset.cols());
-    for (int j = 0; j < ranges.size(); j++) ranges[j] = _dataStats.maxRange[j] - _dataStats.minRange[j];
-    for (int j = 0; j < _normDataset.cols(); j++)
-    {
-        for (int i = 0; i < _normDataset.rows(); i++)
-        {
-            _normDataset(i, j) = (_normDataset(i, j)) / ranges[j]; // - _dataStats.means[j]
-        }
-    }
-
-    //_dataset = _normDataset;
-
-    computeDatasetStats(_dataset, _dataStats);
+    initialize();
 
     // Store dimension names
     if (dataset->getDimensionNames().size() > 0)
@@ -176,9 +140,47 @@ void ExplanationModel::setDataset(Dataset<Points> dataset, Dataset<Points> proje
             _dimensionNames.push_back(QString("Dim " + QString::number(j)));
         }
     }
+}
 
-    // Build exclusion list
-    _exclusionList.resize(_dataset.cols(), false);
+void ExplanationModel::initialize()
+{
+    // Compute projection diameter
+    _projectionDiameter = computeProjectionDiameter(_projection);
+    std::cout << "Diameter: " << _projectionDiameter << std::endl;
+
+    //// Standardized dataset
+    //_standardizedDataset = _dataset;
+    //auto means = _standardizedDataset.colwise().mean();
+    //_standardizedDataset.rowwise() -= means;
+
+    //for (int j = 0; j < _standardizedDataset.cols(); j++)
+    //{
+    //    float variance = 0;
+    //    for (int i = 0; i < _standardizedDataset.rows(); i++)
+    //    {
+    //        variance += _standardizedDataset(i, j) * _standardizedDataset(i, j);
+    //    }
+    //    variance /= _standardizedDataset.rows() - 1;
+    //    float stddev = sqrt(variance);
+    //    _standardizedDataset.col(j) /= stddev;
+    //}
+
+    //// Compute global statistics on data
+    //computeDatasetStats(_dataset, _dataStats);
+
+    //// Normalized dataset
+    //_normDataset = _dataset;
+    //std::vector<float> ranges(_dataset.cols());
+    //for (int j = 0; j < ranges.size(); j++) ranges[j] = _dataStats.maxRange[j] - _dataStats.minRange[j];
+    //for (int j = 0; j < _normDataset.cols(); j++)
+    //{
+    //    for (int i = 0; i < _normDataset.rows(); i++)
+    //    {
+    //        _normDataset(i, j) = (_normDataset(i, j)) / ranges[j]; // - _dataStats.means[j]
+    //    }
+    //}
+
+    computeDatasetStats(_dataset, _dataStats);
 
     // Create color mapping
     _colorMapping.recreate(_dataset);
@@ -203,12 +205,14 @@ void ExplanationModel::recomputeMetrics()
 
 void ExplanationModel::recomputeColorMapping(DataMatrix& dimRanks)
 {
-    _colorMapping.recompute(dimRanks, currentMetric());
+    _colorMapping.recompute(_dataset, dimRanks, currentMetric());
 }
 
 void ExplanationModel::excludeDimension(int dim)
 {
-    _exclusionList[dim] = true;
+    _dataset.excludeDimension(dim);
+
+    emit datasetDimensionsChanged();
 }
 
 void ExplanationModel::setExplanationMetric(Explanation::Metric metric)
@@ -227,17 +231,17 @@ void ExplanationModel::computeDimensionRanks(std::vector<float>& dimRanking, std
 
 void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking)
 {
-    std::vector<unsigned int> selection(_dataset.rows());
+    std::vector<unsigned int> selection(_dataset.numPoints());
     std::iota(selection.begin(), selection.end(), 0);
 
     Explanation::Method* explanationMethod = getCurrentExplanationMethod();
 
-    dimRanking.resize(selection.size(), _dataset.cols());
+    dimRanking.resize(selection.size(), _dataset.numDimensions());
     for (int i = 0; i < selection.size(); i++)
     {
         int si = selection[i];
 
-        for (int j = 0; j < _dataset.cols(); j++)
+        for (int j = 0; j < _dataset.numDimensions(); j++)
         {
             dimRanking(i, j) = explanationMethod->computeDimensionRank(_dataset, si, j);
         }
@@ -259,6 +263,8 @@ std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRan
         int topRank = 0;
         for (int j = 0; j < numDimensions; j++)
         {
+            if (_dataset.isExcluded(j)) continue;
+
             float rank = dimRanks(i, j);
 
             if (currentMetric() == Explanation::Metric::VARIANCE)

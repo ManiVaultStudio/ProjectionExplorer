@@ -5,13 +5,13 @@
 class ValueMethod : public Explanation::Method
 {
 public:
-    void recompute(const DataMatrix& dataset, NeighbourhoodMatrix& neighbourhoodMatrix) override;
-    float computeDimensionRank(const DataMatrix& dataset, int i, int j) override;
-    void computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking) override;
+    void recompute(const DataTable& dataset, NeighbourhoodMatrix& neighbourhoodMatrix) override;
+    float computeDimensionRank(const DataTable& dataset, int i, int j) override;
+    void computeDimensionRank(const DataTable& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking) override;
 
 private:
-    void precomputeGlobalValues(const DataMatrix& dataset);
-    void precomputeLocalValues(const DataMatrix& dataset, NeighbourhoodMatrix& neighbourhoodMatrix);
+    void precomputeGlobalValues(const DataTable& dataset);
+    void precomputeLocalValues(const DataTable& dataset, NeighbourhoodMatrix& neighbourhoodMatrix);
 
     std::vector<float> _globalValues;
 

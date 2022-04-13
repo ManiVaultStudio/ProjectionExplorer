@@ -15,10 +15,10 @@ ColorMapping::ColorMapping()
     }
 }
 
-void ColorMapping::recreate(const DataMatrix& dataset)
+void ColorMapping::recreate(const DataTable& dataset)
 {
     // Create color mapping
-    _colorMapping.resize(dataset.cols());
+    _colorMapping.resize(dataset.numDimensions());
     for (int i = 0; i < _colorMapping.size(); i++)
     {
         QColor color = (i < _palette.size()) ? _palette[i] : QColor(180, 180, 180);
@@ -62,7 +62,7 @@ void computeNewColorAssignment(const std::vector<int> oldMapping, const std::vec
     }
 }
 
-void ColorMapping::recompute(const DataMatrix& dimRanking, Explanation::Metric metric)
+void ColorMapping::recompute(const DataTable& dataset, const DataMatrix& dimRanking, Explanation::Metric metric)
 {
     bool lowRankBest = metric == Explanation::Metric::VARIANCE ? true : false;
 
@@ -77,6 +77,8 @@ void ColorMapping::recompute(const DataMatrix& dimRanking, Explanation::Metric m
 
         for (int j = 0; j < dimRanking.cols(); j++)
         {
+            if (dataset.isExcluded(j)) continue;
+
             float rank = dimRanking(i, j);
 
             if (lowRankBest) { if (rank < topRank) { topRank = rank; } }
@@ -86,6 +88,8 @@ void ColorMapping::recompute(const DataMatrix& dimRanking, Explanation::Metric m
         // Count every dimension that has the same rank
         for (int j = 0; j < dimRanking.cols(); j++)
         {
+            if (dataset.isExcluded(j)) continue;
+
             float rank = dimRanking(i, j);
             if (lowRankBest) { if (rank <= topRank) topCount[j]++; }
             else { if (rank >= topRank) topCount[j]++; }

@@ -3,10 +3,10 @@
 #include <iostream>
 #include <chrono>
 
-void ValueMethod::recompute(const DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::recompute(const DataTable& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
+    int numPoints = dataset.numPoints();
+    int numDimensions = dataset.numDimensions();
 
     _dataRanges.clear();
     _dataRanges.resize(numDimensions);
@@ -33,19 +33,19 @@ void ValueMethod::recompute(const DataMatrix& dataset, std::vector<std::vector<i
     precomputeLocalValues(dataset, neighbourhoodMatrix);
 }
 
-float ValueMethod::computeDimensionRank(const DataMatrix& dataset, int i, int j)
+float ValueMethod::computeDimensionRank(const DataTable& dataset, int i, int j)
 {
     float sum = 0;
-    for (int k = 0; k < dataset.cols(); k++)
+    for (int k = 0; k < dataset.numDimensions(); k++)
     {
         sum += abs((_localValues(i, k) - _globalValues[k]) / _dataRanges[k]); //_localValues(i, k) / _globalValues[k];
     }
     return ((_localValues(i, j) - _globalValues[j]) / _dataRanges[j]) / sum;
 }
 
-void ValueMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
+void ValueMethod::computeDimensionRank(const DataTable& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
 {
-    int numDimensions = dataset.cols();
+    int numDimensions = dataset.numDimensions();
 
     // Compute mean over selection
     std::vector<float> localMeans(numDimensions, 0);
@@ -73,10 +73,10 @@ void ValueMethod::computeDimensionRank(const DataMatrix& dataset, const std::vec
     }
 }
 
-void ValueMethod::precomputeGlobalValues(const DataMatrix& dataset)
+void ValueMethod::precomputeGlobalValues(const DataTable& dataset)
 {
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
+    int numPoints = dataset.numPoints();
+    int numDimensions = dataset.numDimensions();
 
     _globalValues.clear();
     _globalValues.resize(numDimensions);
@@ -94,12 +94,12 @@ void ValueMethod::precomputeGlobalValues(const DataMatrix& dataset)
     }
 }
 
-void ValueMethod::precomputeLocalValues(const DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void ValueMethod::precomputeLocalValues(const DataTable& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
+    int numPoints = dataset.numPoints();
+    int numDimensions = dataset.numDimensions();
 
     _localValues.resize(numPoints, numDimensions);
 #pragma omp parallel for

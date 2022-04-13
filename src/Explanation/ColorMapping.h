@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DataTypes.h"
 #include "Methods/ExplanationMethod.h"
 
 #include <QColor>
@@ -14,8 +15,8 @@ public:
     const std::vector<QColor>& getPalette() { return _palette; }
     const std::vector<QColor>& getColors() { return _colorMapping; }
 
-    void recreate(const DataMatrix& dataset);
-    void recompute(const DataMatrix& dimRanking, Explanation::Metric metric);
+    void recreate(const DataTable& dataset);
+    void recompute(const DataTable& dataset, const DataMatrix& dimRanking, Explanation::Metric metric);
 
 private:
     std::vector<QColor> _palette;

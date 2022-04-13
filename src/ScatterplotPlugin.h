@@ -55,6 +55,7 @@ protected slots:
     void neighbourhoodRadiusSliderPressed();
     void neighbourhoodRadiusSliderReleased();
     void explanationMetricChanged();
+    void datasetDimensionsChanged();
 
 public:
     void createSubset(const bool& fromSourceData = false, const QString& name = "");

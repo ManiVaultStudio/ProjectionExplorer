@@ -177,6 +177,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     connect(_explanationWidget->getRadiusSlider(), &QSlider::sliderPressed, this, &ScatterplotPlugin::neighbourhoodRadiusSliderPressed);
     connect(_explanationWidget->getRadiusSlider(), &QSlider::sliderReleased, this, &ScatterplotPlugin::neighbourhoodRadiusSliderReleased);
     connect(&_explanationModel, &ExplanationModel::explanationMetricChanged, this, &ScatterplotPlugin::explanationMetricChanged);
+    connect(&_explanationModel, &ExplanationModel::datasetDimensionsChanged, this, &ScatterplotPlugin::datasetDimensionsChanged);
+    connect(&_explanationWidget->getBarchart(), &BarChart::dimensionExcluded, &_explanationModel, &ExplanationModel::excludeDimension);
     //connect(_explanationWidget->getRankingComboBox(), &QComboBox::currentIndexChanged, this, &ScatterplotPlugin::dimensionRankingChanged);
     //connect(_explanationWidget->getVarianceColoringButton(), &QPushButton::pressed, this, &ScatterplotPlugin::colorByVariance);
     //connect(_explanationWidget->getValueColoringButton(), &QPushButton::pressed, this, &ScatterplotPlugin::colorByValue);
@@ -328,6 +330,12 @@ void ScatterplotPlugin::explanationMetricChanged()
     colorPointsByRanking();
 }
 
+void ScatterplotPlugin::datasetDimensionsChanged()
+{
+    std::cout << "Dim excluded" << std::endl;
+    colorPointsByRanking();
+}
+
 void ScatterplotPlugin::colorPointsByRanking()
 {
     _explanationModel.recomputeMetrics();
@@ -346,6 +354,7 @@ void ScatterplotPlugin::colorPointsByRanking()
     // Build vector of top ranked dimensions
     std::vector<int> topRankedDims(dimRanking.rows());
     
+    const DataTable& dataset = _explanationModel.getDataset();
     for (int i = 0; i < dimRanking.rows(); i++)
     {
         std::vector<int> indices(dimRanking.cols());
@@ -356,7 +365,9 @@ void ScatterplotPlugin::colorPointsByRanking()
         else
             std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) > dimRanking(i, b); });
 
-        topRankedDims[i] = indices[0];
+        int j = 0;
+        while (dataset.isExcluded(indices[j]) && j < dataset.numDimensions()-1) { j++; }
+        topRankedDims[i] = indices[j];
     }
 
     // Color points by dimension ranking

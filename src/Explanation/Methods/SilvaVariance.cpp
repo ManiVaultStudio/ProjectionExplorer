@@ -3,25 +3,25 @@
 #include <iostream>
 #include <chrono>
 
-void VarianceMethod::recompute(const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMethod::recompute(const DataTable& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
     precomputeGlobalVariances(dataset);
     precomputeLocalVariances(_localVariances, dataset, neighbourhoodMatrix);
 }
 
-float VarianceMethod::computeDimensionRank(const Eigen::ArrayXXf& dataset, int i, int j)
+float VarianceMethod::computeDimensionRank(const DataTable& dataset, int i, int j)
 {
     float sum = 0;
-    for (int k = 0; k < dataset.cols(); k++)
+    for (int k = 0; k < dataset.numDimensions(); k++)
     {
         sum += _localVariances(i, k) / _globalVariances[k];
     }
     return (_localVariances(i, j) / _globalVariances[j]) / sum;
 }
 
-void VarianceMethod::computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
+void VarianceMethod::computeDimensionRank(const DataTable& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
 {
-    int numDimensions = dataset.cols();
+    int numDimensions = dataset.numDimensions();
 
     // Compute mean over selection
     std::vector<float> localMeans(numDimensions, 0);
@@ -64,12 +64,12 @@ void VarianceMethod::computeDimensionRank(const DataMatrix& dataset, const std::
     }
 }
 
-void VarianceMethod::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
+void VarianceMethod::precomputeGlobalVariances(const DataTable& dataset)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
+    int numPoints = dataset.numPoints();
+    int numDimensions = dataset.numDimensions();
 
     _globalVariances.clear();
     _globalVariances.resize(numDimensions);
@@ -100,10 +100,10 @@ void VarianceMethod::precomputeGlobalVariances(const Eigen::ArrayXXf& dataset)
     std::cout << "Global Elapsed time : " << elapsed.count() << " s\n";
 }
 
-void VarianceMethod::precomputeLocalVariances(Eigen::ArrayXXf& localVariance, const Eigen::ArrayXXf& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
+void VarianceMethod::precomputeLocalVariances(DataMatrix& localVariance, const DataTable& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix)
 {
-    int numPoints = dataset.rows();
-    int numDimensions = dataset.cols();
+    int numPoints = dataset.numPoints();
+    int numDimensions = dataset.numDimensions();
     auto start = std::chrono::high_resolution_clock::now();
 
     localVariance.resize(numPoints, numDimensions);

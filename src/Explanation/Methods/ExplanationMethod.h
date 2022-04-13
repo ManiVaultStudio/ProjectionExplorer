@@ -1,12 +1,8 @@
 #pragma once
 
-#include <Eigen/Eigen>
+#include "Explanation/DataTypes.h"
 
 #include <vector>
-
-using DataMatrix = Eigen::ArrayXXf;
-using Neighbourhood = std::vector<int>;
-using NeighbourhoodMatrix = std::vector<Neighbourhood>;
 
 namespace Explanation
 {
@@ -21,8 +17,8 @@ namespace Explanation
     class Method
     {
     public:
-        virtual void  recompute(const DataMatrix& dataset, NeighbourhoodMatrix& neighbourhoodMatrix) = 0;
-        virtual float computeDimensionRank(const DataMatrix& dataset, int i, int j) = 0;
-        virtual void computeDimensionRank(const DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking) = 0;
+        virtual void  recompute(const DataTable& dataset, NeighbourhoodMatrix& neighbourhoodMatrix) = 0;
+        virtual float computeDimensionRank(const DataTable& dataset, int i, int j) = 0;
+        virtual void computeDimensionRank(const DataTable& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking) = 0;
     };
 }
