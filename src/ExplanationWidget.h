@@ -78,6 +78,8 @@ private:
 
     // Mouse events
     QPoint _mousePos;
+
+    QImage _legend;
 };
 
 class ImageViewWidget : public QWidget
