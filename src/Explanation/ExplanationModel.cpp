@@ -49,11 +49,13 @@ namespace
         dataStats.variances.clear();
         dataStats.minRange.clear();
         dataStats.maxRange.clear();
+        dataStats.ranges.clear();
 
         dataStats.means.resize(numDimensions);
         dataStats.variances.resize(numDimensions);
         dataStats.minRange.resize(numDimensions, std::numeric_limits<float>::max());
         dataStats.maxRange.resize(numDimensions, -std::numeric_limits<float>::max());
+        dataStats.ranges.resize(numDimensions, 0);
 
         for (int j = 0; j < numDimensions; j++)
         {
@@ -82,6 +84,9 @@ namespace
         }
         for (int j = 0; j < numDimensions; j++)
         {
+            dataStats.ranges[j] = dataStats.maxRange[j] - dataStats.minRange[j];
+            if (dataStats.ranges[j] == 0) dataStats.ranges[j] = 1;
+
             std::cout << j << ": " << "Means : " << dataStats.means[j] << " Variances : " << dataStats.variances[j] << " Min range : " << dataStats.minRange[j] << " Max range : " << dataStats.maxRange[j] << std::endl;
         }
     }

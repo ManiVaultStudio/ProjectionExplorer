@@ -27,6 +27,8 @@ void ValueMethod::recompute(const DataTable& dataset, std::vector<std::vector<in
         }
         mean /= numPoints;
         _dataRanges[j] = maxRanges[j] - minRanges[j];
+
+        if (_dataRanges[j] == 0) _dataRanges[j] = 1;
     }
 
     precomputeGlobalValues(dataset);

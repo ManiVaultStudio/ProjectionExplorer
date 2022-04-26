@@ -20,6 +20,7 @@ public:
     std::vector<float> variances;
     std::vector<float> minRange;
     std::vector<float> maxRange;
+    std::vector<float> ranges;
 };
 
 class ExplanationModel : public QObject

@@ -58,7 +58,8 @@ void DataMetrics::compute(const DataTable& dataset, const std::vector<unsigned i
     // Normalization
     for (int j = 0; j < numDimensions; j++)
     {
-        float range = dataStats.maxRange[j] - dataStats.minRange[j];
+        float range = dataStats.ranges[j];
+
         float normalizedValue = (averageValues[j] - dataStats.minRange[j]) / range;
         averageValues[j] = normalizedValue;
         float normalizedStddev = variances[j] / range;
@@ -248,8 +249,8 @@ void BarChart::paintEvent(QPaintEvent* event)
                     bool excluded = _explanationModel.getDataset().isExcluded(sortIndexB);
                     if (excluded) continue;
 
-                    float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / (dataStats.maxRange[sortIndexA] - dataStats.minRange[sortIndexA]);
-                    float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / (dataStats.maxRange[sortIndexB] - dataStats.minRange[sortIndexB]);
+                    float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / dataStats.ranges[sortIndexA];
+                    float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / dataStats.ranges[sortIndexB];
 
                     painter.drawLine(RANGE_OFFSET + normValueA * RANGE_WIDTH, TOP_MARGIN + 16 * j + 8, RANGE_OFFSET + normValueB * RANGE_WIDTH, TOP_MARGIN + 16 * (j + 1) + 8);
                 }
@@ -314,7 +315,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             {
                 // Draw mean
                 float mean = _newMetrics.averageValues[sortIndex];
-                float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / (dataStats.maxRange[sortIndex] - dataStats.minRange[sortIndex]);
+                float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / dataStats.ranges[sortIndex];
                 
                 int oldMeanX = RANGE_OFFSET + globalMean * RANGE_WIDTH;
                 int newMeanX = RANGE_OFFSET + mean * RANGE_WIDTH;

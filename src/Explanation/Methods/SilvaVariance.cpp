@@ -93,6 +93,8 @@ void VarianceMethod::precomputeGlobalVariances(const DataTable& dataset)
         variance /= numPoints;
 
         _globalVariances[j] = variance;
+
+        if (variance == 0) _globalVariances[j] = 1;
     }
 
     auto finish = std::chrono::high_resolution_clock::now();
