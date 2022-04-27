@@ -42,6 +42,7 @@ ScatterplotWidget::ScatterplotWidget() :
     setAcceptDrops(true);
     setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     _pointRenderer.setPointScaling(Absolute);
 

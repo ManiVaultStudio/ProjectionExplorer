@@ -1,6 +1,6 @@
 #include "ExplanationWidget.h"
 
-#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 #include <string>
 
@@ -51,11 +51,13 @@ ExplanationWidget::ExplanationWidget()
     _rankLabel = new QLabel("No ranking");
     _barChart = new BarChart();
 
-    QHBoxLayout* layout = new QHBoxLayout();
+    QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(_barChart);
     layout->addWidget(_rankLabel);
 
     setLayout(layout);
+
+    setMaximumWidth(300);
 }
 
 ExplanationWidget::~ExplanationWidget()
