@@ -78,6 +78,7 @@ BarChart::BarChart(ExplanationModel& explanationModel) :
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setMinimumHeight(270);
     setMinimumWidth(460);
+    setContentsMargins(0, 0, 0, 0);
 
     installEventFilter(this);
     setMouseTracking(true);
@@ -223,6 +224,7 @@ void BarChart::paintEvent(QPaintEvent* event)
 
     painter.setPen(Qt::white);
     painter.setFont(QFont("MS Shell Dlg 2", 10, QFont::ExtraBold));
+    
     if (_dimAggregation.size() > 0)
     {
         // Draw sorting label
@@ -277,6 +279,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
                 painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(180, 180, 180));
+                //emit dimensionExcluded(sortIndex);
             }
             else
             {
@@ -409,7 +412,7 @@ void BarChart::paintEvent(QPaintEvent* event)
     // Draw legend
     //// Draw range line
     int varHeight = TOP_MARGIN + 8 + 16 * (numDimensions + 2);
-    painter.fillRect(0, varHeight, 600, 120, QColor(60, 60, 60));
+    painter.fillRect(0, varHeight, 600, 270, QColor(60, 60, 60));
     //int leftEnd = 50;
     //int rightEnd = 150;
     //int mid = 100;
@@ -472,9 +475,7 @@ void BarChart::paintEvent(QPaintEvent* event)
 
     painter.setPen(QColor(255, 255, 255));
     painter.drawText(10, varHeight + 20, "Legend");
-    painter.drawImage(RANGE_OFFSET, varHeight + 30, _legend);
-
-    
+    painter.drawImage(60, varHeight + 40, _legend);
 }
 
 bool BarChart::eventFilter(QObject* target, QEvent* event)
@@ -544,6 +545,7 @@ ExplanationWidget::ExplanationWidget(ExplanationModel& explanationModel)
     _imageViewWidget = new ImageViewWidget();
 
     QVBoxLayout* layout = new QVBoxLayout();
+    layout->setMargin(0);
     layout->addWidget(_barChart);
     //layout->addWidget(_imageViewWidget);
     //layout->addWidget(_rankLabel);
