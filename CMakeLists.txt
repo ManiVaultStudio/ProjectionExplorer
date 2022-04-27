@@ -31,6 +31,8 @@ set(PLUGIN
 set(UI
     src/ScatterplotWidget.h
     src/ScatterplotWidget.cpp
+    src/ExplanationWidget.h
+    src/ExplanationWidget.cpp
     src/ExportImageDialog.h
     src/ExportImageDialog.cpp
 )

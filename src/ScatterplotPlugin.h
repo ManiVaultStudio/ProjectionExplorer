@@ -4,6 +4,7 @@
 
 #include "util/PixelSelectionTool.h"
 #include "Explanation.h"
+#include "ExplanationWidget.h"
 
 #include "Common.h"
 
@@ -117,6 +118,7 @@ protected:
     SettingsAction              _settingsAction;
 
     Explanation                 _explanation;
+    ExplanationWidget*          _explanationWidget;
 };
 
 // =============================================================================
