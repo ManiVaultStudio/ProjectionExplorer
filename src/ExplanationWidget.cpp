@@ -84,6 +84,8 @@ BarChart::BarChart(ExplanationModel& explanationModel) :
     setMouseTracking(true);
 
     _legend.load(":/Legend.png");
+
+    connect(&_explanationModel, &ExplanationModel::datasetChanged, this, &BarChart::datasetChanged);
     //const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
 }
 
@@ -161,6 +163,7 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
     _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataStatistics());
 
     // Compute sorting
+    _sortIndices.clear();
     _sortIndices.resize(numDimensions);
     std::iota(_sortIndices.begin(), _sortIndices.end(), 0);
 
@@ -191,6 +194,13 @@ void BarChart::computeOldMetrics(const std::vector<unsigned int>& oldSelection)
     _oldMetrics.compute(_explanationModel.getDataset(), oldSelection, _explanationModel.getDataStatistics());
 }
 
+void BarChart::datasetChanged()
+{
+    _dimAggregation.clear();
+    _sortIndices.clear();
+    _selection.clear();
+}
+
 void BarChart::sortByDefault()
 {
     _sortingType = SortingType::NONE;
@@ -209,7 +219,9 @@ void BarChart::sortByValue()
 void BarChart::paintEvent(QPaintEvent* event)
 {
     if (!_explanationModel.hasDataset())
+    {
         return;
+    }
 
     const DataTable& dataset = _explanationModel.getDataset();
     const DataStatistics& dataStats = _explanationModel.getDataStatistics();

@@ -514,6 +514,7 @@ void ScatterplotWidget::paintGL()
         float radius = _neighbourhoodRadius * size * 0.9090f;
         painter.drawEllipse(_currentPoint.x() - radius, _currentPoint.y() - radius, radius * 2, radius * 2);
 
+        painter.setBrush(Qt::NoBrush);
         painter.end();
     }
     catch (std::exception& e)

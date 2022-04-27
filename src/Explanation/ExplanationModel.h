@@ -37,6 +37,7 @@ public:
     Explanation::Metric currentMetric() { return _explanationMetric; }
     const std::vector<QColor>& getColorMapping() { return _colorMapping.getColors(); }
 
+    void resetDataset() { _hasDataset = false; }
     void setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection);
     void recomputeNeighbourhood(float neighbourhoodRadius);
     void recomputeMetrics();
@@ -51,6 +52,7 @@ public:
     std::vector<float> computeConfidences(const DataMatrix& dimRanks);
 
 signals:
+    void datasetChanged();
     void explanationMetricChanged(Explanation::Metric metric);
 
     void datasetDimensionsChanged();

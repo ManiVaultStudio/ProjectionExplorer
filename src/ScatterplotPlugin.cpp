@@ -547,6 +547,9 @@ void ScatterplotPlugin::positionDatasetChanged()
     if (!_positionDataset.isValid())
         return;
 
+    // Unset data from explanation model
+    _explanationModel.resetDataset();
+
     // Reset dataset references
     _positionSourceDataset.reset();
 
@@ -880,7 +883,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        _core->notifyDataSelectionChanged(_positionDataset);
+        _core->notifyDatasetSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 
@@ -907,7 +910,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        _core->notifyDataSelectionChanged(_positionDataset);
+        _core->notifyDatasetSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 

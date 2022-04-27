@@ -145,6 +145,10 @@ void ExplanationModel::setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<P
             _dimensionNames.push_back(QString("Dim " + QString::number(j)));
         }
     }
+
+    emit datasetChanged();
+
+    _hasDataset = true;
 }
 
 void ExplanationModel::initialize()
@@ -189,8 +193,6 @@ void ExplanationModel::initialize()
 
     // Create color mapping
     _colorMapping.recreate(_dataset);
-
-    _hasDataset = true;
 }
 
 void ExplanationModel::recomputeNeighbourhood(float neighbourhoodRadius)

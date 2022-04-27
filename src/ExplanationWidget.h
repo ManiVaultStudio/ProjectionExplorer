@@ -52,6 +52,7 @@ public:
     void showDifferentialValues(bool on) { _differentialRanking = on; }
 
 public slots:
+    void datasetChanged();
     void sortByDefault();
     void sortByVariance();
     void sortByValue();

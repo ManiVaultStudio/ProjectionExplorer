@@ -176,7 +176,7 @@ private:
 
     QPoint                  _oldSelectionPoint;
     float                   _oldSelectionRadius;
-    bool                    _drawOldSelection;
+    bool                    _drawOldSelection = false;
     QPoint                  _currentPoint;
     float                   _currentRadius;
     bool                    _globalColor = false;
