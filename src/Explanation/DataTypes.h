@@ -14,7 +14,7 @@ public:
     int numDimensions() const { return _data.cols(); }
     int numPoints() const { return _data.rows(); }
 
-    void excludeDimension(int dim) { _exclusionList[dim] = true; }
+    void excludeDimension(int dim) { _exclusionList[dim] = !_exclusionList[dim]; }
     bool isExcluded(int dim) const { return _exclusionList[dim]; }
 
     auto row(int row) const { return _data.row(row); }
