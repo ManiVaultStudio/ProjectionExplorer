@@ -147,6 +147,7 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
     if (selection.size() == 0)
     {
         _dimAggregation.clear();
+        _sortIndices.clear();
         return;
     }
 
@@ -408,6 +409,15 @@ void BarChart::paintEvent(QPaintEvent* event)
         for (int i = 0; i < _explanationModel.getDataset().numDimensions(); i++)
         {
             // Draw colored legend boxes
+            // Set color according to exclusion
+            bool excluded = _explanationModel.getDataset().isExcluded(i);
+
+            QColor color(180, 180, 180, 255);
+            if (i < colorMapping.size())
+                color = colorMapping[i];
+            if (excluded)
+                color = QColor(255, 255, 255);
+
             // Check if mouse is over box, if so, draw a cross over it
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
@@ -415,7 +425,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             }
             else
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, colorMapping[i]);
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
             }
 
             painter.setPen(QColor(255, 255, 255));
