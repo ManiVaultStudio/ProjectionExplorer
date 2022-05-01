@@ -15,6 +15,7 @@
 #define RANGE_WIDTH 250
 #define TOP_MARGIN 30
 #define DIFF_HEIGHT 12
+#define LEGEND_BUTTON 400
 
 bool isMouseOverBox(QPoint mousePos, int x, int y, int size)
 {
@@ -199,6 +200,13 @@ void BarChart::datasetChanged()
     _dimAggregation.clear();
     _sortIndices.clear();
     _selection.clear();
+
+    // Draw legend or not depending on the number of dimensions
+    std::cout << "Height: " << height() << " Dim height: " << (_explanationModel.getDataset().numDimensions() * 20 + 270) << std::endl;
+    if (_explanationModel.getDataset().numDimensions() * 20 + 270 > height())
+        _drawLegend = false;
+    else
+        _drawLegend = true;
 }
 
 void BarChart::sortByDefault()
@@ -283,15 +291,14 @@ void BarChart::paintEvent(QPaintEvent* event)
             if (excluded)
                 color = QColor(255, 255, 255);
 
-            painter.setPen(Qt::red);
-            painter.drawEllipse(_mousePos.x() - 8, _mousePos.y() - 8, 16, 16);
+            //painter.setPen(Qt::red);
+            //painter.drawEllipse(_mousePos.x() - 8, _mousePos.y() - 8, 16, 16);
 
             // Draw colored legend boxes
             // Check if mouse is over box, if so, draw a cross over it
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
                 painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(180, 180, 180));
-                //emit dimensionExcluded(sortIndex);
             }
             else
             {
@@ -402,7 +409,6 @@ void BarChart::paintEvent(QPaintEvent* event)
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
                 painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(220, 220, 220));
-                emit dimensionExcluded(i);
             }
             else
             {
@@ -422,9 +428,35 @@ void BarChart::paintEvent(QPaintEvent* event)
     }
 
     // Draw legend
+    int legendY = _drawLegend ? std::min(TOP_MARGIN + 8 + 16 * (numDimensions + 2), height()-270) : height() - 30;
+    int legendHeight = _drawLegend ? 270 : 30;
+
+    painter.fillRect(0, legendY, 600, legendHeight, QColor(60, 60, 60));
+
+    painter.setPen(QColor(255, 255, 255));
+    painter.drawText(10, legendY + 20, "Legend");
+
+    // Draw minimize / maximize
+    QPen arrowPen;
+    arrowPen.setColor(Qt::white);
+    arrowPen.setWidth(3);
+    painter.setPen(arrowPen);
+
+    if (_drawLegend)
+    {
+        // Draw minus sign
+        painter.drawLine(LEGEND_BUTTON, legendY + 15, LEGEND_BUTTON + 10, legendY + 15);
+
+        painter.drawImage(60, legendY + 40, _legend);
+    }
+    else
+    {
+        // Draw plus sign
+        painter.drawLine(LEGEND_BUTTON, legendY + 15, LEGEND_BUTTON + 10, legendY + 15);
+        painter.drawLine(LEGEND_BUTTON + 5, legendY + 10, LEGEND_BUTTON + 5, legendY + 20);
+    }
+    
     //// Draw range line
-    int varHeight = TOP_MARGIN + 8 + 16 * (numDimensions + 2);
-    painter.fillRect(0, varHeight, 600, 270, QColor(60, 60, 60));
     //int leftEnd = 50;
     //int rightEnd = 150;
     //int mid = 100;
@@ -484,10 +516,6 @@ void BarChart::paintEvent(QPaintEvent* event)
     //painter.fillRect(RANGE_OFFSET + mid - 60, varHeight - 4, 60, DIFF_HEIGHT, QColor(255, 0, 0, 128));
     //painter.setPen(QColor(255, 255, 255, 255));
     //painter.drawText(RANGE_OFFSET + mid - 330, varHeight + 5, QString("Selection Mean < Global Mean"));
-
-    painter.setPen(QColor(255, 255, 255));
-    painter.drawText(10, varHeight + 20, "Legend");
-    painter.drawImage(60, varHeight + 40, _legend);
 }
 
 bool BarChart::eventFilter(QObject* target, QEvent* event)
@@ -508,6 +536,18 @@ bool BarChart::eventFilter(QObject* target, QEvent* event)
                     emit dimensionExcluded(_sortIndices[j]);
                 else
                     emit dimensionExcluded(j);
+            }
+        }
+
+        if (_explanationModel.hasDataset())
+        {
+            int numDimensions = _explanationModel.getDataset().numDimensions();
+            int legendY = _drawLegend ? std::min(TOP_MARGIN + 8 + 16 * (numDimensions + 2), height() - 270) : height() - 30;
+
+            if (isMouseOverBox(mousePos, LEGEND_BUTTON - 4, legendY + 10 - 4, 18)) // Padded by 4 pixels all sides
+            {
+                _drawLegend = !_drawLegend;
+                update();
             }
         }
 

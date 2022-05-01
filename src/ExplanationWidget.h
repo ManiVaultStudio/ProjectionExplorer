@@ -84,6 +84,8 @@ private:
     QPoint _mousePos;
 
     QImage _legend;
+
+    bool _drawLegend = true;
 };
 
 class ImageViewWidget : public QWidget
