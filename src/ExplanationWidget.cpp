@@ -16,6 +16,7 @@
 #define TOP_MARGIN 30
 #define DIFF_HEIGHT 12
 #define LEGEND_BUTTON 400
+#define HIGHLIGHT_COLOR Qt::white
 
 bool isMouseOverBox(QPoint mousePos, int x, int y, int size)
 {
@@ -152,11 +153,11 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
     int numDimensions = dimRanking.size();
 
     // Print rankings
-    for (int j = 0; j < numDimensions; j++)
-    {
-        std::cout << "Dim selection rank 1: " << dimRanking[j];
-    }
-    std::cout << std::endl;
+    //for (int j = 0; j < numDimensions; j++)
+    //{
+    //    std::cout << "Dim selection rank 1: " << dimRanking[j];
+    //}
+    //std::cout << std::endl;
 
     _dimAggregation = dimRanking;
 
@@ -188,6 +189,8 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
         std::sort(_sortIndices.begin(), _sortIndices.end(), [&](int i, int j) {return _dimAggregation[i] > _dimAggregation[j]; }); break;
     default: break;
     }
+
+    update();
 }
 
 void BarChart::computeOldMetrics(const std::vector<unsigned int>& oldSelection)
@@ -298,7 +301,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             // Check if mouse is over box, if so, draw a cross over it
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(180, 180, 180));
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, HIGHLIGHT_COLOR);
             }
             else
             {
@@ -408,7 +411,7 @@ void BarChart::paintEvent(QPaintEvent* event)
             // Check if mouse is over box, if so, draw a cross over it
             if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, QColor(220, 220, 220));
+                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, HIGHLIGHT_COLOR);
             }
             else
             {

@@ -352,7 +352,14 @@ void ScatterplotPlugin::colorPointsByRanking()
 
     hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
     hdps::Dataset<Points> selection = sourceDataset->getSelection();
-    //_explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+    
+    // Compute new ranking of selection if any
+    if (selection->indices.size() > 0)
+    {
+        std::vector<float> dimRanking(sourceDataset->getNumDimensions());
+        _explanationModel.computeDimensionRanks(dimRanking, selection->indices);
+        _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+    }
 
     std::vector<float> confidences = _explanationModel.computeConfidences(dimRanking);
 
