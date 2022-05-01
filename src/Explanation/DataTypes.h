@@ -9,7 +9,11 @@ using NeighbourhoodMatrix = std::vector<Neighbourhood>;
 class DataTable
 {
 public:
-    void setData(DataMatrix& data) { _data = data; _exclusionList.resize(_data.cols(), false); }
+    void setData(DataMatrix& data) {
+        _data = data;
+        _exclusionList.clear();
+        _exclusionList.resize(_data.cols(), false);
+    }
 
     int numDimensions() const { return _data.cols(); }
     int numPoints() const { return _data.rows(); }
