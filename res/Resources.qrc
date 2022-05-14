@@ -3,5 +3,6 @@
         <file>shaders/SelectionTool.frag</file>
         <file>shaders/SelectionTool.vert</file>
         <file>Legend.png</file>
+        <file>DiffLegend.png</file>
     </qresource>
 </RCC>

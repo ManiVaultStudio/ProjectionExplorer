@@ -71,6 +71,26 @@ void DataMetrics::compute(const DataTable& dataset, const std::vector<unsigned i
     }
 }
 
+void drawVarianceWhiskers(QPainter& painter, float x1, float x2, int y)
+{
+    QPen originalPen = painter.pen();
+    QPen variancePen;
+    variancePen.setColor(QColor(255, 255, 255, 255));
+    variancePen.setWidth(2);
+    painter.setPen(variancePen);
+
+    painter.drawLine(RANGE_OFFSET + x1 * RANGE_WIDTH, TOP_MARGIN + y, RANGE_OFFSET + x2 * RANGE_WIDTH, TOP_MARGIN + y);
+
+    variancePen.setWidth(1);
+    painter.setPen(variancePen);
+
+    painter.drawLine(RANGE_OFFSET + x1 * RANGE_WIDTH, TOP_MARGIN + y - 4, RANGE_OFFSET + x1 * RANGE_WIDTH, TOP_MARGIN + y + 4);
+    painter.drawLine(RANGE_OFFSET + x2 * RANGE_WIDTH, TOP_MARGIN + y - 4, RANGE_OFFSET + x2 * RANGE_WIDTH, TOP_MARGIN + y + 4);
+
+    // Restore original pen
+    painter.setPen(originalPen);
+}
+
 BarChart::BarChart(ExplanationModel& explanationModel) :
     _explanationModel(explanationModel),
     _differentialRanking(false),
@@ -86,6 +106,7 @@ BarChart::BarChart(ExplanationModel& explanationModel) :
     setMouseTracking(true);
 
     _legend.load(":/Legend.png");
+    _diffLegend.load(":/DiffLegend.png");
 
     connect(&_explanationModel, &ExplanationModel::datasetChanged, this, &BarChart::datasetChanged);
     //const char* tab_colors[] = { "#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#edc948", "#bab0ac", "#e15759", "#b07aa1", "#76b7b2", "#ff9da7" };
@@ -243,11 +264,13 @@ void BarChart::paintEvent(QPaintEvent* event)
     const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping();
 
     QPainter painter(this);
-    //painter.setRenderHint(QPainter::RenderHint::Antialiasing);
+    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
     painter.fillRect(0, 0, 600, (numDimensions + 2) * 20, QColor(38, 38, 38));
 
     painter.setPen(Qt::white);
-    painter.setFont(QFont("MS Shell Dlg 2", 10, QFont::ExtraBold));
+    QFont font = QFont("MS Shell Dlg 2", 10, QFont::ExtraBold);
+    font.setPixelSize(12);
+    painter.setFont(font);
     
     if (_dimAggregation.size() > 0)
     {
@@ -262,9 +285,13 @@ void BarChart::paintEvent(QPaintEvent* event)
         if (!_differentialRanking)
         {
             // Draw PCP
-            int alpha = std::min(4 * std::max<int>(255.0f / _selection.size(), 1), 255);
-            painter.setPen(QColor(255, 255, 0, alpha));
+            int alpha = std::min(2 * std::max<int>(255.0f / _selection.size(), 1), 255);
 
+            QPen pcpPen;
+            pcpPen.setColor(QColor(255, 255, 0, alpha));
+            pcpPen.setWidth(2);
+            painter.setPen(pcpPen);
+            
             for (const unsigned int& si : _selection)
             {
                 for (int j = 0; j < numDimensions - 1; j++)
@@ -352,9 +379,11 @@ void BarChart::paintEvent(QPaintEvent* event)
                 // Draw variance
                 painter.setPen(QColor(255, 255, 255, 255));
                 //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, (_newMetrics.variances[sortIndex]) * RANGE_WIDTH * 2, 12);
-                painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
-                painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
-                painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+
+                drawVarianceWhiskers(painter, mean - _newMetrics.variances[sortIndex], mean + _newMetrics.variances[sortIndex], 16 * i + 8);
+                //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
+                //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+                //painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
 
                 QPen meanPen;
                 meanPen.setColor(QColor(255, 0, 0, 255));
@@ -383,11 +412,17 @@ void BarChart::paintEvent(QPaintEvent* event)
                 int newMeanX = RANGE_OFFSET + newMean * RANGE_WIDTH;
 
                 QColor diffColor = newMeanX - oldMeanX >= 0 ? QColor(0, 255, 0, 128) : QColor(255, 0, 0, 128);
-                painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i, newMeanX - oldMeanX, DIFF_HEIGHT, diffColor);
+                painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i + 2, newMeanX - oldMeanX, DIFF_HEIGHT, diffColor);
 
-                painter.setPen(QColor(180, 180, 180, 255));
-                painter.drawLine(oldMeanX, TOP_MARGIN + 16 * i, oldMeanX, TOP_MARGIN + 16 * i + 16);
-                painter.setPen(QColor(255, 0, 0, 255));
+                QPen meanPen;
+                meanPen.setWidth(2);
+
+                meanPen.setColor(QColor(128, 0, 0, 255));
+                painter.setPen(meanPen);
+                painter.drawLine(oldMeanX, TOP_MARGIN + 16 * i + 2, oldMeanX, TOP_MARGIN + 16 * i + 14);
+                
+                meanPen.setColor(QColor(255, 0, 0, 255));
+                painter.setPen(meanPen);
                 painter.drawLine(newMeanX, TOP_MARGIN + 16 * i, newMeanX, TOP_MARGIN + 16 * i + 16);
 
                 qDebug() << newMeanX << oldMeanX << newMean << oldMean;
@@ -395,10 +430,11 @@ void BarChart::paintEvent(QPaintEvent* event)
                 // Draw variance
                 painter.setPen(QColor(255, 255, 255, 255));
                 //painter.drawRect(RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, 2 * _newMetrics.variances[sortIndex] * RANGE_WIDTH, 16);
+                drawVarianceWhiskers(painter, newMean - _newMetrics.variances[sortIndex], newMean + _newMetrics.variances[sortIndex], 16 * i + 8);
 
-                painter.drawLine(RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
-                painter.drawLine(RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 14 + 16 * i);
-                painter.drawLine(RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 14 + 16 * i);
+                //painter.drawLine(RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
+                //painter.drawLine(RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (newMean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+                //painter.drawLine(RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (newMean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
             }
         }
     }
@@ -460,7 +496,10 @@ void BarChart::paintEvent(QPaintEvent* event)
         // Draw minus sign
         painter.drawLine(LEGEND_BUTTON, legendY + 15, LEGEND_BUTTON + 10, legendY + 15);
 
-        painter.drawImage(60, legendY + 40, _legend);
+        if (_differentialRanking)
+            painter.drawImage(60, legendY + 40, _diffLegend);
+        else
+            painter.drawImage(60, legendY + 40, _legend);
     }
     else
     {

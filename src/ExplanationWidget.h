@@ -84,6 +84,7 @@ private:
     QPoint _mousePos;
 
     QImage _legend;
+    QImage _diffLegend;
 
     bool _drawLegend = true;
 };
