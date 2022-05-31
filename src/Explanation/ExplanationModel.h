@@ -39,7 +39,7 @@ public:
 
     void resetDataset() { _hasDataset = false; }
     void setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection);
-    void recomputeNeighbourhood(float neighbourhoodRadius);
+    void recomputeNeighbourhood(float neighbourhoodRadius, int xDim, int yDim);
     void recomputeMetrics();
     void recomputeColorMapping(DataMatrix& dimRanks);
 
@@ -65,7 +65,7 @@ private:
      * For every point in the projection compute the indices of the points
      * in its neighbourhood and add them to the matrix.
      */
-    void computeNeighbourhoodMatrix(NeighbourhoodMatrix& neighbourhoodMatrix, float radius);
+    void computeNeighbourhoodMatrix(NeighbourhoodMatrix& neighbourhoodMatrix, float radius, int xDim, int yDim);
 
     Explanation::Method* getCurrentExplanationMethod();
 

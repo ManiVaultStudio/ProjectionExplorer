@@ -19,14 +19,14 @@ namespace
         }
     }
 
-    float computeProjectionDiameter(const DataMatrix& projection)
+    float computeProjectionDiameter(const DataMatrix& projection, int xDim, int yDim)
     {
         float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
         float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
         for (int i = 0; i < projection.rows(); i++)
         {
-            float x = projection(i, 0);
-            float y = projection(i, 1);
+            float x = projection(i, xDim);
+            float y = projection(i, yDim);
 
             if (x < minX) minX = x;
             if (x > maxX) maxX = x;
@@ -91,10 +91,10 @@ namespace
         }
     }
 
-    void findNeighbourhood(const DataMatrix& projection, int centerId, float radius, std::vector<int>& neighbourhood)
+    void findNeighbourhood(const DataMatrix& projection, int centerId, float radius, std::vector<int>& neighbourhood, int xDim, int yDim)
     {
-        float x = projection(centerId, 0);
-        float y = projection(centerId, 1);
+        float x = projection(centerId, xDim);
+        float y = projection(centerId, yDim);
 
         float radSquared = radius * radius;
 
@@ -102,8 +102,8 @@ namespace
 
         for (int i = 0; i < projection.rows(); i++)
         {
-            float xd = projection(i, 0) - x;
-            float yd = projection(i, 1) - y;
+            float xd = projection(i, xDim) - x;
+            float yd = projection(i, yDim) - y;
 
             float magSquared = xd * xd + yd * yd;
 
@@ -154,7 +154,7 @@ void ExplanationModel::setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<P
 void ExplanationModel::initialize()
 {
     // Compute projection diameter
-    _projectionDiameter = computeProjectionDiameter(_projection);
+    _projectionDiameter = computeProjectionDiameter(_projection, 0, 1);
     std::cout << "Diameter: " << _projectionDiameter << std::endl;
 
     //// Standardized dataset
@@ -195,11 +195,16 @@ void ExplanationModel::initialize()
     _colorMapping.recreate(_dataset);
 }
 
-void ExplanationModel::recomputeNeighbourhood(float neighbourhoodRadius)
+void ExplanationModel::recomputeNeighbourhood(float neighbourhoodRadius, int xDim, int yDim)
 {
-    computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius);
+    if (!_hasDataset)
+        return;
 
-    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.25f);
+    _projectionDiameter = computeProjectionDiameter(_projection, xDim, yDim);
+
+    computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius, xDim, yDim);
+
+    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.25f, xDim, yDim);
 }
 
 void ExplanationModel::recomputeMetrics()
@@ -349,7 +354,7 @@ std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRan
     return confidences;
 }
 
-void ExplanationModel::computeNeighbourhoodMatrix(NeighbourhoodMatrix& neighbourhoodMatrix, float radius)
+void ExplanationModel::computeNeighbourhoodMatrix(NeighbourhoodMatrix& neighbourhoodMatrix, float radius, int xDim, int yDim)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -359,7 +364,7 @@ void ExplanationModel::computeNeighbourhoodMatrix(NeighbourhoodMatrix& neighbour
 #pragma omp parallel for
     for (int i = 0; i < _projection.rows(); i++)
     {
-        findNeighbourhood(_projection, i, radius, neighbourhoodMatrix[i]);
+        findNeighbourhood(_projection, i, radius, neighbourhoodMatrix[i], xDim, yDim);
 
         if (i % 10000 == 0) std::cout << "Computing neighbourhood for points: [" << i << "/" << _projection.rows() << "]" << std::endl;
     }

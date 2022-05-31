@@ -315,7 +315,10 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
 void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
 {
     _scatterPlotWidget->setNeighbourhoodRadius(value / 100.0f);
-    _explanationModel.recomputeNeighbourhood(value / 100.0f);
+
+    int xDim = _settingsAction.getPositionAction().getDimensionX();
+    int yDim = _settingsAction.getPositionAction().getDimensionY();
+    _explanationModel.recomputeNeighbourhood(value / 100.0f, xDim, yDim);
 
     colorPointsByRanking();
 }
@@ -574,8 +577,10 @@ void ScatterplotPlugin::positionDatasetChanged()
     updateData();
 
     // Compute explanations
+    int xDim = _settingsAction.getPositionAction().getDimensionX();
+    int yDim = _settingsAction.getPositionAction().getDimensionY();
     _explanationModel.setDataset(_positionDataset->getSourceDataset<Points>(), _positionDataset);
-    _explanationModel.recomputeNeighbourhood(0.1f);
+    _explanationModel.recomputeNeighbourhood(0.1f, xDim, yDim);
 
     colorPointsByRanking();
 
@@ -721,11 +726,27 @@ std::uint32_t ScatterplotPlugin::getNumberOfPoints() const
 void ScatterplotPlugin::setXDimension(const std::int32_t& dimensionIndex)
 {
     updateData();
+
+    int xDim = _settingsAction.getPositionAction().getDimensionX();
+    int yDim = _settingsAction.getPositionAction().getDimensionY();
+    _explanationModel.recomputeNeighbourhood(0.1f, xDim, yDim);
+
+    colorPointsByRanking();
+
+    _explanationWidget->getBarchart().update();
 }
 
 void ScatterplotPlugin::setYDimension(const std::int32_t& dimensionIndex)
 {
     updateData();
+
+    int xDim = _settingsAction.getPositionAction().getDimensionX();
+    int yDim = _settingsAction.getPositionAction().getDimensionY();
+    _explanationModel.recomputeNeighbourhood(0.1f, xDim, yDim);
+
+    colorPointsByRanking();
+
+    _explanationWidget->getBarchart().update();
 }
 
 void ScatterplotPlugin::computeLensSelection(std::vector<std::uint32_t>& targetSelectionIndices)
