@@ -348,6 +348,9 @@ void ScatterplotPlugin::datasetDimensionsChanged()
 
 void ScatterplotPlugin::colorPointsByRanking()
 {
+    if (!_explanationModel.hasDataset())
+        return;
+
     _explanationModel.recomputeMetrics();
 
     Eigen::ArrayXXf dimRanking;
