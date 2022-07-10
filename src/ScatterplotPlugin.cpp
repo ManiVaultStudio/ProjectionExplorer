@@ -28,6 +28,7 @@
 #include <set>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 Q_PLUGIN_METADATA(IID "nl.uu.ExplanationScatterplot")
 
@@ -364,9 +365,22 @@ void ScatterplotPlugin::colorPointsByRanking()
     // Compute new ranking of selection if any
     if (selection->indices.size() > 0)
     {
-        std::vector<float> dimRanking(sourceDataset->getNumDimensions());
-        _explanationModel.computeDimensionRanks(dimRanking, selection->indices);
-        _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+        hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+        if (sourceDataset->isFull())
+        {
+            std::vector<float> dimRanking(sourceDataset->getNumDimensions());
+            _explanationModel.computeDimensionRanks(dimRanking, selection->indices);
+            _explanationWidget->getBarchart().setRanking(dimRanking, selection->indices);
+        }
+        else
+        {
+            std::vector<unsigned int> localSelectionIndices;
+            sourceDataset->getLocalSelectionIndices(localSelectionIndices);
+
+            std::vector<float> dimRanking(sourceDataset->getNumDimensions());
+            _explanationModel.computeDimensionRanks(dimRanking, localSelectionIndices);
+            _explanationWidget->getBarchart().setRanking(dimRanking, localSelectionIndices);
+        }
     }
 
     std::vector<float> confidences = _explanationModel.computeConfidences(dimRanking);
@@ -561,6 +575,27 @@ void ScatterplotPlugin::positionDatasetChanged()
     // Only proceed if we have a valid position dataset
     if (!_positionDataset.isValid())
         return;
+
+    ////// Print dataset
+    //std::fstream fs;
+    //fs.open("spam.2d", std::fstream::out);
+    //fs << "DY\n";
+    //fs << _positionDataset->getNumPoints() << "\n";
+    //fs << _positionDataset->getNumDimensions() << "\n";
+    //fs << "\n";
+    //if (fs.is_open()) {
+    //    for (int i = 0; i < _positionDataset->getNumPoints(); i++)
+    //    {
+    //        fs << i << ";";
+    //        for (int j = 0; j < _positionDataset->getNumDimensions(); j++)
+    //        {
+    //            float v = _positionDataset->getValueAt(i * _positionDataset->getNumDimensions() + j);
+    //            fs << v << ";";
+    //        }
+    //        fs << 0.0 << "\n";
+    //    }
+    //}
+    //fs.close();
 
     // Unset data from explanation model
     _explanationModel.resetDataset();
@@ -808,7 +843,18 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 
             if (_positionDataset.isValid())
             {
-                _explanationWidget->getBarchart().computeOldMetrics(_positionDataset->getSelection()->getSelectionIndices());
+                hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+                if (sourceDataset->isFull())
+                {
+                    _explanationWidget->getBarchart().computeOldMetrics(_positionDataset->getSelection()->getSelectionIndices());
+                }
+                else
+                {
+                    std::vector<unsigned int> localSelectionIndices;
+                    sourceDataset->getLocalSelectionIndices(localSelectionIndices);
+
+                    _explanationWidget->getBarchart().computeOldMetrics(localSelectionIndices);
+                }
 
                 _explanationWidget->getBarchart().showDifferentialValues(true);
 

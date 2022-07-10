@@ -269,7 +269,7 @@ void BarChart::paintEvent(QPaintEvent* event)
 
     painter.setPen(Qt::white);
     QFont font = QFont("MS Shell Dlg 2", 10, QFont::ExtraBold);
-    font.setPixelSize(12);
+    font.setPixelSize(16);
     painter.setFont(font);
     
     if (_dimAggregation.size() > 0)
@@ -285,7 +285,7 @@ void BarChart::paintEvent(QPaintEvent* event)
         if (!_differentialRanking)
         {
             // Draw PCP
-            int alpha = std::min(2 * std::max<int>(255.0f / _selection.size(), 1), 255);
+            int alpha = std::min(1 * std::max<int>(255.0f / _selection.size(), 1), 255);
 
             QPen pcpPen;
             pcpPen.setColor(QColor(255, 255, 0, alpha));

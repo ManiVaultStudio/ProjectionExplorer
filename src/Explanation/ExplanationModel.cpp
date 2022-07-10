@@ -10,13 +10,23 @@ namespace
         int numDimensions = dataset->getNumDimensions();
 
         dataMatrix.resize(numPoints, numDimensions);
-        for (int j = 0; j < numDimensions; j++)
+        
+        for (int i = 0; i < numPoints; i++)
         {
-            std::vector<float> result;
-            dataset->extractDataForDimension(result, j);
-            for (int i = 0; i < result.size(); i++)
-                dataMatrix(i, j) = result[i];
+            for (int j = 0; j < numDimensions; j++)
+            {
+                int index = dataset->isFull() ? i * numDimensions + j : dataset->indices[i] * numDimensions + j;
+                dataMatrix(i, j) = dataset->getValueAt(index);
+            }
         }
+        
+        //for (int j = 0; j < numDimensions; j++)
+        //{
+        //    std::vector<float> result;
+        //    dataset->extractDataForDimension(result, j);
+        //    for (int i = 0; i < result.size(); i++)
+        //        dataMatrix(i, j) = result[i];
+        //}
     }
 
     float computeProjectionDiameter(const DataMatrix& projection, int xDim, int yDim)
