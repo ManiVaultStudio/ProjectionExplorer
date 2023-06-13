@@ -202,9 +202,9 @@ void ExportImageAction::exportImages()
             coloringAction.getDimensionAction().setCurrentDimensionName(dimensionNames[dimensionIndex]);
 
             if (_overrideRangesAction.isChecked()) {
-                auto& rangeAction = coloringAction.getColorMapAction().getSettingsAction().getHorizontalAxisAction().getRangeAction();
+                auto& rangeAction = coloringAction.getColorMapAction().getRangeAction(ColorMapAction::Axis::X);
 
-                rangeAction.initialize(_fixedRangeAction.getMinimum(), _fixedRangeAction.getMaximum(), _fixedRangeAction.getMinimum(), _fixedRangeAction.getMaximum());
+                rangeAction.initialize({ _fixedRangeAction.getMinimum(), _fixedRangeAction.getMaximum() }, { _fixedRangeAction.getMinimum(), _fixedRangeAction.getMaximum() });
             }
 
             // Create and save the image

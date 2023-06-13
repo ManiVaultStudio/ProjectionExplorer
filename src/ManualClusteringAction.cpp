@@ -1,8 +1,8 @@
 #include "ManualClusteringAction.h"
 #include "ScatterplotPlugin.h"
 #include "Application.h"
-#include "PointData.h"
-#include "ClusterData.h"
+#include "PointData/PointData.h"
+#include "ClusterData/ClusterData.h"
 
 #include <QHBoxLayout>
 #include <QRandomGenerator>
@@ -63,7 +63,7 @@ ManualClusteringAction::ManualClusteringAction(ScatterplotPlugin* scatterplotPlu
         targetClusterDataset->addCluster(cluster);
 
         // Notify others that the cluster data has changed
-        Application::core()->notifyDatasetChanged(targetClusterDataset);
+        events().notifyDatasetChanged(targetClusterDataset);
 
         // Reset the cluster name input
         _nameAction.reset();
@@ -92,7 +92,7 @@ void ManualClusteringAction::createDefaultClusterDataset()
     const auto defaultClusters = Application::core()->addDataset<Clusters>("Cluster", "Clusters (manual)", _scatterplotPlugin->getPositionDataset());
 
     // Notify others that the default set was added
-    Application::core()->notifyDatasetAdded(defaultClusters);
+    events().notifyDatasetAdded(defaultClusters);
 
     // Update picker
     updateTargetClusterDatasets();
@@ -169,7 +169,7 @@ ManualClusteringAction::Widget::Widget(QWidget* parent, ManualClusteringAction* 
     else {
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
 
         // Create widgets
         auto targetClusterWidget    = manualClusteringAction->getTargetClusterDataset().createWidget(this);

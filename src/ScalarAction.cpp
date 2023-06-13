@@ -127,7 +127,7 @@ ScalarAction::Widget::Widget(QWidget* parent, ScalarAction* scalarAction) :
 
     auto layout = new QHBoxLayout();
 
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     // Create action widgets
     auto magnitudeWidget        = scalarAction->getMagnitudeAction().createWidget(this);

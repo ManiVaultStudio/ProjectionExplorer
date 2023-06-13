@@ -102,7 +102,7 @@ RenderModeAction::Widget::Widget(QWidget* parent, RenderModeAction* renderModeAc
         setPopupLayout(layout);
     }
     else {
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         setLayout(layout);
     }
 }

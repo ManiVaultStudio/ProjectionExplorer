@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QColor>
 
-#include "PointData.h"
+#include "PointData/PointData.h"
 
 #include "DataTypes.h"
 #include "Methods/ExplanationMethod.h"

@@ -5,9 +5,9 @@
 
 #include "util/PixelSelectionTool.h"
 
-#include "PointData.h"
-#include "ClusterData.h"
-#include "ColorData.h"
+#include "PointData/PointData.h"
+#include "ClusterData/ClusterData.h"
+#include "ColorData/ColorData.h"
 
 #include "graphics/Vector2f.h"
 #include "graphics/Vector3f.h"
@@ -193,7 +193,7 @@ void ScatterplotPlugin::init()
 {
     auto layout = new QVBoxLayout();
 
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
     auto settingsWidget = _settingsAction.createWidget(&getWidget());
@@ -204,7 +204,7 @@ void ScatterplotPlugin::init()
     centralWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     centralWidget->setContentsMargins(0, 0, 0, 0);
     auto centralLayout = new QHBoxLayout();
-    centralLayout->setMargin(0);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
     centralLayout->addWidget(_scatterPlotWidget);
     centralLayout->addWidget(_explanationWidget);
@@ -219,7 +219,7 @@ void ScatterplotPlugin::init()
     bottomToolbarWidget->setMaximumHeight(40);
 
     bottomToolbarWidget->setContentsMargins(0, 0, 0, 0);
-    bottomToolbarLayout->setMargin(0);
+    bottomToolbarLayout->setContentsMargins(0, 0, 0, 0);
     bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createLabelWidget(&getWidget()));
     bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createWidget(&getWidget()));
     bottomToolbarLayout->addWidget(_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().createWidget(&getWidget()));
@@ -249,7 +249,6 @@ void ScatterplotPlugin::init()
         selectPoints();
     });
 
-    _eventListener.setEventCore(Application::core());
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&ScatterplotPlugin::onDataEvent, this, std::placeholders::_1));
 
@@ -280,7 +279,7 @@ void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
                 hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
                 hdps::Dataset<Points> selection = sourceDataset->getSelection();
 
-                std::vector<float> dimRanking(sourceDataset->getNumDimensions());
+                std::vector<float> dimRanking(_explanationModel.getDataset().numDimensions());
 
                 if (selection->indices.size() > 0)
                 {
@@ -446,7 +445,7 @@ void ScatterplotPlugin::createSubset(const bool& fromSourceData /*= false*/, con
     auto subset = subsetPoints->createSubsetFromSelection(_positionDataset->getGuiName(), _positionDataset);
 
     // Notify others that the subset was added
-    _core->notifyDatasetAdded(subset);
+    events().notifyDatasetAdded(subset);
     
     // And select the subset
     subset->getDataHierarchyItem().select();
@@ -549,7 +548,7 @@ void ScatterplotPlugin::selectPoints()
     _positionDataset->setSelectionIndices(targetSelectionIndices);
 
     // Notify others that the selection changed
-    _core->notifyDatasetSelectionChanged(_positionDataset);
+    events().notifyDatasetSelectionChanged(_positionDataset);
 }
 
 void ScatterplotPlugin::updateWindowTitle()
@@ -962,7 +961,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        _core->notifyDatasetSelectionChanged(_positionDataset);
+        events().notifyDatasetSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 
@@ -989,7 +988,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        _core->notifyDatasetSelectionChanged(_positionDataset);
+        events().notifyDatasetSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 
@@ -1003,9 +1002,9 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     return QObject::eventFilter(target, event);
 }
 
-QIcon ScatterplotPluginFactory::getIcon() const
+QIcon ScatterplotPluginFactory::getIcon(const QColor& color /*= Qt::black*/) const
 {
-    return Application::getIconFont("FontAwesome").getIcon("braille");
+    return Application::getIconFont("FontAwesome").getIcon("braille", color);
 }
 
 ViewPlugin* ScatterplotPluginFactory::produce()
@@ -1013,9 +1012,28 @@ ViewPlugin* ScatterplotPluginFactory::produce()
     return new ScatterplotPlugin(this);
 }
 
-hdps::DataTypes ScatterplotPluginFactory::supportedDataTypes() const
+PluginTriggerActions ScatterplotPluginFactory::getPluginTriggerActions(const hdps::Datasets& datasets) const
 {
-    DataTypes supportedTypes;
-    supportedTypes.append(PointType);
-    return supportedTypes;
+    PluginTriggerActions pluginTriggerActions;
+
+    const auto getInstance = [this]() -> ScatterplotPlugin* {
+        return dynamic_cast<ScatterplotPlugin*>(Application::core()->getPluginManager().requestViewPlugin(getKind()));
+    };
+
+    const auto numberOfDatasets = datasets.count();
+
+    if (PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
+        auto& fontAwesome = Application::getIconFont("FontAwesome");
+
+        if (numberOfDatasets >= 1) {
+            auto pluginTriggerAction = new PluginTriggerAction(const_cast<ScatterplotPluginFactory*>(this), this, "Scatterplot", "View selected datasets side-by-side in separate scatter plot viewers", fontAwesome.getIcon("braille"), [this, getInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+                for (auto dataset : datasets)
+                    getInstance()->loadData(Datasets({ dataset }));
+                });
+
+            pluginTriggerActions << pluginTriggerAction;
+        }
+    }
+
+    return pluginTriggerActions;
 }

@@ -1,5 +1,7 @@
 #include "ExplanationModel.h"
 
+#include "PointData/DimensionsPickerAction.h"
+
 #include <iostream>
 
 namespace
@@ -9,15 +11,24 @@ namespace
         int numPoints = dataset->getNumPoints();
         int numDimensions = dataset->getNumDimensions();
 
-        dataMatrix.resize(numPoints, numDimensions);
+        std::vector<bool> enabledDims = dataset->getDimensionsPickerAction().getEnabledDimensions();
+        int numEnabledDims = std::count(enabledDims.begin(), enabledDims.end(), true);
+
+        dataMatrix.resize(numPoints, numEnabledDims);
         
-        for (int i = 0; i < numPoints; i++)
+        int d = 0;
+
+        for (int j = 0; j < numDimensions; j++)
         {
-            for (int j = 0; j < numDimensions; j++)
+            if (!enabledDims[j]) continue;
+
+            for (int i = 0; i < numPoints; i++)
             {
                 int index = dataset->isFull() ? i * numDimensions + j : dataset->indices[i] * numDimensions + j;
-                dataMatrix(i, j) = dataset->getValueAt(index);
+                dataMatrix(i, d) = dataset->getValueAt(index);
             }
+
+            d++;
         }
         
         //for (int j = 0; j < numDimensions; j++)
@@ -60,7 +71,7 @@ namespace
         dataStats.minRange.clear();
         dataStats.maxRange.clear();
         dataStats.ranges.clear();
-
+        
         dataStats.means.resize(numDimensions);
         dataStats.variances.resize(numDimensions);
         dataStats.minRange.resize(numDimensions, std::numeric_limits<float>::max());

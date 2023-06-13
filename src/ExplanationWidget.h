@@ -1,6 +1,6 @@
 #pragma once
 
-#include <PointData.h>
+#include <PointData/PointData.h>
 
 #include "Explanation/ExplanationModel.h"
 

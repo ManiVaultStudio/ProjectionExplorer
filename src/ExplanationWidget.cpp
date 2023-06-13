@@ -649,7 +649,7 @@ ExplanationWidget::ExplanationWidget(ExplanationModel& explanationModel)
     _imageViewWidget = new ImageViewWidget();
 
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(_barChart);
     //layout->addWidget(_imageViewWidget);
     //layout->addWidget(_rankLabel);

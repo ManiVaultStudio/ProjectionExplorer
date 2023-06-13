@@ -22,7 +22,7 @@ ExportImageDialog::ExportImageDialog(QWidget* parent, ScatterplotPlugin& scatter
 
     dynamic_cast<QGridLayout*>(exportImageWidget->layout())->setColumnStretch(0, 1);
 
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(exportImageWidget);
     layout->addStretch(1);
 

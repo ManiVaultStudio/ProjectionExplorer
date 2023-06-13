@@ -69,7 +69,7 @@ PlotAction::Widget::Widget(QWidget* parent, PlotAction* plotAction, const std::i
 
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(pointPlotWidget);
         layout->addWidget(densityPlotWidget);
 

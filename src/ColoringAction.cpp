@@ -5,8 +5,8 @@
 #include "ScatterplotWidget.h"
 #include "DataHierarchyItem.h"
 
-#include "PointData.h"
-#include "ClusterData.h"
+#include "PointData/PointData.h"
+#include "ClusterData/ClusterData.h"
 
 using namespace hdps::gui;
 
@@ -128,7 +128,7 @@ ColoringAction::ColoringAction(ScatterplotPlugin* scatterplotPlugin) :
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
 
     // Update scatter plot widget color map range when the color map action range changes
-    connect(&_colorMapAction.getSettingsAction().getHorizontalAxisAction().getRangeAction(), &DecimalRangeAction::rangeChanged, this, &ColoringAction::updateScatterPlotWidgetColorMapRange);
+    connect(&_colorMapAction.getRangeAction(ColorMapAction::Axis::X), &DecimalRangeAction::rangeChanged, this, &ColoringAction::updateScatterPlotWidgetColorMapRange);
 
     // Enable/disable the color map action when the scatter plot widget rendering or coloring mode changes
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::coloringModeChanged, this, &ColoringAction::updateColorMapActionReadOnly);
@@ -268,16 +268,15 @@ void ColoringAction::updateScatterPlotWidgetColors()
 
 void ColoringAction::updateColorMapActionScalarRange()
 {
-    // Get the color map range from the scatter plot widget
-    const auto colorMapRange    = _scatterplotPlugin->getScatterplotWidget().getColorMapRange();
+    const auto colorMapRange = _scatterplotPlugin->getScatterplotWidget().getColorMapRange();
     const auto colorMapRangeMin = colorMapRange.x;
     const auto colorMapRangeMax = colorMapRange.y;
 
-    // Get reference to color map range action
-    auto& colorMapRangeAction = _colorMapAction.getSettingsAction().getHorizontalAxisAction().getRangeAction();
+    auto& colorMapRangeAction = _colorMapAction.getRangeAction(ColorMapAction::Axis::X);
 
-    // Initialize the color map range action with the color map range from the scatter plot 
-    colorMapRangeAction.initialize(colorMapRangeMin, colorMapRangeMax, colorMapRangeMin, colorMapRangeMax, colorMapRangeMin, colorMapRangeMax);
+    colorMapRangeAction.initialize({ colorMapRangeMin, colorMapRangeMax }, { colorMapRangeMin, colorMapRangeMax });
+
+    _colorMapAction.getDataRangeAction(ColorMapAction::Axis::X).setRange({ colorMapRangeMin, colorMapRangeMax });
 }
 
 void ColoringAction::updateScatterplotWidgetColorMap()
@@ -328,7 +327,7 @@ void ColoringAction::updateScatterplotWidgetColorMap()
 void ColoringAction::updateScatterPlotWidgetColorMapRange()
 {
     // Get color map range action
-    const auto& rangeAction = _colorMapAction.getSettingsAction().getHorizontalAxisAction().getRangeAction();
+    const auto& rangeAction = _colorMapAction.getRangeAction(ColorMapAction::Axis::X);
 
     // And assign scatter plot renderer color map range
     getScatterplotWidget().setColorMapRange(rangeAction.getMinimum(), rangeAction.getMaximum());
@@ -402,7 +401,7 @@ ColoringAction::Widget::Widget(QWidget* parent, ColoringAction* coloringAction, 
     else {
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(labelWidget);
         layout->addWidget(colorByWidget);
         layout->addWidget(colorByConstantWidget);

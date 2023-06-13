@@ -55,7 +55,7 @@ SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionActio
         const auto getTypeWidget = [&, this]() -> QWidget* {
             auto layout = new QHBoxLayout();
 
-            layout->setMargin(0);
+            layout->setContentsMargins(0, 0, 0, 0);
             layout->addWidget(typeWidget);
             layout->addWidget(modifierAddWidget);
             layout->addWidget(modifierSubtractWidget);
@@ -71,7 +71,7 @@ SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionActio
         const auto getSelectWidget = [&, this]() -> QWidget* {
             auto layout = new QHBoxLayout();
 
-            layout->setMargin(0);
+            layout->setContentsMargins(0, 0, 0, 0);
             layout->addWidget(clearSelectionWidget);
             layout->addWidget(selectAllWidget);
             layout->addWidget(invertSelectionWidget);
@@ -99,7 +99,7 @@ SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionActio
     else {
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(typeWidget);
         layout->addWidget(brushRadiusWidget);
         layout->addWidget(modifierAddWidget);

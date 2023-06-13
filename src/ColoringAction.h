@@ -3,7 +3,7 @@
 #include "PluginAction.h"
 #include "ColorSourceModel.h"
 
-#include <DimensionPickerAction.h>
+#include <PointData/DimensionPickerAction.h>
 
 #include <QHBoxLayout>
 #include <QLabel>

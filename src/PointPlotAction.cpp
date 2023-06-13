@@ -457,7 +457,7 @@ PointPlotAction::Widget::Widget(QWidget* parent, PointPlotAction* pointPlotActio
     if (widgetFlags & PopupLayout) {
         auto layout = new QGridLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
 
         layout->addWidget(pointPlotAction->getSizeAction().createLabelWidget(this), 0, 0);
         layout->addWidget(pointPlotAction->getSizeAction().createWidget(this), 0, 1);
@@ -470,7 +470,7 @@ PointPlotAction::Widget::Widget(QWidget* parent, PointPlotAction* pointPlotActio
     else {
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
 
         layout->addWidget(pointPlotAction->getSizeAction().createLabelWidget(this));
         layout->addWidget(pointPlotAction->getSizeAction().createWidget(this));

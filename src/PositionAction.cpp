@@ -103,7 +103,7 @@ PositionAction::Widget::Widget(QWidget* parent, PositionAction* positionAction, 
     else {
         auto layout = new QHBoxLayout();
 
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         layout->addWidget(xDimensionLabel);
         layout->addWidget(xDimensionWidget);
         layout->addWidget(yDimensionLabel);
