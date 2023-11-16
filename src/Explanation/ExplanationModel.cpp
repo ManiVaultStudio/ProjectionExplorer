@@ -225,7 +225,7 @@ void ExplanationModel::recomputeNeighbourhood(float neighbourhoodRadius, int xDi
 
     computeNeighbourhoodMatrix(_neighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius, xDim, yDim);
 
-    computeNeighbourhoodMatrix(_confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.25f, xDim, yDim);
+    computeNeighbourhoodMatrix(_confidenceModel._confidenceNeighbourhoodMatrix, _projectionDiameter * neighbourhoodRadius * 0.25f, xDim, yDim);
 }
 
 void ExplanationModel::recomputeMetrics()
@@ -284,94 +284,12 @@ void ExplanationModel::computeDimensionRanks(DataMatrix& dimRanking)
 std::vector<float> ExplanationModel::computeConfidences(const DataMatrix& dimRanks)
 {
     int numPoints = dimRanks.rows();
-    int numDimensions = dimRanks.cols();
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // Compute the top-ranked dimension for every point
-    std::vector<int> topDimensions(numPoints);
-    for (int i = 0; i < numPoints; i++)
-    {
-        float minRank = std::numeric_limits<float>::max();
-        float maxRank = -std::numeric_limits<float>::max();
-        int topRank = 0;
-        for (int j = 0; j < numDimensions; j++)
-        {
-            if (_dataset.isExcluded(j)) continue;
-
-            float rank = dimRanks(i, j);
-
-            if (currentMetric() == Explanation::Metric::VARIANCE)
-            {
-                if (rank < minRank) { minRank = rank; topRank = j; }
-            }
-            else if (currentMetric() == Explanation::Metric::VALUE)
-            {
-                if (rank > maxRank) { maxRank = rank; topRank = j; }
-            }
-        }
-        topDimensions[i] = topRank;
-    }
 
     // Compute confidences
     std::vector<float> confidences(numPoints);
-    for (int i = 0; i < numPoints; i++)
-    {
-        const std::vector<int>& neighbourhood = _confidenceNeighbourhoodMatrix[i];
 
-        //// Add top-1 rankings over all neighbouring points in vector
-        //std::vector<float> topRankings(numDimensions, 0);
-        //for (const int ni : neighbourhood)
-        //{
-        //    int topDim = topDimensions[ni];
+    _confidenceModel.computeConfidences(currentMetric(), _dataset, dimRanks, confidences);
 
-        //    topRankings[topDim] += abs(dimRanks(ni, topDim));
-        //}
-
-        //// Compute total ranking
-        //int topDim = topDimensions[i];
-        //float totalRank = 0;
-        //for (const int ni : neighbourhood)
-        //    totalRank += abs(dimRanks(ni, topDim));
-
-        //// Divide all rankings by total rank values to get confidences
-        //float topRanking = topRankings[topDim];
-
-        //confidences[i] = topRanking / totalRank;
-
-        int topDim = topDimensions[i];
-
-        int count = 0;
-        for (const int ni : neighbourhood)
-        {
-            int nTopDim = topDimensions[ni];
-
-            if (nTopDim == topDim) count++;
-        }
-
-        confidences[i] = ((float)count) / neighbourhood.size();
-
-        //if (totalRank == 0)
-        if (neighbourhood.size() == 0)
-            confidences[i] = 0;
-    }
-
-    // Normalize confidences
-    float minVal = std::numeric_limits<float>::max();
-    float maxVal = -std::numeric_limits<float>::max();
-    for (int i = 0; i < confidences.size(); i++)
-    {
-        if (confidences[i] < minVal) minVal = confidences[i];
-        if (confidences[i] > maxVal) maxVal = confidences[i];
-    }
-    std::cout << "Min val: " << minVal << " Max val: " << maxVal << std::endl;
-    for (int i = 0; i < confidences.size(); i++)
-    {
-        confidences[i] = (confidences[i] - minVal) / (maxVal - minVal);
-    }
-
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "Confidence Elapsed time: " << elapsed.count() << " s\n";
     return confidences;
 }
 

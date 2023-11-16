@@ -12,6 +12,7 @@
 #include "Methods/SilvaEuclidean.h"
 #include "Methods/SilvaVariance.h"
 #include "Methods/ValueRanking.h"
+#include "ConfidenceModel.h"
 
 class DataStatistics
 {
@@ -87,8 +88,6 @@ private:
     /** Matrix of neighbourhood indices for every point in the projection */
     NeighbourhoodMatrix     _neighbourhoodMatrix;
 
-    NeighbourhoodMatrix     _confidenceNeighbourhoodMatrix;
-
     // Explanation metrics
     /** Enum of which method is currently selected */
     Explanation::Metric     _explanationMetric;
@@ -98,4 +97,6 @@ private:
     VarianceMethod          _varianceMethod;
     /** Value-based explanation method */
     ValueMethod             _valueMethod;
+    /** Confidence model */
+    ConfidenceModel         _confidenceModel;
 };
