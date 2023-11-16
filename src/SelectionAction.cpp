@@ -1,114 +1,190 @@
 #include "SelectionAction.h"
-#include "Application.h"
 #include "ScatterplotPlugin.h"
 #include "ScatterplotWidget.h"
 
-#include "util/PixelSelectionTool.h"
+#include <util/PixelSelectionTool.h>
 
 #include <QHBoxLayout>
 #include <QPushButton>
 
-using namespace hdps::gui;
+using namespace mv::gui;
 
-const auto allowedPixelSelectionTypes = PixelSelectionTypes({
-    PixelSelectionType::Rectangle,
-    PixelSelectionType::Brush,
-    PixelSelectionType::Lasso,
-    PixelSelectionType::Polygon
-});
-
-SelectionAction::SelectionAction(ScatterplotPlugin& scatterplotPlugin) :
-    PixelSelectionAction(&scatterplotPlugin, &scatterplotPlugin.getScatterplotWidget(), scatterplotPlugin.getScatterplotWidget().getPixelSelectionTool(), allowedPixelSelectionTypes),
-    _scatterplotPlugin(scatterplotPlugin)
+SelectionAction::SelectionAction(QObject* parent, const QString& title) :
+    GroupAction(parent, title),
+    _pixelSelectionAction(this, "Point Selection"),
+    _displayModeAction(this, "Display mode", { "Outline", "Override" }),
+    _outlineOverrideColorAction(this, "Custom color", true),
+    _outlineScaleAction(this, "Scale", 100.0f, 500.0f, 200.0f, 1),
+    _outlineOpacityAction(this, "Opacity", 0.0f, 100.0f, 100.0f, 1),
+    _outlineHaloEnabledAction(this, "Halo")
 {
-    setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("mouse-pointer"));
-    
-    connect(&getSelectAllAction(), &QAction::triggered, [this]() {
-        if (_scatterplotPlugin.getPositionDataset().isValid())
-            _scatterplotPlugin.getPositionDataset()->selectAll();
-    });
+    setIcon(mv::Application::getIconFont("FontAwesome").getIcon("mouse-pointer"));
+    setConfigurationFlag(WidgetAction::ConfigurationFlag::ForceCollapsedInGroup);
 
-    connect(&getClearSelectionAction(), &QAction::triggered, [this]() {
-        if (_scatterplotPlugin.getPositionDataset().isValid())
-            _scatterplotPlugin.getPositionDataset()->selectNone();
-    });
+    addAction(&_pixelSelectionAction.getTypeAction());
+    addAction(&_pixelSelectionAction.getBrushRadiusAction());
+    addAction(&_pixelSelectionAction.getModifierAction(), OptionAction::HorizontalButtons);
+    addAction(&_pixelSelectionAction.getSelectAction());
+    addAction(&_pixelSelectionAction.getNotifyDuringSelectionAction());
+    addAction(&_pixelSelectionAction.getOverlayColorAction());
 
-    connect(&getInvertSelectionAction(), &QAction::triggered, [this]() {
-        if (_scatterplotPlugin.getPositionDataset().isValid())
-            _scatterplotPlugin.getPositionDataset()->selectInvert();
-    });
+    addAction(&getDisplayModeAction());
+    addAction(&getOutlineScaleAction());
+    addAction(&getOutlineOpacityAction());
+    addAction(&getOutlineHaloEnabledAction());
+
+    _pixelSelectionAction.getOverlayColorAction().setText("Color");
+
+    _displayModeAction.setToolTip("The way in which selection is visualized");
+
+    _outlineScaleAction.setSuffix("%");
+    _outlineOpacityAction.setSuffix("%");
+
+    const auto updateActionsReadOnly = [this]() -> void {
+        const auto isOutline = static_cast<PointSelectionDisplayMode>(_displayModeAction.getCurrentIndex()) == PointSelectionDisplayMode::Outline;
+
+        _outlineScaleAction.setEnabled(isOutline);
+        _outlineOpacityAction.setEnabled(isOutline);
+        _outlineHaloEnabledAction.setEnabled(isOutline);
+    };
+
+    updateActionsReadOnly();
+
+    connect(&_displayModeAction, &OptionAction::currentIndexChanged, this, updateActionsReadOnly);
+    connect(&_outlineOverrideColorAction, &ToggleAction::toggled, this, updateActionsReadOnly);
 }
 
-SelectionAction::Widget::Widget(QWidget* parent, SelectionAction* selectionAction, const std::int32_t& widgetFlags) :
-    WidgetActionWidget(parent, selectionAction, widgetFlags)
+void SelectionAction::initialize(ScatterplotPlugin* scatterplotPlugin)
 {
-    auto typeWidget                     = selectionAction->getTypeAction().createWidget(this);
-    auto brushRadiusWidget              = selectionAction->getBrushRadiusAction().createWidget(this);
-    auto modifierAddWidget              = selectionAction->getModifierAddAction().createWidget(this, ToggleAction::PushButtonIcon);
-    auto modifierSubtractWidget         = selectionAction->getModifierSubtractAction().createWidget(this, ToggleAction::PushButtonIcon);
-    auto clearSelectionWidget           = selectionAction->getClearSelectionAction().createWidget(this);
-    auto selectAllWidget                = selectionAction->getSelectAllAction().createWidget(this);
-    auto invertSelectionWidget          = selectionAction->getInvertSelectionAction().createWidget(this);
-    auto notifyDuringSelectionWidget    = selectionAction->getNotifyDuringSelectionAction().createWidget(this);
+    Q_ASSERT(scatterplotPlugin != nullptr);
 
-    if (widgetFlags & PopupLayout) {
-        const auto getTypeWidget = [&, this]() -> QWidget* {
-            auto layout = new QHBoxLayout();
+    if (scatterplotPlugin == nullptr)
+        return;
 
-            layout->setContentsMargins(0, 0, 0, 0);
-            layout->addWidget(typeWidget);
-            layout->addWidget(modifierAddWidget);
-            layout->addWidget(modifierSubtractWidget);
-            layout->itemAt(0)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto& scatterplotWidget = scatterplotPlugin->getScatterplotWidget();
 
-            auto widget = new QWidget();
+    getPixelSelectionAction().initialize(&scatterplotWidget, &scatterplotWidget.getPixelSelectionTool(), {
+        PixelSelectionType::Rectangle,
+        PixelSelectionType::Brush,
+        PixelSelectionType::Lasso,
+        PixelSelectionType::Polygon
+    });
 
-            widget->setLayout(layout);
+    _displayModeAction.setCurrentIndex(static_cast<std::int32_t>(scatterplotPlugin->getScatterplotWidget().getSelectionDisplayMode()));
+    _outlineScaleAction.setValue(100.0f * scatterplotPlugin->getScatterplotWidget().getSelectionOutlineScale());
+    _outlineOpacityAction.setValue(100.0f * scatterplotPlugin->getScatterplotWidget().getSelectionOutlineOpacity());
 
-            return widget;
-        };
+    _outlineHaloEnabledAction.setChecked(scatterplotPlugin->getScatterplotWidget().getSelectionOutlineHaloEnabled());
+    _outlineOverrideColorAction.setChecked(scatterplotPlugin->getScatterplotWidget().getSelectionOutlineOverrideColor());
 
-        const auto getSelectWidget = [&, this]() -> QWidget* {
-            auto layout = new QHBoxLayout();
+    connect(&_pixelSelectionAction.getSelectAllAction(), &QAction::triggered, [this, scatterplotPlugin]() {
+        if (scatterplotPlugin->getPositionDataset().isValid())
+            scatterplotPlugin->getPositionDataset()->selectAll();
+    });
 
-            layout->setContentsMargins(0, 0, 0, 0);
-            layout->addWidget(clearSelectionWidget);
-            layout->addWidget(selectAllWidget);
-            layout->addWidget(invertSelectionWidget);
-            layout->addStretch(1);
+    connect(&_pixelSelectionAction.getClearSelectionAction(), &QAction::triggered, this, [this, scatterplotPlugin]() {
+        if (scatterplotPlugin->getPositionDataset().isValid())
+            scatterplotPlugin->getPositionDataset()->selectNone();
+    });
 
-            auto widget = new QWidget();
+    connect(&_pixelSelectionAction.getInvertSelectionAction(), &QAction::triggered, this, [this, scatterplotPlugin]() {
+        if (scatterplotPlugin->getPositionDataset().isValid())
+            scatterplotPlugin->getPositionDataset()->selectInvert();
+    });
 
-            widget->setLayout(layout);
+    connect(&_outlineScaleAction, &DecimalAction::valueChanged, this, [this, scatterplotPlugin](float value) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionOutlineScale(0.01f * value);
+    });
 
-            return widget;
-        };
+    connect(&_outlineOpacityAction, &DecimalAction::valueChanged, this, [this, scatterplotPlugin](float value) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionOutlineOpacity(0.01f * value);
+    });
 
-        auto layout = new QGridLayout();
+    connect(&_outlineHaloEnabledAction, &ToggleAction::toggled, this, [this, scatterplotPlugin](bool toggled) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionOutlineHaloEnabled(toggled);
+    });
 
-        layout->addWidget(selectionAction->getTypeAction().createLabelWidget(this), 0, 0);
-        layout->addWidget(getTypeWidget(), 0, 1);
-        layout->addWidget(selectionAction->_brushRadiusAction.createLabelWidget(this), 1, 0);
-        layout->addWidget(brushRadiusWidget, 1, 1);
-        layout->addWidget(getSelectWidget(), 2, 1);
-        layout->addWidget(notifyDuringSelectionWidget, 3, 1);
-        layout->itemAtPosition(1, 1)->widget()->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    connect(&_pixelSelectionAction.getOverlayColorAction(), &ColorAction::colorChanged, this, [this, scatterplotPlugin](const QColor& color) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionOutlineColor(color);
+    });
 
-        setPopupLayout(layout);
+    connect(&_displayModeAction, &OptionAction::currentIndexChanged, this, [this, scatterplotPlugin](const std::int32_t& currentIndex) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionDisplayMode(static_cast<PointSelectionDisplayMode>(currentIndex));
+    });
+
+    connect(&_outlineOverrideColorAction, &ToggleAction::toggled, this, [this, scatterplotPlugin](bool toggled) {
+        scatterplotPlugin->getScatterplotWidget().setSelectionOutlineOverrideColor(toggled);
+    });
+
+    const auto updateReadOnly = [this, scatterplotPlugin]() -> void {
+        setEnabled(scatterplotPlugin->getPositionDataset().isValid());
+    };
+
+    updateReadOnly();
+
+    connect(&scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, updateReadOnly);
+}
+
+void SelectionAction::connectToPublicAction(WidgetAction* publicAction, bool recursive)
+{
+    auto publicSelectionAction = dynamic_cast<SelectionAction*>(publicAction);
+
+    Q_ASSERT(publicSelectionAction != nullptr);
+
+    if (publicSelectionAction == nullptr)
+        return;
+
+    if (recursive) {
+        actions().connectPrivateActionToPublicAction(&_pixelSelectionAction, &publicSelectionAction->getPixelSelectionAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_displayModeAction, &publicSelectionAction->getDisplayModeAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_outlineOverrideColorAction, &publicSelectionAction->getOutlineOverrideColorAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_outlineScaleAction, &publicSelectionAction->getOutlineScaleAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_outlineOpacityAction, &publicSelectionAction->getOutlineOpacityAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_outlineHaloEnabledAction, &publicSelectionAction->getOutlineHaloEnabledAction(), recursive);
     }
-    else {
-        auto layout = new QHBoxLayout();
 
-        layout->setContentsMargins(0, 0, 0, 0);
-        layout->addWidget(typeWidget);
-        layout->addWidget(brushRadiusWidget);
-        layout->addWidget(modifierAddWidget);
-        layout->addWidget(modifierSubtractWidget);
-        layout->addWidget(clearSelectionWidget);
-        layout->addWidget(selectAllWidget);
-        layout->addWidget(invertSelectionWidget);
-        layout->addWidget(notifyDuringSelectionWidget);
+    GroupAction::connectToPublicAction(publicAction, recursive);
+}
 
-        setLayout(layout);
+void SelectionAction::disconnectFromPublicAction(bool recursive)
+{
+    if (!isConnected())
+        return;
+
+    if (recursive) {
+        actions().disconnectPrivateActionFromPublicAction(&_pixelSelectionAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_displayModeAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_outlineOverrideColorAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_outlineScaleAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_outlineOpacityAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_outlineHaloEnabledAction, recursive);
     }
+
+    GroupAction::disconnectFromPublicAction(recursive);
+}
+
+void SelectionAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    GroupAction::fromVariantMap(variantMap);
+
+    _pixelSelectionAction.fromParentVariantMap(variantMap);
+    _displayModeAction.fromParentVariantMap(variantMap);
+    _outlineOverrideColorAction.fromParentVariantMap(variantMap);
+    _outlineScaleAction.fromParentVariantMap(variantMap);
+    _outlineOpacityAction.fromParentVariantMap(variantMap);
+    _outlineHaloEnabledAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap SelectionAction::toVariantMap() const
+{
+    auto variantMap = GroupAction::toVariantMap();
+
+    _pixelSelectionAction.insertIntoVariantMap(variantMap);
+    _displayModeAction.insertIntoVariantMap(variantMap);
+    _outlineOverrideColorAction.insertIntoVariantMap(variantMap);
+    _outlineScaleAction.insertIntoVariantMap(variantMap);
+    _outlineOpacityAction.insertIntoVariantMap(variantMap);
+    _outlineHaloEnabledAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }

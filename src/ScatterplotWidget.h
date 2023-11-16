@@ -17,9 +17,9 @@
 #include <QMouseEvent>
 #include <QMenu>
 
-using namespace hdps;
-using namespace hdps::gui;
-using namespace hdps::util;
+using namespace mv;
+using namespace mv::gui;
+using namespace mv::util;
 
 class ScatterplotWidget : public QOpenGLWidget, QOpenGLFunctions_3_3_Core
 {
@@ -35,7 +35,8 @@ public:
     /** The way that point colors are determined */
     enum class ColoringMode {
         Constant,      /** Point color is a constant color */
-        Data                /** Determined by external dataset */
+        Data,          /** Determined by external dataset */
+        Scatter
     };
 
 public:
@@ -86,7 +87,7 @@ public:
     void setPointOpacityScalars(const std::vector<float>& pointOpacityScalars);
 
     void setScalarEffect(PointEffect effect);
-    void setPointScaling(hdps::gui::PointScaling scalingMode);
+    void setPointScaling(mv::gui::PointScaling scalingMode);
     void setSigma(const float sigma);
 
     void drawOldSelection(bool drawOldSelection) { _drawOldSelection = drawOldSelection; }
@@ -111,6 +112,80 @@ public:
      * @param backgroundColor Background color of the screen shot
      */
     void createScreenshot(std::int32_t width, std::int32_t height, const QString& fileName, const QColor& backgroundColor);
+
+public: // Selection
+
+    /**
+     * Get the selection display mode color
+     * @return Selection display mode
+     */
+    PointSelectionDisplayMode getSelectionDisplayMode() const;
+
+    /**
+     * Set the selection display mode
+     * @param selectionDisplayMode Selection display mode
+     */
+    void setSelectionDisplayMode(PointSelectionDisplayMode selectionDisplayMode);
+
+    /**
+     * Get the selection outline color
+     * @return Color of the selection outline
+     */
+    QColor getSelectionOutlineColor() const;
+
+    /**
+     * Set the selection outline color
+     * @param selectionOutlineColor Selection outline color
+     */
+    void setSelectionOutlineColor(const QColor& selectionOutlineColor);
+
+    /**
+     * Get whether the selection outline color should be the point color or a custom color
+     * @return Boolean determining whether the selection outline color should be the point color or a custom color
+     */
+    bool getSelectionOutlineOverrideColor() const;
+
+    /**
+     * Set whether the selection outline color should be the point color or a custom color
+     * @param selectionOutlineOverrideColor Boolean determining whether the selection outline color should be the point color or a custom color
+     */
+    void setSelectionOutlineOverrideColor(bool selectionOutlineOverrideColor);
+
+    /**
+     * Get the selection outline scale
+     * @return Scale of the selection outline
+     */
+    float getSelectionOutlineScale() const;
+
+    /**
+     * Set the selection outline scale
+     * @param selectionOutlineScale Scale of the selection outline
+     */
+    void setSelectionOutlineScale(float selectionOutlineScale);
+
+    /**
+     * Get the selection outline opacity
+     * @return Opacity of the selection outline
+     */
+    float getSelectionOutlineOpacity() const;
+
+    /**
+     * Set the selection outline opacity
+     * @param selectionOutlineOpacity Opacity of the selection outline
+     */
+    void setSelectionOutlineOpacity(float selectionOutlineOpacity);
+
+    /**
+     * Get whether the selection outline halo is enabled or not
+     * @return Boolean determining whether the selection outline halo is enabled or not
+     */
+    bool getSelectionOutlineHaloEnabled() const;
+
+    /**
+     * Set whether the selection outline halo is enabled or not
+     * @param selectionOutlineHaloEnabled Boolean determining whether the selection outline halo is enabled or not
+     */
+    void setSelectionOutlineHaloEnabled(bool selectionOutlineHaloEnabled);
 
 protected:
     void initializeGL()         Q_DECL_OVERRIDE;

@@ -1,38 +1,34 @@
 #include "ScalarAction.h"
 #include "ScalarSourceModel.h"
-
 #include "ScatterplotPlugin.h"
-#include "Application.h"
 
 #include <QHBoxLayout>
 
-using namespace hdps::gui;
+using namespace mv::gui;
 
-ScalarAction::ScalarAction(ScatterplotPlugin* scatterplotPlugin, const QString& title, const float& minimum, const float& maximum, const float& value, const float& defaultValue) :
-    PluginAction(scatterplotPlugin, "Scalar"),
-    _magnitudeAction(this, title, minimum, maximum, value, defaultValue),
-    _sourceAction(scatterplotPlugin, title)
+ScalarAction::ScalarAction(QObject* parent, const QString& title, const float& minimum /*= 0.0f*/, const float& maximum /*= 100.0f*/, const float& value /*= 0.0f*/) :
+    GroupAction(parent, title),
+    _magnitudeAction(this, title, minimum, maximum, value),
+    _sourceAction(this, QString("%1 source").arg(title))
 {
-    setText(title);
+    setDefaultWidgetFlags(GroupAction::Horizontal);
+    setShowLabels(false);
 
-    _scatterplotPlugin->getWidget().addAction(&_sourceAction);
+    addAction(&_magnitudeAction);
+    addAction(&_sourceAction);
 
-    // Notify others when the source selection changes
     connect(&_sourceAction.getPickerAction(), &OptionAction::currentIndexChanged, this, [this](const std::uint32_t& currentIndex) {
         emit sourceSelectionChanged(currentIndex);
     });
 
-    // Pass-through magnitude updates
     connect(&_magnitudeAction, &DecimalAction::valueChanged, this, [this](const float& value) {
         emit magnitudeChanged(value);
     });
 
-    // Pass-through scalar range updates
     connect(&_sourceAction, &ScalarSourceAction::scalarRangeChanged, this, [this](const float& minimum, const float& maximum) {
         emit scalarRangeChanged(minimum, maximum);
     });
 
-    // Pass-through scalar offset updates
     connect(&_sourceAction.getOffsetAction(), &DecimalAction::valueChanged, this, [this](const float& value) {
         emit offsetChanged(value);
     });
@@ -40,31 +36,22 @@ ScalarAction::ScalarAction(ScatterplotPlugin* scatterplotPlugin, const QString& 
 
 void ScalarAction::addDataset(const Dataset<DatasetImpl>& dataset)
 {
-    // Get reference to the point size source model
     auto& sourceModel = _sourceAction.getModel();
 
-    // Add dataset to the list of candidate datasets
     sourceModel.addDataset(dataset);
 
-    // Connect to the data changed signal so that we can update the scatter plot point size appropriately
     connect(&sourceModel.getDatasets().last(), &Dataset<DatasetImpl>::dataChanged, this, [this, dataset]() {
-
-        // Get smart pointer to current dataset
         const auto currentDataset = getCurrentDataset();
 
-        // Only proceed if we have a valid point size dataset
         if (!currentDataset.isValid())
             return;
 
-        // To do: schedule more efficient
         _sourceAction.updateScalarRange();
 
-        // Update scatter plot widget point size if the dataset matches
         if (currentDataset == dataset)
             emit sourceDataChanged(dataset);
     });
 
-    // Connect to the data changed signal so that we can update the scatter plot point size appropriately
     connect(&_magnitudeAction, &DecimalAction::valueChanged, this, [this, dataset](const float& value) {
         emit magnitudeChanged(value);
     });
@@ -77,13 +64,10 @@ void ScalarAction::removeAllDatasets()
 
 Dataset<DatasetImpl> ScalarAction::getCurrentDataset()
 {
-    // Get reference to the scalar source model
     auto& scalarSourceModel = _sourceAction.getModel();
 
-    // Get current scalar source index
     const auto currentSourceIndex = _sourceAction.getPickerAction().getCurrentIndex();
 
-    // Only proceed if we have a valid point size dataset row index
     if (currentSourceIndex < ScalarSourceModel::DefaultRow::DatasetStart)
         return Dataset<DatasetImpl>();
 
@@ -92,10 +76,8 @@ Dataset<DatasetImpl> ScalarAction::getCurrentDataset()
 
 void ScalarAction::setCurrentDataset(const Dataset<DatasetImpl>& dataset)
 {
-    // Obtain row index of the dataset
     const auto datasetRowIndex = _sourceAction.getModel().rowIndex(dataset);
 
-    // Set picker current index if the dataset was found
     if (datasetRowIndex >= 0)
         _sourceAction.getPickerAction().setCurrentIndex(datasetRowIndex);
 }
@@ -120,29 +102,50 @@ bool ScalarAction::isSourceDataset() const
     return _sourceAction.getPickerAction().getCurrentIndex() >= ScalarSourceModel::DefaultRow::DatasetStart;
 }
 
-ScalarAction::Widget::Widget(QWidget* parent, ScalarAction* scalarAction) :
-    WidgetActionWidget(parent, scalarAction)
+void ScalarAction::connectToPublicAction(WidgetAction* publicAction, bool recursive)
 {
-    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+    auto publicScalarAction = dynamic_cast<ScalarAction*>(publicAction);
 
-    auto layout = new QHBoxLayout();
+    Q_ASSERT(publicScalarAction != nullptr);
 
-    layout->setContentsMargins(0, 0, 0, 0);
+    if (publicScalarAction == nullptr)
+        return;
 
-    // Create action widgets
-    auto magnitudeWidget        = scalarAction->getMagnitudeAction().createWidget(this);
-    auto sourceWidget           = scalarAction->getSourceAction().createCollapsedWidget(this);
+    if (recursive) {
+        actions().connectPrivateActionToPublicAction(&_magnitudeAction, &publicScalarAction->getMagnitudeAction(), recursive);
+        actions().connectPrivateActionToPublicAction(&_sourceAction, &publicScalarAction->getSourceAction(), recursive);
+    }
 
-    // And add them to the layout
-    layout->addWidget(magnitudeWidget);
-    layout->addWidget(sourceWidget);
+    GroupAction::connectToPublicAction(publicAction, recursive);
+}
 
-    // Adjust size of the combo boxes to the contents
-    //pointSizeByWidget->findChild<QComboBox*>("ComboBox")->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+void ScalarAction::disconnectFromPublicAction(bool recursive)
+{
+    if (!isConnected())
+        return;
 
-    setLayout(layout);
+    if (recursive) {
+        actions().disconnectPrivateActionFromPublicAction(&_magnitudeAction, recursive);
+        actions().disconnectPrivateActionFromPublicAction(&_sourceAction, recursive);
+    }
 
-    connect(&scalarAction->getSourceAction().getPickerAction(), &OptionAction::currentIndexChanged, this, [this, layout]() {
-        layout->update();
-    });
+    GroupAction::disconnectFromPublicAction(recursive);
+}
+
+void ScalarAction::fromVariantMap(const QVariantMap& variantMap)
+{
+    GroupAction::fromVariantMap(variantMap);
+
+    _magnitudeAction.fromParentVariantMap(variantMap);
+    _sourceAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap ScalarAction::toVariantMap() const
+{
+    auto variantMap = GroupAction::toVariantMap();
+
+    _magnitudeAction.insertIntoVariantMap(variantMap);
+    _sourceAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }

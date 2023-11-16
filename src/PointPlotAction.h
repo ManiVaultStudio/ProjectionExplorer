@@ -1,30 +1,50 @@
 #pragma once
 
-#include "PluginAction.h"
+#include <actions/VerticalGroupAction.h>
 
 #include "ScalarAction.h"
 
-#include <QLabel>
+class ScatterplotPlugin;
 
-using namespace hdps::gui;
+using namespace mv::gui;
 
-class PointPlotAction : public PluginAction
+/**
+ * Point plot action class
+ *
+ * Action class for configuring point plot settings
+ *
+ * @author Thomas Kroes
+ */
+class PointPlotAction : public VerticalGroupAction
 {
-protected: // Widget
-
-    class Widget : public WidgetActionWidget {
-    public:
-        Widget(QWidget* parent, PointPlotAction* pointPlotAction, const std::int32_t& widgetFlags);
-    };
-
-    QWidget* getWidget(QWidget* parent, const std::int32_t& widgetFlags) override {
-        return new Widget(parent, this, widgetFlags);
-    };
+    Q_OBJECT
 
 public:
-    PointPlotAction(ScatterplotPlugin* scatterplotPlugin);
+    
+    /**
+     * Construct with \p parent and \p title
+     * @param parent Pointer to parent object
+     * @param title Title of the action
+     */
+    Q_INVOKABLE PointPlotAction(QObject* parent, const QString& title);
 
+    /**
+     * Initialize the selection action with \p scatterplotPlugin
+     * @param scatterplotPlugin Pointer to scatterplot plugin
+     */
+    void initialize(ScatterplotPlugin* scatterplotPlugin);
+
+    /**
+     * Get action context menu
+     * @return Pointer to menu
+     */
     QMenu* getContextMenu();
+
+    /**
+     * Override to show/hide child actions
+     * @param visible Whether the action is visible or not
+     */
+    void setVisible(bool visible);
 
     /**
      * Add point size dataset
@@ -49,13 +69,43 @@ protected:
     /** Update the scatter plot widget point opacity scalars */
     void updateScatterPlotWidgetPointOpacityScalars();
 
+protected: // Linking
+
+    /**
+     * Connect this action to a public action
+     * @param publicAction Pointer to public action to connect to
+     * @param recursive Whether to also connect descendant child actions
+     */
+    void connectToPublicAction(WidgetAction* publicAction, bool recursive) override;
+
+    /**
+     * Disconnect this action from its public action
+     * @param recursive Whether to also disconnect descendant child actions
+     */
+    void disconnectFromPublicAction(bool recursive) override;
+
+public: // Serialization
+
+    /**
+     * Load widget action from variant map
+     * @param Variant map representation of the widget action
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save widget action to variant map
+     * @return Variant map representation of the widget action
+     */
+    QVariantMap toVariantMap() const override;
+
 public: // Action getters
 
     ScalarAction& getSizeAction() { return _sizeAction; }
     ScalarAction& getOpacityAction() { return _opacityAction; }
     ToggleAction& getFocusSelection() { return _focusSelection; }
 
-protected:
+private:
+    ScatterplotPlugin*      _scatterplotPlugin;         /** Pointer to scatterplot plugin */
     ScalarAction            _sizeAction;                /** Point size action */
     ScalarAction            _opacityAction;             /** Point opacity action */
     std::vector<float>      _pointSizeScalars;          /** Cached point size scalars */
@@ -66,5 +116,10 @@ protected:
     static constexpr double DEFAULT_POINT_SIZE      = 10.0;     /** Default point size */
     static constexpr double DEFAULT_POINT_OPACITY   = 50.0;     /** Default point opacity */
 
-    friend class PlotAction;
+    friend class ScatterplotPlugin;
+    friend class mv::AbstractActionsManager;
 };
+
+Q_DECLARE_METATYPE(PointPlotAction)
+
+inline const auto pointPlotActionMetaTypeId = qRegisterMetaType<PointPlotAction*>("PointPlotAction");

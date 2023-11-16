@@ -242,7 +242,7 @@ void ScatterplotWidget::setPointOpacityScalars(const std::vector<float>& pointOp
     update();
 }
 
-void ScatterplotWidget::setPointScaling(hdps::gui::PointScaling scalingMode)
+void ScatterplotWidget::setPointScaling(mv::gui::PointScaling scalingMode)
 {
     _pointRenderer.setPointScaling(scalingMode);
 }
@@ -261,7 +261,7 @@ void ScatterplotWidget::setSigma(const float sigma)
     update();
 }
 
-hdps::Vector3f ScatterplotWidget::getColorMapRange() const
+mv::Vector3f ScatterplotWidget::getColorMapRange() const
 {
     switch (_renderMode) {
         case SCATTERPLOT:
@@ -377,6 +377,103 @@ void ScatterplotWidget::createScreenshot(std::int32_t width, std::int32_t height
     }
 }
 
+PointSelectionDisplayMode ScatterplotWidget::getSelectionDisplayMode() const
+{
+    return _pointRenderer.getSelectionDisplayMode();
+}
+
+
+void ScatterplotWidget::setSelectionDisplayMode(PointSelectionDisplayMode selectionDisplayMode)
+{
+    _pointRenderer.setSelectionDisplayMode(selectionDisplayMode);
+
+
+    update();
+}
+
+
+QColor ScatterplotWidget::getSelectionOutlineColor() const
+{
+    QColor haloColor;
+
+
+    haloColor.setRedF(_pointRenderer.getSelectionOutlineColor().x);
+    haloColor.setGreenF(_pointRenderer.getSelectionOutlineColor().y);
+    haloColor.setBlueF(_pointRenderer.getSelectionOutlineColor().z);
+
+
+    return haloColor;
+}
+
+
+void ScatterplotWidget::setSelectionOutlineColor(const QColor& selectionOutlineColor)
+{
+    _pointRenderer.setSelectionOutlineColor(Vector3f(selectionOutlineColor.redF(), selectionOutlineColor.greenF(), selectionOutlineColor.blueF()));
+
+
+    update();
+}
+
+
+bool ScatterplotWidget::getSelectionOutlineOverrideColor() const
+{
+    return _pointRenderer.getSelectionOutlineOverrideColor();
+}
+
+
+void ScatterplotWidget::setSelectionOutlineOverrideColor(bool selectionOutlineOverrideColor)
+{
+    _pointRenderer.setSelectionOutlineOverrideColor(selectionOutlineOverrideColor);
+
+
+    update();
+}
+
+
+float ScatterplotWidget::getSelectionOutlineScale() const
+{
+    return _pointRenderer.getSelectionOutlineScale();
+}
+
+
+void ScatterplotWidget::setSelectionOutlineScale(float selectionOutlineScale)
+{
+    _pointRenderer.setSelectionOutlineScale(selectionOutlineScale);
+
+
+    update();
+}
+
+
+float ScatterplotWidget::getSelectionOutlineOpacity() const
+{
+    return _pointRenderer.getSelectionOutlineOpacity();
+}
+
+
+void ScatterplotWidget::setSelectionOutlineOpacity(float selectionOutlineOpacity)
+{
+    _pointRenderer.setSelectionOutlineOpacity(selectionOutlineOpacity);
+
+
+    update();
+}
+
+
+bool ScatterplotWidget::getSelectionOutlineHaloEnabled() const
+{
+    return _pointRenderer.getSelectionHaloEnabled();
+}
+
+
+void ScatterplotWidget::setSelectionOutlineHaloEnabled(bool selectionOutlineHaloEnabled)
+{
+    _pointRenderer.setSelectionHaloEnabled(selectionOutlineHaloEnabled);
+
+
+    update();
+}
+
 void ScatterplotWidget::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -397,6 +494,8 @@ void ScatterplotWidget::initializeGL()
 
     // Set a default color map for both renderers
     _pointRenderer.setScalarEffect(PointEffect::Color);
+
+    _pointRenderer.setSelectionOutlineColor(Vector3f(1, 0, 0));
 
     // OpenGL is initialized
     _isInitialized = true;

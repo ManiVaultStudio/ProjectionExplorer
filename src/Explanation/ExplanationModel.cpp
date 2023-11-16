@@ -6,7 +6,7 @@
 
 namespace
 {
-    void convertToEigenMatrix(hdps::Dataset<Points> dataset, DataMatrix& dataMatrix)
+    void convertToEigenMatrix(mv::Dataset<Points> dataset, DataMatrix& dataMatrix)
     {
         int numPoints = dataset->getNumPoints();
         int numDimensions = dataset->getNumDimensions();
@@ -144,7 +144,7 @@ ExplanationModel::ExplanationModel() :
 
 }
 
-void ExplanationModel::setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection)
+void ExplanationModel::setDataset(mv::Dataset<Points> dataset, mv::Dataset<Points> projection)
 {
     // Convert the dataset and projection to eigen matrices
     DataMatrix eigenDataMatrix;

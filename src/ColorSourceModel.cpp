@@ -1,10 +1,10 @@
 #include "ColorSourceModel.h"
 
-#include "DataHierarchyItem.h"
-#include "Application.h"
-#include "Set.h"
+#include <DataHierarchyItem.h>
+#include <Application.h>
+#include <Set.h>
 
-using namespace hdps;
+using namespace mv;
 
 ColorSourceModel::ColorSourceModel(QObject* parent /*= nullptr*/) :
     QAbstractListModel(parent),
@@ -15,8 +15,8 @@ ColorSourceModel::ColorSourceModel(QObject* parent /*= nullptr*/) :
 
 int ColorSourceModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
-    // Constant color option plus the number of available datasets
-    return _datasets.count() + 1;
+    // Constant color option, 2D colormap, plus the number of available datasets
+    return _datasets.count() + 2;
 }
 
 int ColorSourceModel::rowIndex(const Dataset<DatasetImpl>& dataset) const
@@ -25,8 +25,11 @@ int ColorSourceModel::rowIndex(const Dataset<DatasetImpl>& dataset) const
     if (!dataset.isValid())
         return -1;
 
-    // Return the index of the dataset and add one for the constant color option
-    return _datasets.indexOf(dataset) + 1;
+    if (!_datasets.contains(dataset))
+        return -1;
+
+    // Return the index of the dataset
+    return _datasets.indexOf(dataset) + 2;
 }
 
 int ColorSourceModel::columnCount(const QModelIndex& parent /*= QModelIndex()*/) const
@@ -45,16 +48,20 @@ QVariant ColorSourceModel::data(const QModelIndex& index, int role) const
     {
         // Return palette icon for constant color and dataset icon otherwise
         case Qt::DecorationRole:
-            return row > 0 ? dataset->getIcon() : Application::getIconFont("FontAwesome").getIcon("palette");
+            return row > 1 ? dataset->getIcon() : Application::getIconFont("FontAwesome").getIcon("palette");
 
         // Return 'Constant' for constant color and dataset (full path) GUI name otherwise
         case Qt::DisplayRole:
         {
-            if (row > 0)
-                if (row == 1)
-                    return dataset->getGuiName();
+            if (row > 1)
+            {
+                if (row == 2)
+                    return dataset->text();
                 else
-                    return _showFullPathName ? dataset->getDataHierarchyItem().getFullPathName() : dataset->getGuiName();
+                    return _showFullPathName ? dataset->getLocation() : dataset->text();
+            }
+            if (row == 1 )
+                return "Scatter layout";
             else
                 return "Constant";
         }
@@ -80,12 +87,12 @@ void ColorSourceModel::addDataset(const Dataset<DatasetImpl>& dataset)
     auto& addedDataset = _datasets.last();
 
     // Remove a dataset from the model when it is about to be deleted
-    connect(&addedDataset, &Dataset<DatasetImpl>::dataAboutToBeRemoved, this, [this, &addedDataset]() {
+    connect(&addedDataset, &Dataset<DatasetImpl>::aboutToBeRemoved, this, [this, &addedDataset]() {
         removeDataset(addedDataset);
     });
 
     // Notify others that the model has updated when the dataset GUI name changes
-    connect(&addedDataset, &Dataset<DatasetImpl>::dataGuiNameChanged, this, [this, &addedDataset]() {
+    connect(addedDataset.get(), &DatasetImpl::textChanged, this, [this, &addedDataset]() {
 
         // Get row index of the dataset
         const auto colorDatasetRowIndex = rowIndex(addedDataset);
@@ -142,11 +149,11 @@ const Datasets& ColorSourceModel::getDatasets() const
 Dataset<DatasetImpl> ColorSourceModel::getDataset(const std::int32_t& rowIndex) const
 {
     // Return empty smart pointer when out of range
-    if (rowIndex <= 0 || rowIndex > _datasets.count())
+    if (rowIndex <= 1 || rowIndex > (_datasets.count() + 1))
         return Dataset<DatasetImpl>();
 
-    // Subtract the constant point size row
-    return _datasets[rowIndex - 1];
+    // Subtract the constant point size and 2D colormap rows
+    return _datasets[rowIndex - 2];
 }
 
 bool ColorSourceModel::getShowFullPathName() const

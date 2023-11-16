@@ -3,6 +3,7 @@
 #include "DataHierarchyItem.h"
 #include "Application.h"
 
+#include <DatasetsMimeData.h>
 #include "util/PixelSelectionTool.h"
 
 #include "PointData/PointData.h"
@@ -32,8 +33,8 @@
 
 Q_PLUGIN_METADATA(IID "nl.uu.ExplanationScatterplot")
 
-using namespace hdps;
-using namespace hdps::util;
+using namespace mv;
+using namespace mv::util;
 
 ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
@@ -44,7 +45,9 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _scatterPlotWidget(new ScatterplotWidget(_explanationModel)),
     _explanationWidget(new ExplanationWidget(_explanationModel)),
     _dropWidget(nullptr),
-    _settingsAction(this),
+    _settingsAction(this, "Settings"),
+    _primaryToolbarAction(this, "Primary Toolbar"),
+    _secondaryToolbarAction(this, "Secondary Toolbar"),
     _selectionRadius(30),
     _lockSelection(false)
 {
@@ -53,6 +56,21 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _dropWidget = new DropWidget(_scatterPlotWidget);
 
     getWidget().setFocusPolicy(Qt::ClickFocus);
+
+    auto bottomToolbarWidget = new QWidget();
+    auto bottomToolbarLayout = new QHBoxLayout();
+
+    _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getPlotAction(), 2, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getColoringAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
+
+    _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
+    _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
+    _secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
 
     connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
         if (!_positionDataset.isValid())
@@ -71,16 +89,19 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
         DropWidget::DropRegions dropRegions;
 
-        const auto mimeText = mimeData->text();
-        const auto tokens   = mimeText.split("\n");
+        const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
 
-        if (tokens.count() == 1)
+        if (datasetsMimeData == nullptr)
             return dropRegions;
 
-        const auto datasetGuiName       = tokens[0];
-        const auto datasetId            = tokens[1];
-        const auto dataType             = DataType(tokens[2]);
-        const auto dataTypes            = DataTypes({ PointType , ColorType, ClusterType });
+        if (datasetsMimeData->getDatasets().count() > 1)
+            return dropRegions;
+
+        const auto dataset = datasetsMimeData->getDatasets().first();
+        const auto datasetGuiName = dataset->text();
+        const auto datasetId = dataset->getId();
+        const auto dataType = dataset->getDataType();
+        const auto dataTypes = DataTypes({ PointType });
 
         // Check if the data type can be dropped
         if (!dataTypes.contains(dataType))
@@ -93,7 +114,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
             auto candidateDataset = _core->requestDataset<Points>(datasetId);
 
             // Establish drop region description
-            const auto description = QString("Visualize %1 as points or density/contour map").arg(datasetGuiName);
+            const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
 
             if (!_positionDataset.isValid()) {
 
@@ -134,41 +155,6 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
             }
         }
 
-        // Cluster dataset is about to be dropped
-        if (dataType == ClusterType) {
-
-            // Get clusters dataset from the core
-            auto candidateDataset  = _core->requestDataset<Clusters>(datasetId);
-            
-            // Establish drop region description
-            const auto description  = QString("Color points by %1").arg(candidateDataset->getGuiName());
-
-            // Only allow user to color by clusters when there is a positions dataset loaded
-            if (_positionDataset.isValid()) {
-
-                if (_settingsAction.getColoringAction().hasColorDataset(candidateDataset)) {
-
-                    // The clusters dataset is already loaded
-                    dropRegions << new DropWidget::DropRegion(this, "Color", description, "palette", true, [this, candidateDataset]() {
-                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
-                    });
-                }
-                else {
-
-                    // Use the clusters set for points color
-                    dropRegions << new DropWidget::DropRegion(this, "Color", description, "palette", true, [this, candidateDataset]() {
-                        _settingsAction.getColoringAction().addColorDataset(candidateDataset);
-                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
-                    });
-                }
-            }
-            else {
-
-                // Only allow user to color by clusters when there is a positions dataset loaded
-                dropRegions << new DropWidget::DropRegion(this, "No points data loaded", "Clusters can only be visualized in concert with points data", "exclamation-circle", false);
-            }
-        }
-
         return dropRegions;
     });
 
@@ -198,7 +184,8 @@ void ScatterplotPlugin::init()
 
     auto settingsWidget = _settingsAction.createWidget(&getWidget());
     settingsWidget->setMaximumHeight(40);
-    layout->addWidget(settingsWidget);
+    layout->addWidget(_primaryToolbarAction.createWidget(&getWidget()));
+    //layout->addWidget(settingsWidget);
 
     auto centralWidget = new QWidget();
     centralWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -211,24 +198,7 @@ void ScatterplotPlugin::init()
     centralWidget->setLayout(centralLayout);
     layout->addWidget(centralWidget);
 
-    auto bottomToolbarWidget = new QWidget();
-    auto bottomToolbarLayout = new QHBoxLayout();
-
-    bottomToolbarWidget->setAutoFillBackground(true);
-    bottomToolbarWidget->setLayout(bottomToolbarLayout);
-    bottomToolbarWidget->setMaximumHeight(40);
-
-    bottomToolbarWidget->setContentsMargins(0, 0, 0, 0);
-    bottomToolbarLayout->setContentsMargins(0, 0, 0, 0);
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createLabelWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getColoringAction().getColorMapAction().createWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getPlotAction().getPointPlotAction().getFocusSelection().createWidget(&getWidget()));
-
-    bottomToolbarLayout->addStretch(0);
-    bottomToolbarLayout->addWidget(_settingsAction.getExportAction().createWidget(&getWidget()));
-    bottomToolbarLayout->addWidget(_settingsAction.getMiscellaneousAction().createCollapsedWidget(&getWidget()));
-
-    layout->addWidget(bottomToolbarWidget, 1);
+    layout->addWidget(_secondaryToolbarAction.createWidget(&getWidget()));
 
     getWidget().setLayout(layout);
 
@@ -249,7 +219,7 @@ void ScatterplotPlugin::init()
         selectPoints();
     });
 
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DataSelectionChanged));
+    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&ScatterplotPlugin::onDataEvent, this, std::placeholders::_1));
 
     // Load points when the pointer to the position dataset changes
@@ -260,24 +230,18 @@ void ScatterplotPlugin::init()
 
     // Update point selection when the position dataset data changes
     connect(&_positionDataset, &Dataset<Points>::dataSelectionChanged, this, &ScatterplotPlugin::updateSelection);
-
-    // Update the window title when the GUI name of the position dataset changes
-    connect(&_positionDataset, &Dataset<Points>::dataGuiNameChanged, this, &ScatterplotPlugin::updateWindowTitle);
-
-    // Do an initial update of the window title
-    updateWindowTitle();
 }
 
-void ScatterplotPlugin::onDataEvent(hdps::DataEvent* dataEvent)
+void ScatterplotPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
 {
-    if (dataEvent->getType() == EventType::DataSelectionChanged)
+    if (dataEvent->getType() == EventType::DatasetDataSelectionChanged)
     {
         if (dataEvent->getDataset() == _positionDataset)
         {
             if (_positionDataset->isDerivedData())
             {
-                hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
-                hdps::Dataset<Points> selection = sourceDataset->getSelection();
+                mv::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+                mv::Dataset<Points> selection = sourceDataset->getSelection();
 
                 std::vector<float> dimRanking(_explanationModel.getDataset().numDimensions());
 
@@ -358,13 +322,13 @@ void ScatterplotPlugin::colorPointsByRanking()
 
     _explanationModel.recomputeColorMapping(dimRanking);
 
-    hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
-    hdps::Dataset<Points> selection = sourceDataset->getSelection();
+    mv::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+    mv::Dataset<Points> selection = sourceDataset->getSelection();
     
     // Compute new ranking of selection if any
     if (selection->indices.size() > 0)
     {
-        hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+        mv::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
         if (sourceDataset->isFull())
         {
             std::vector<float> dimRanking(sourceDataset->getNumDimensions());
@@ -492,7 +456,7 @@ void ScatterplotPlugin::selectPoints()
     }
 
     // Selection should be subtracted when the selection process was aborted by the user (e.g. by pressing the escape key)
-    const auto selectionModifier = _scatterPlotWidget->getPixelSelectionTool().isAborted() ? PixelSelectionModifierType::Remove : _scatterPlotWidget->getPixelSelectionTool().getModifier();
+    const auto selectionModifier = _scatterPlotWidget->getPixelSelectionTool().isAborted() ? PixelSelectionModifierType::Subtract : _scatterPlotWidget->getPixelSelectionTool().getModifier();
 
     switch (selectionModifier)
     {
@@ -500,7 +464,7 @@ void ScatterplotPlugin::selectPoints()
             break;
 
         case PixelSelectionModifierType::Add:
-        case PixelSelectionModifierType::Remove:
+        case PixelSelectionModifierType::Subtract:
         {
             // Get reference to the indices of the selection set
             auto& selectionSetIndices = selectionSet->indices;
@@ -521,7 +485,7 @@ void ScatterplotPlugin::selectPoints()
                 }
 
                 // Remove points from the current selection
-                case PixelSelectionModifierType::Remove:
+                case PixelSelectionModifierType::Subtract:
                 {
                     // Remove indices from the set 
                     for (const auto& targetIndex : targetSelectionIndices)
@@ -548,15 +512,7 @@ void ScatterplotPlugin::selectPoints()
     _positionDataset->setSelectionIndices(targetSelectionIndices);
 
     // Notify others that the selection changed
-    events().notifyDatasetSelectionChanged(_positionDataset);
-}
-
-void ScatterplotPlugin::updateWindowTitle()
-{
-    if (!_positionDataset.isValid())
-        getWidget().setWindowTitle(getGuiName());
-    else
-        getWidget().setWindowTitle(QString("%1: %2").arg(getGuiName(), _positionDataset->getDataHierarchyItem().getFullPathName()));
+    events().notifyDatasetDataSelectionChanged(_positionDataset);
 }
 
 Dataset<Points>& ScatterplotPlugin::getPositionDataset()
@@ -624,9 +580,6 @@ void ScatterplotPlugin::positionDatasetChanged()
     colorPointsByRanking();
 
     _explanationWidget->getBarchart().update();
-
-    // Update the window title to reflect the position dataset change
-    updateWindowTitle();
 }
 
 void ScatterplotPlugin::loadColors(const Dataset<Points>& points, const std::uint32_t& dimensionIndex)
@@ -842,7 +795,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
 
             if (_positionDataset.isValid())
             {
-                hdps::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
+                mv::Dataset<Points> sourceDataset = _positionDataset->getSourceDataset<Points>();
                 if (sourceDataset->isFull())
                 {
                     _explanationWidget->getBarchart().computeOldMetrics(_positionDataset->getSelection()->getSelectionIndices());
@@ -961,7 +914,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        events().notifyDatasetSelectionChanged(_positionDataset);
+        events().notifyDatasetDataSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 
@@ -988,7 +941,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        events().notifyDatasetSelectionChanged(_positionDataset);
+        events().notifyDatasetDataSelectionChanged(_positionDataset);
 
         _explanationWidget->update();
 
@@ -1012,7 +965,7 @@ ViewPlugin* ScatterplotPluginFactory::produce()
     return new ScatterplotPlugin(this);
 }
 
-PluginTriggerActions ScatterplotPluginFactory::getPluginTriggerActions(const hdps::Datasets& datasets) const
+PluginTriggerActions ScatterplotPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
 {
     PluginTriggerActions pluginTriggerActions;
 

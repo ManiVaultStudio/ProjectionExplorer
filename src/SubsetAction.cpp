@@ -1,29 +1,52 @@
 #include "SubsetAction.h"
 #include "ScatterplotPlugin.h"
-#include "PointData/PointData.h"
+#include "ScatterplotWidget.h"
+
+#include <PointData/PointData.h>
+
+#include <Application.h>
 
 #include <QMenu>
 
-using namespace hdps;
-using namespace hdps::gui;
+using namespace mv;
+using namespace mv::gui;
 
-SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
-    PluginAction(scatterplotPlugin, "Subset"),
+SubsetAction::SubsetAction(QObject* parent, const QString& title) :
+    VerticalGroupAction(parent, title),
+    _scatterplotPlugin(dynamic_cast<ScatterplotPlugin*>(parent->parent())),
     _subsetNameAction(this, "Subset name"),
-    _createSubsetAction(this, "Create subset"),
-    _sourceDataAction(this, "Source data")
+    _sourceDataAction(this, "Source data"),
+    _createSubsetAction(this, "Create subset")
 {
-    setIcon(hdps::Application::getIconFont("FontAwesome").getIcon("crop"));
+    setIcon(mv::Application::getIconFont("FontAwesome").getIcon("crop"));
+    setConnectionPermissionsToForceNone(true);
+    setConfigurationFlag(WidgetAction::ConfigurationFlag::ForceCollapsedInGroup);
+    setLabelSizingType(LabelSizingType::Auto);
+
+    addAction(&_subsetNameAction);
+    addAction(&_sourceDataAction);
+    addAction(&_createSubsetAction);
 
     _subsetNameAction.setToolTip("Name of the subset");
     _createSubsetAction.setToolTip("Create subset from selected data points");
 
-    const auto updateActions = [this]() -> void {
-        const auto positionDataset = _scatterplotPlugin->getPositionDataset();
-        setEnabled(positionDataset.isValid() && positionDataset->getSelectionSize() >= 1);
+    const auto updateReadOnly = [this]() -> void {
+        _createSubsetAction.setEnabled(!_subsetNameAction.getString().isEmpty());
     };
 
-    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateActions);
+    updateReadOnly();
+
+    connect(&_subsetNameAction, &StringAction::stringChanged, this, updateReadOnly);
+}
+
+void SubsetAction::initialize(ScatterplotPlugin* scatterplotPlugin)
+{
+    Q_ASSERT(scatterplotPlugin != nullptr);
+
+    if (scatterplotPlugin == nullptr)
+        return;
+
+    _scatterplotPlugin = scatterplotPlugin;
 
     connect(&_createSubsetAction, &QAction::triggered, this, [this]() {
         _scatterplotPlugin->createSubset(_sourceDataAction.getCurrentIndex() == 1, _subsetNameAction.getString());
@@ -33,12 +56,12 @@ SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
         if (!_scatterplotPlugin->getPositionDataset().isValid())
             return;
 
-        const auto datasetGuiName = _scatterplotPlugin->getPositionDataset()->getGuiName();
+        const auto datasetGuiName = _scatterplotPlugin->getPositionDataset()->text();
 
         QStringList sourceDataOptions;
 
         if (!datasetGuiName.isEmpty()) {
-            const auto sourceDatasetGuiName = _scatterplotPlugin->getPositionDataset()->getSourceDataset<Points>()->getGuiName();
+            const auto sourceDatasetGuiName = _scatterplotPlugin->getPositionDataset()->getSourceDataset<Points>()->text();
 
             sourceDataOptions << QString("From: %1").arg(datasetGuiName);
 
@@ -50,10 +73,22 @@ SubsetAction::SubsetAction(ScatterplotPlugin* scatterplotPlugin) :
         _sourceDataAction.setEnabled(sourceDataOptions.count() >= 2);
     };
 
-    connect(&scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, onCurrentDatasetChanged);
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::changed, this, onCurrentDatasetChanged);
 
     onCurrentDatasetChanged();
-    updateActions();
+
+    const auto updateReadOnly = [this]() {
+        const auto positionDataset          = _scatterplotPlugin->getPositionDataset();
+        const auto numberOfSelectedPoints   = positionDataset.isValid() ? positionDataset->getSelectionSize() : 0;
+        const auto hasSelection             = numberOfSelectedPoints >= 1;
+
+        setEnabled(_scatterplotPlugin->getScatterplotWidget().getRenderMode() == ScatterplotWidget::SCATTERPLOT && hasSelection);
+    };
+
+    updateReadOnly();
+
+    connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, updateReadOnly);
+    connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::dataSelectionChanged, this, updateReadOnly);
 }
 
 QMenu* SubsetAction::getContextMenu()
@@ -66,20 +101,18 @@ QMenu* SubsetAction::getContextMenu()
     return menu;
 }
 
-SubsetAction::Widget::Widget(QWidget* parent, SubsetAction* subsetAction, const std::int32_t& widgetFlags) :
-    WidgetActionWidget(parent, subsetAction)
+void SubsetAction::fromVariantMap(const QVariantMap& variantMap)
 {
-    auto layout = new QHBoxLayout();
+    GroupAction::fromVariantMap(variantMap);
 
-    layout->addWidget(subsetAction->_createSubsetAction.createWidget(this));
-    layout->addWidget(subsetAction->_sourceDataAction.createWidget(this));
+    _subsetNameAction.fromParentVariantMap(variantMap);
+}
 
-    if (widgetFlags & PopupLayout)
-    {
-        setPopupLayout(layout);
-            
-    } else {
-        layout->setContentsMargins(0, 0, 0, 0);
-        setLayout(layout);
-    }
+QVariantMap SubsetAction::toVariantMap() const
+{
+    auto variantMap = GroupAction::toVariantMap();
+
+    _subsetNameAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }

@@ -1,37 +1,24 @@
 #pragma once
 
-#include <actions/VerticalGroupAction.h>
-#include <actions/ColorAction.h>
+#include <actions/GroupAction.h>
+#include <actions/DatasetPickerAction.h>
 
 using namespace mv::gui;
 
-class QMenu;
-
 class ScatterplotPlugin;
 
-/**
- * Miscellaneous action class
- *
- * Action class for configuring miscellaneous settings (such as the background color)
- *
- * @author Thomas Kroes
- */
-class MiscellaneousAction : public VerticalGroupAction
+class DatasetsAction : public GroupAction
 {
+    Q_OBJECT
+
 public:
 
     /**
-     * Construct with \p parent object and \p title
+     * Construct with \p parent and \p title
      * @param parent Pointer to parent object
-     * @param title Title
+     * @param title Title of the action
      */
-    Q_INVOKABLE MiscellaneousAction(QObject* parent, const QString& title);
-
-    /**
-     * Get action context menu
-     * @return Pointer to menu
-     */
-    QMenu* getContextMenu();
+    Q_INVOKABLE DatasetsAction(QObject* parent, const QString& title);
 
 protected: // Linking
 
@@ -64,17 +51,17 @@ public: // Serialization
 
 public: // Action getters
 
-    ColorAction& getBackgroundColorAction() { return _backgroundColorAction; }
+    DatasetPickerAction& getPositionDatasetPickerAction() { return _positionDatasetPickerAction; }
+    DatasetPickerAction& getColorDatasetPickerAction() { return _colorDatasetPickerAction; }
 
 private:
-    ScatterplotPlugin*  _scatterplotPlugin;         /** Pointer to scatter plot plugin */
-    ColorAction         _backgroundColorAction;     /** Color action for settings the background color action */
-
-    static const QColor DEFAULT_BACKGROUND_COLOR;
+    ScatterplotPlugin*      _scatterplotPlugin;                 /** Pointer to scatter plot plugin */
+    DatasetPickerAction	    _positionDatasetPickerAction;       /** Dataset picker action for position dataset */
+    DatasetPickerAction     _colorDatasetPickerAction;          /** Dataset picker action for color dataset */
 
     friend class mv::AbstractActionsManager;
 };
 
-Q_DECLARE_METATYPE(MiscellaneousAction)
+Q_DECLARE_METATYPE(DatasetsAction)
 
-inline const auto miscellaneousActionMetaTypeId = qRegisterMetaType<MiscellaneousAction*>("MiscellaneousAction");
+inline const auto datasetsActionMetaTypeId = qRegisterMetaType<DatasetsAction*>("DatasetsAction");

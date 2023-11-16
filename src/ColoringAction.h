@@ -1,15 +1,20 @@
 #pragma once
 
-#include "PluginAction.h"
-#include "ColorSourceModel.h"
+#include <actions/VerticalGroupAction.h>
+#include <actions/ColorMap1DAction.h>
+#include <actions/ColorMap2DAction.h>
 
 #include <PointData/DimensionPickerAction.h>
+
+#include "ColorSourceModel.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QStackedWidget>
 
-using namespace hdps::gui;
+using namespace mv::gui;
+
+class ScatterplotPlugin;
 
 /**
  * Coloring action class
@@ -18,40 +23,18 @@ using namespace hdps::gui;
  *
  * @author Thomas Kroes
  */
-class ColoringAction : public PluginAction
+class ColoringAction : public VerticalGroupAction
 {
-protected: // Widget
-
-    /** Widget class for coloring action */
-    class Widget : public WidgetActionWidget {
-    public:
-
-        /**
-         * Constructor
-         * @param parent Pointer to parent widget
-         * @param coloringAction Pointer to coloring action
-         */
-        Widget(QWidget* parent, ColoringAction* coloringAction, const std::int32_t& widgetFlags);
-    };
-
-protected:
-
-    /**
-     * Get widget representation of the coloring action
-     * @param parent Pointer to parent widget
-     * @param widgetFlags Widget flags for the configuration of the widget (type)
-     */
-    QWidget* getWidget(QWidget* parent, const std::int32_t& widgetFlags) override {
-        return new Widget(parent, this, widgetFlags);
-    };
+    Q_OBJECT
 
 public:
 
     /**
-     * Constructor
-     * @param scatterplotPlugin Pointer to scatter plot plugin
+     * Construct with \p parent object and \p title
+     * @param parent Pointer to parent object
+     * @param title Title
      */
-    ColoringAction(ScatterplotPlugin* scatterplotPlugin);
+    Q_INVOKABLE ColoringAction(QObject* parent, const QString& title);
 
     /**
      * Get the context menu for the action
@@ -101,24 +84,64 @@ protected: // Color map
     bool shouldEnableColorMap() const;
 
     /** Enables/disables the color map */
-    void updateColorMapActionReadOnly();
+    void updateColorMapActionsReadOnly();
+
+protected: // Linking
+
+    /**
+     * Connect this action to a public action
+     * @param publicAction Pointer to public action to connect to
+     * @param recursive Whether to also connect descendant child actions
+     */
+    void connectToPublicAction(WidgetAction* publicAction, bool recursive) override;
+
+    /**
+     * Disconnect this action from its public action
+     * @param recursive Whether to also disconnect descendant child actions
+     */
+    void disconnectFromPublicAction(bool recursive) override;
+
+public: // Serialization
+
+    /**
+     * Load widget action from variant map
+     * @param Variant map representation of the widget action
+     */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+     * Save widget action to variant map
+     * @return Variant map representation of the widget action
+     */
+    QVariantMap toVariantMap() const override;
 
 public: // Action getters
 
     OptionAction& getColorByAction() { return _colorByAction; }
     ColorAction& getConstantColorAction() { return _constantColorAction; }
     DimensionPickerAction& getDimensionAction() { return _dimensionAction; }
-    ColorMapAction& getColorMapAction() { return _colorMapAction; }
+    ColorMapAction& getColorMap1DAction() { return _colorMap1DAction; }
+    ColorMapAction& getColorMap2DAction() { return _colorMap2DAction; }
 
-protected:
-    ColorSourceModel        _colorByModel;              /** Color by model (model input for the color by action) */
-    OptionAction            _colorByAction;             /** Action for picking the coloring type */
-    ColorAction             _constantColorAction;       /** Action for picking the constant color */
-    DimensionPickerAction   _dimensionAction;           /** Dimension picker action */
-    ColorMapAction          _colorMapAction;            /** Color map action */
+signals:
+    void currentColorDatasetChanged(Dataset<DatasetImpl> currentColorDataset);
+
+private:
+    ScatterplotPlugin*      _scatterplotPlugin;     /** Pointer to scatter plot plugin */
+    ColorSourceModel        _colorByModel;          /** Color by model (model input for the color by action) */
+    OptionAction            _colorByAction;         /** Action for picking the coloring type */
+    ColorAction             _constantColorAction;   /** Action for picking the constant color */
+    DimensionPickerAction   _dimensionAction;       /** Dimension picker action */
+    ColorMap1DAction        _colorMap1DAction;      /** One-dimensional color map action */
+    ColorMap2DAction        _colorMap2DAction;      /** Two-dimensional color map action */
 
     /** Default constant color */
     static const QColor DEFAULT_CONSTANT_COLOR;
 
-    friend class Widget;
+    friend class ScatterplotPlugin;
+    friend class mv::AbstractActionsManager;
 };
+
+Q_DECLARE_METATYPE(ColoringAction)
+
+inline const auto coloringActionMetaTypeId = qRegisterMetaType<ColoringAction*>("ColoringAction");

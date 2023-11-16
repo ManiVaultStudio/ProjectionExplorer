@@ -10,14 +10,17 @@
 
 #include "SettingsAction.h"
 
-using namespace hdps::plugin;
-using namespace hdps::util;
+#include <ClusterData/ClusterData.h>
+#include <actions/HorizontalToolbarAction.h>
+
+using namespace mv::plugin;
+using namespace mv::util;
 
 class Points;
 
 class ScatterplotWidget;
 
-namespace hdps
+namespace mv
 {
     class CoreInterface;
     class Vector2f;
@@ -37,7 +40,7 @@ public:
 
     void init() override;
 
-    void onDataEvent(hdps::DataEvent* dataEvent);
+    void onDataEvent(mv::DatasetEvent* dataEvent);
 
     /**
      * Load one (or more datasets in the view)
@@ -95,11 +98,6 @@ public: // Miscellaneous
     /** Use the pixel selection tool to select data points */
     void selectPoints();
 
-protected:
-
-    /** Updates the window title (displays the name of the view and the GUI name of the loaded points dataset) */
-    void updateWindowTitle();
-
 public:
 
     /** Get reference to the scatter plot widget */
@@ -118,17 +116,20 @@ private:
 private:
     Dataset<Points>                 _positionDataset;           /** Smart pointer to points dataset for point position */
     Dataset<Points>                 _positionSourceDataset;     /** Smart pointer to source of the points dataset for point position (if any) */
-    std::vector<hdps::Vector2f>     _positions;                 /** Point positions */
+    std::vector<mv::Vector2f>     _positions;                 /** Point positions */
     unsigned int                    _numPoints;                 /** Number of point positions */
     
     
 protected:
     ScatterplotWidget*          _scatterPlotWidget;
-    hdps::gui::DropWidget*      _dropWidget;
+    mv::gui::DropWidget*      _dropWidget;
     SettingsAction              _settingsAction;
 
     ExplanationModel            _explanationModel;
     ExplanationWidget*          _explanationWidget;
+
+    HorizontalToolbarAction    _primaryToolbarAction;
+    HorizontalToolbarAction    _secondaryToolbarAction;
 
     float _selectionRadius;
 
@@ -146,7 +147,7 @@ protected:
 
 class ScatterplotPluginFactory : public ViewPluginFactory
 {
-    Q_INTERFACES(hdps::plugin::ViewPluginFactory hdps::plugin::PluginFactory)
+    Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
     Q_PLUGIN_METADATA(IID   "nl.tudelft.ScatterplotPlugin"
                       FILE  "ScatterplotPlugin.json")
@@ -169,5 +170,5 @@ public:
      * @param datasets Vector of input datasets
      * @return Vector of plugin trigger actions
      */
-    PluginTriggerActions getPluginTriggerActions(const hdps::Datasets& datasets) const override;
+    PluginTriggerActions getPluginTriggerActions(const mv::Datasets& datasets) const override;
 };

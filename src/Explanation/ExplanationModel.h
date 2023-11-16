@@ -38,7 +38,7 @@ public:
     const std::vector<QColor>& getColorMapping() { return _colorMapping.getColors(); }
 
     void resetDataset() { _hasDataset = false; }
-    void setDataset(hdps::Dataset<Points> dataset, hdps::Dataset<Points> projection);
+    void setDataset(mv::Dataset<Points> dataset, mv::Dataset<Points> projection);
     void recomputeNeighbourhood(float neighbourhoodRadius, int xDim, int yDim);
     void recomputeMetrics();
     void recomputeColorMapping(DataMatrix& dimRanks);
