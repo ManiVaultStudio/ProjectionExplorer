@@ -512,7 +512,7 @@ void ScatterplotPlugin::selectPoints()
     _positionDataset->setSelectionIndices(targetSelectionIndices);
 
     // Notify others that the selection changed
-    events().notifyDatasetDataSelectionChanged(_positionDataset);
+    events().notifyDatasetDataSelectionChanged(_positionDataset->getSourceDataset<Points>());
 }
 
 Dataset<Points>& ScatterplotPlugin::getPositionDataset()
@@ -914,7 +914,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        events().notifyDatasetDataSelectionChanged(_positionDataset);
+        events().notifyDatasetDataSelectionChanged(_positionDataset->getSourceDataset<Points>());
 
         _explanationWidget->update();
 
@@ -941,7 +941,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         _positionDataset->setSelectionIndices(targetSelectionIndices);
 
         // Notify others that the selection changed
-        events().notifyDatasetDataSelectionChanged(_positionDataset);
+        events().notifyDatasetDataSelectionChanged(_positionDataset->getSourceDataset<Points>());
 
         _explanationWidget->update();
 
