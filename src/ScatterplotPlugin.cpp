@@ -5,6 +5,7 @@
 
 #include <DatasetsMimeData.h>
 #include "util/PixelSelectionTool.h"
+#include "event/Event.h"
 
 #include "PointData/PointData.h"
 #include "ClusterData/ClusterData.h"
@@ -111,7 +112,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
         if (dataType == PointType) {
 
             // Get points dataset from the core
-            auto candidateDataset = _core->requestDataset<Points>(datasetId);
+            auto candidateDataset = mv::data().getDataset<Points>(datasetId);
 
             // Establish drop region description
             const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
