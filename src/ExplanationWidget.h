@@ -3,6 +3,7 @@
 #include <PointData/PointData.h>
 
 #include "Explanation/ExplanationModel.h"
+#include "Explanation/Histogram.h"
 
 #include <QWidget>
 #include <QLabel>
@@ -66,6 +67,9 @@ protected:
 
 private:
     ExplanationModel& _explanationModel;
+
+    std::vector<Histogram> _histograms;
+    std::vector<Histogram> _globalHistograms;
 
     std::vector<float> _dimAggregation;
     std::vector<int> _sortIndices;

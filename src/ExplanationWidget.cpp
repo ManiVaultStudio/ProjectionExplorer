@@ -11,9 +11,10 @@
 #include <algorithm>
 #include <numeric>
 
-#define RANGE_OFFSET 200
-#define RANGE_WIDTH 250
+#define RANGE_OFFSET 250
+#define RANGE_WIDTH 200
 #define TOP_MARGIN 30
+#define BOX_HEIGHT 40
 #define DIFF_HEIGHT 12
 #define LEGEND_BUTTON 400
 #define HIGHLIGHT_COLOR Qt::white
@@ -174,6 +175,12 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
 
     int numDimensions = dimRanking.size();
 
+    _globalHistograms.clear();
+    _globalHistograms.resize(numDimensions, Histogram(20));
+
+    _histograms.clear();
+    _histograms.resize(numDimensions, Histogram(20));
+
     // Print rankings
     //for (int j = 0; j < numDimensions; j++)
     //{
@@ -185,6 +192,30 @@ void BarChart::setRanking(const std::vector<float>& dimRanking, const std::vecto
 
     // Compute metrics on current selection
     _newMetrics.compute(_explanationModel.getDataset(), _selection, _explanationModel.getDataStatistics());
+
+    const DataTable& dataset = _explanationModel.getDataset();
+
+    // Compute global histograms
+    for (int j = 0; j < numDimensions; j++)
+    {
+        _globalHistograms[j].setRange(_explanationModel.getDataStatistics().minRange[j], _explanationModel.getDataStatistics().maxRange[j]);
+        for (int i = 0; i < dataset.numPoints(); i++)
+        {
+            _globalHistograms[j].addDataValue(dataset(i, j));
+        }
+    }
+
+    // Compute local histograms
+    for (int j = 0; j < numDimensions; j++)
+    {
+        _histograms[j].setRange(_explanationModel.getDataStatistics().minRange[j], _explanationModel.getDataStatistics().maxRange[j]);
+        for (int i = 0; i < selection.size(); i++)
+        {
+            int si = selection[i];
+
+            _histograms[j].addDataValue(dataset(si, j));
+        }
+    }
 
     // Compute sorting
     _sortIndices.clear();
@@ -265,10 +296,11 @@ void BarChart::paintEvent(QPaintEvent* event)
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::RenderHint::Antialiasing);
-    painter.fillRect(0, 0, 600, (numDimensions + 2) * 20, QColor(38, 38, 38));
+    painter.fillRect(0, 0, 600, (numDimensions + 2) * BOX_HEIGHT, QColor(38, 38, 38));
 
     painter.setPen(Qt::white);
     QFont font = QFont("MS Shell Dlg 2", 10, QFont::ExtraBold);
+    QFontMetricsF fm(font);
     font.setPixelSize(16);
     painter.setFont(font);
     
@@ -284,30 +316,30 @@ void BarChart::paintEvent(QPaintEvent* event)
 
         if (!_differentialRanking)
         {
-            // Draw PCP
-            int alpha = std::min(1 * std::max<int>(255.0f / _selection.size(), 1), 255);
+            //// Draw PCP
+            //int alpha = std::min(2 * std::max<int>(255.0f / _selection.size(), 1), 255);
 
-            QPen pcpPen;
-            pcpPen.setColor(QColor(255, 255, 0, alpha));
-            pcpPen.setWidth(2);
-            painter.setPen(pcpPen);
-            
-            for (const unsigned int& si : _selection)
-            {
-                for (int j = 0; j < numDimensions - 1; j++)
-                {
-                    int sortIndexA = _sortIndices[j];
-                    int sortIndexB = _sortIndices[j + 1];
+            //QPen pcpPen;
+            //pcpPen.setColor(QColor(255, 255, 0, alpha));
+            //pcpPen.setWidth(2);
+            //painter.setPen(pcpPen);
+            //
+            //for (const unsigned int& si : _selection)
+            //{
+            //    for (int j = 0; j < numDimensions - 1; j++)
+            //    {
+            //        int sortIndexA = _sortIndices[j];
+            //        int sortIndexB = _sortIndices[j + 1];
 
-                    bool excluded = _explanationModel.getDataset().isExcluded(sortIndexB);
-                    if (excluded) continue;
+            //        bool excluded = _explanationModel.getDataset().isExcluded(sortIndexB);
+            //        if (excluded) continue;
 
-                    float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / dataStats.ranges[sortIndexA];
-                    float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / dataStats.ranges[sortIndexB];
+            //        float normValueA = (dataset(si, sortIndexA) - dataStats.minRange[sortIndexA]) / dataStats.ranges[sortIndexA];
+            //        float normValueB = (dataset(si, sortIndexB) - dataStats.minRange[sortIndexB]) / dataStats.ranges[sortIndexB];
 
-                    painter.drawLine(RANGE_OFFSET + normValueA * RANGE_WIDTH, TOP_MARGIN + 16 * j + 8, RANGE_OFFSET + normValueB * RANGE_WIDTH, TOP_MARGIN + 16 * (j + 1) + 8);
-                }
-            }
+            //        painter.drawLine(RANGE_OFFSET + normValueA * RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * j + 0, RANGE_OFFSET + normValueB * RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * (j + 1) + 0);
+            //    }
+            //}
         }
 
         for (int i = 0; i < _dimAggregation.size(); i++)
@@ -327,18 +359,20 @@ void BarChart::paintEvent(QPaintEvent* event)
 
             // Draw colored legend boxes
             // Check if mouse is over box, if so, draw a cross over it
-            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
+            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + BOX_HEIGHT * i, 14))
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, HIGHLIGHT_COLOR);
+                painter.fillRect(10, TOP_MARGIN + BOX_HEIGHT * i, 14, 14, HIGHLIGHT_COLOR);
             }
             else
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
+                painter.fillRect(10, TOP_MARGIN + BOX_HEIGHT * i, 14, 14, color);
             }
 
             // Draw dimension names
             painter.setPen(color);
-            painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[sortIndex]);
+            QString dimName = _explanationModel.getDataNames()[sortIndex];
+            dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 150);
+            painter.drawText(30, TOP_MARGIN + 10 + i * BOX_HEIGHT, dimName);
 
             if (excluded)
                 continue;
@@ -362,46 +396,102 @@ void BarChart::paintEvent(QPaintEvent* event)
 
             //// Draw values
             // Draw range line
-            painter.drawLine(RANGE_OFFSET, TOP_MARGIN + 16 * i + 8, RANGE_OFFSET + RANGE_WIDTH, TOP_MARGIN + 16 * i + 8);
+            painter.drawLine(RANGE_OFFSET, TOP_MARGIN + BOX_HEIGHT * i + 0, RANGE_OFFSET + RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * i + 0);
 
+            // Draw histogram
             if (!_differentialRanking)
             {
-                // Draw mean
-                float mean = _newMetrics.averageValues[sortIndex];
-                float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / dataStats.ranges[sortIndex];
-                
-                int oldMeanX = RANGE_OFFSET + globalMean * RANGE_WIDTH;
-                int newMeanX = RANGE_OFFSET + mean * RANGE_WIDTH;
+                Histogram& globalHist = _globalHistograms[sortIndex];
+                Histogram& hist = _histograms[sortIndex];
+                int globalNumPoints = globalHist.getNumDataPoints();
+                int localNumPoints = hist.getNumDataPoints();
+                int globalHighestBinValue = globalHist.getHighestBinValue();
+                int localHighestBinValue = hist.getHighestBinValue();
 
-                QColor diffColor = newMeanX - oldMeanX >= 0 ? QColor(0, 255, 0, 128) : QColor(255, 0, 0, 128);
-                painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i + 2, newMeanX - oldMeanX, DIFF_HEIGHT, diffColor);
+                // Draw global histograms
+                float globalBoxWidth = (float)RANGE_WIDTH / globalHist.getBins().size();
+                for (int b = 0; b < globalHist.getBins().size(); b++)
+                {
+                    painter.fillRect(RANGE_OFFSET + b * globalBoxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, globalBoxWidth, ((float) globalHist.getBins()[b] / globalHighestBinValue) * BOX_HEIGHT / 2, QColor(180, 180, 180));
+                }
 
-                // Draw variance
-                painter.setPen(QColor(255, 255, 255, 255));
-                //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, (_newMetrics.variances[sortIndex]) * RANGE_WIDTH * 2, 12);
+                // Draw local histograms
+                float boxWidth = (float) RANGE_WIDTH / hist.getBins().size();
+                for (int b = 0; b < hist.getBins().size(); b++)
+                {
+                    painter.fillRect(RANGE_OFFSET + b * boxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, boxWidth, ((float) -hist.getBins()[b] / localHighestBinValue) * BOX_HEIGHT / 2, QColor(0, 180, 225));
+                }
 
-                drawVarianceWhiskers(painter, mean - _newMetrics.variances[sortIndex], mean + _newMetrics.variances[sortIndex], 16 * i + 8);
-                //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
-                //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
-                //painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+                //// Draw mean
+                //float mean = _newMetrics.averageValues[sortIndex];
+                //float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / dataStats.ranges[sortIndex];
 
-                QPen meanPen;
-                meanPen.setColor(QColor(255, 0, 0, 255));
-                meanPen.setWidth(2);
-                painter.setPen(meanPen);
-                painter.drawLine(RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 2, RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 14);
+                //int oldMeanX = RANGE_OFFSET + globalMean * RANGE_WIDTH;
+                //int newMeanX = RANGE_OFFSET + mean * RANGE_WIDTH;
 
-                // Draw global mean
-                //painter.setPen(QColor(180, 180, 180, 255));
-                meanPen.setColor(QColor(180, 180, 180, 255));
-                painter.setPen(meanPen);
-                painter.drawLine(RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 0, RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 16);
+                //QColor diffColor = newMeanX - oldMeanX >= 0 ? QColor(0, 255, 0, 128) : QColor(255, 0, 0, 128);
+                //painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i + 2, newMeanX - oldMeanX, DIFF_HEIGHT, diffColor);
 
+                //// Draw variance
+                //painter.setPen(QColor(255, 255, 255, 255));
+                ////painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, (_newMetrics.variances[sortIndex]) * RANGE_WIDTH * 2, 12);
 
-                //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, 2 * _newMetrics.variances[sortIndex] * RANGE_WIDTH, 16);
+                //drawVarianceWhiskers(painter, mean - _newMetrics.variances[sortIndex], mean + _newMetrics.variances[sortIndex], 16 * i + 8);
+                ////painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
+                ////painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+                ////painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
 
+                //QPen meanPen;
+                //meanPen.setColor(QColor(255, 0, 0, 255));
+                //meanPen.setWidth(2);
+                //painter.setPen(meanPen);
+                //painter.drawLine(RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 2, RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 14);
 
+                //// Draw global mean
+                ////painter.setPen(QColor(180, 180, 180, 255));
+                //meanPen.setColor(QColor(180, 180, 180, 255));
+                //painter.setPen(meanPen);
+                //painter.drawLine(RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 0, RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 16);
             }
+            // Draw normally
+            //if (!_differentialRanking)
+            //{
+            //    // Draw mean
+            //    float mean = _newMetrics.averageValues[sortIndex];
+            //    float globalMean = (dataStats.means[sortIndex] - dataStats.minRange[sortIndex]) / dataStats.ranges[sortIndex];
+            //    
+            //    int oldMeanX = RANGE_OFFSET + globalMean * RANGE_WIDTH;
+            //    int newMeanX = RANGE_OFFSET + mean * RANGE_WIDTH;
+
+            //    QColor diffColor = newMeanX - oldMeanX >= 0 ? QColor(0, 255, 0, 128) : QColor(255, 0, 0, 128);
+            //    painter.fillRect(oldMeanX, TOP_MARGIN + 16 * i + 2, newMeanX - oldMeanX, DIFF_HEIGHT, diffColor);
+
+            //    // Draw variance
+            //    painter.setPen(QColor(255, 255, 255, 255));
+            //    //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 2 + 16 * i, (_newMetrics.variances[sortIndex]) * RANGE_WIDTH * 2, 12);
+
+            //    drawVarianceWhiskers(painter, mean - _newMetrics.variances[sortIndex], mean + _newMetrics.variances[sortIndex], 16 * i + 8);
+            //    //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 8 + 16 * i);
+            //    //painter.drawLine(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+            //    //painter.drawLine(RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 4 + 16 * i, RANGE_OFFSET + (mean + _newMetrics.variances[sortIndex]) * RANGE_WIDTH, TOP_MARGIN + 12 + 16 * i);
+
+            //    QPen meanPen;
+            //    meanPen.setColor(QColor(255, 0, 0, 255));
+            //    meanPen.setWidth(2);
+            //    painter.setPen(meanPen);
+            //    painter.drawLine(RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 2, RANGE_OFFSET + mean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 14);
+
+            //    // Draw global mean
+            //    //painter.setPen(QColor(180, 180, 180, 255));
+            //    meanPen.setColor(QColor(180, 180, 180, 255));
+            //    painter.setPen(meanPen);
+            //    painter.drawLine(RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 0, RANGE_OFFSET + globalMean * RANGE_WIDTH, TOP_MARGIN + 16 * i + 16);
+
+
+            //    //painter.drawRect(RANGE_OFFSET + (mean - _newMetrics.variances[sortIndex]) * RANGE_WIDTH, 10 + 16 * i, 2 * _newMetrics.variances[sortIndex] * RANGE_WIDTH, 16);
+
+
+            //}
             else
             {
                 // Draw mean
@@ -455,29 +545,29 @@ void BarChart::paintEvent(QPaintEvent* event)
                 color = QColor(255, 255, 255);
 
             // Check if mouse is over box, if so, draw a cross over it
-            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + 16 * i, 14))
+            if (isMouseOverBox(_mousePos, 10, TOP_MARGIN + BOX_HEIGHT * i, 14))
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, HIGHLIGHT_COLOR);
+                painter.fillRect(10, TOP_MARGIN + BOX_HEIGHT * i, 14, 14, HIGHLIGHT_COLOR);
             }
             else
             {
-                painter.fillRect(10, TOP_MARGIN + 16 * i, 14, 14, color);
+                painter.fillRect(10, TOP_MARGIN + BOX_HEIGHT * i, 14, 14, color);
             }
 
             painter.setPen(QColor(255, 255, 255));
             if (_explanationModel.getDataNames().size() > 0)
             {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, _explanationModel.getDataNames()[i]);
+                painter.drawText(30, TOP_MARGIN + 10 + BOX_HEIGHT * i, _explanationModel.getDataNames()[i]);
             }
             else
             {
-                painter.drawText(30, TOP_MARGIN + 10 + 16 * i, QString::number(i));
+                painter.drawText(30, TOP_MARGIN + 10 + BOX_HEIGHT * i, QString::number(i));
             }
         }
     }
 
     // Draw legend
-    int legendY = _drawLegend ? std::min(TOP_MARGIN + 8 + 16 * (numDimensions + 2), height()-270) : height() - 30;
+    int legendY = _drawLegend ? std::min(TOP_MARGIN + 8 + BOX_HEIGHT * (numDimensions + 2), height()-270) : height() - 30;
     int legendHeight = _drawLegend ? 270 : 30;
 
     painter.fillRect(0, legendY, 600, legendHeight, QColor(60, 60, 60));

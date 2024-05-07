@@ -57,6 +57,8 @@ set(EXPLANATION
     src/Explanation/ColorMapping.cpp
     src/Explanation/ConfidenceModel.h
     src/Explanation/ConfidenceModel.cpp
+    src/Explanation/Histogram.h
+    src/Explanation/Histogram.cpp
     #src/Explanation/Explanation.h
     #src/Explanation/Explanation.cpp
     src/Explanation/Methods/ExplanationMethod.h
