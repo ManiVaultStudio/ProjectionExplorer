@@ -701,7 +701,7 @@ bool BarChart::eventFilter(QObject* target, QEvent* event)
         auto mouseEvent = static_cast<QMouseEvent*>(event);
 
 
-        _mousePos = QPoint(mouseEvent->x(), mouseEvent->y());
+        _mousePos = QPoint(mouseEvent->position().x(), mouseEvent->position().y());
         update();
 
         break;

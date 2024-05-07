@@ -900,7 +900,7 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
         if (!_mousePressed)
             break;
 
-        _lastMousePos = QPoint(mouseEvent->x(), mouseEvent->y());
+        _lastMousePos = QPoint(mouseEvent->position().x(), mouseEvent->position().y());
 
         _scatterPlotWidget->setCurrentPosition(_lastMousePos, _selectionRadius);
 
