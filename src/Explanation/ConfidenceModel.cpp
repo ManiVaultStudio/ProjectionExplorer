@@ -70,7 +70,7 @@ void ConfidenceModel::silvaConfidence(const std::vector<int>& topDimensions, con
 
         confidences[i] = topRanking / totalRank;
 
-        if (isnan(confidences[i]))
+        if (std::isnan(confidences[i]))
             confidences[i] = 0;
 
         if (neighbourhood.size() == 0)
