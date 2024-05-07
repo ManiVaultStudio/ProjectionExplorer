@@ -32,7 +32,7 @@
 #include <iostream>
 #include <fstream>
 
-Q_PLUGIN_METADATA(IID "nl.uu.ExplanationScatterplot")
+Q_PLUGIN_METADATA(IID "nl.uu.ProjectionExplorer")
 
 using namespace mv;
 using namespace mv::util;

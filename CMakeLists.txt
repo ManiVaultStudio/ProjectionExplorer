@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.17)
 # -----------------------------------------------------------------------------
 # Projection Explanation Plugin
 # -----------------------------------------------------------------------------
-set(PROJECT "ExplanationScatterplot")
+set(PROJECT "ProjectionExplorer")
 PROJECT(${PROJECT})
 
 # -----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ set(SHADERS
 
 set(AUX
     res/Resources.qrc
-    src/ScatterplotPlugin.json
+    src/ProjectionExplorer.json
 )
 
 set(SOURCES ${PLUGIN} ${EXPLANATION} ${UI} ${Actions} ${Models})
