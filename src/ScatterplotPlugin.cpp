@@ -956,6 +956,31 @@ bool ScatterplotPlugin::eventFilter(QObject* target, QEvent* event)
     return QObject::eventFilter(target, event);
 }
 
+void ScatterplotPlugin::fromVariantMap(const QVariantMap& variantMap)
+{
+    _explanationWidget->getBarchart().sortByValue();
+    _explanationModel.setExplanationMetric(Explanation::Metric::VALUE);
+
+    ViewPlugin::fromVariantMap(variantMap);
+
+    variantMapMustContain(variantMap, "Settings");
+
+    _primaryToolbarAction.fromParentVariantMap(variantMap);
+    _secondaryToolbarAction.fromParentVariantMap(variantMap);
+    _settingsAction.fromParentVariantMap(variantMap);
+}
+
+QVariantMap ScatterplotPlugin::toVariantMap() const
+{
+    QVariantMap variantMap = ViewPlugin::toVariantMap();
+
+    _primaryToolbarAction.insertIntoVariantMap(variantMap);
+    _secondaryToolbarAction.insertIntoVariantMap(variantMap);
+    _settingsAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
+}
+
 QIcon ScatterplotPluginFactory::getIcon(const QColor& color /*= Qt::black*/) const
 {
     return Application::getIconFont("FontAwesome").getIcon("braille", color);

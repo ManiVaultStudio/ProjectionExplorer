@@ -80,8 +80,6 @@ set(UI
 set(Actions
     src/ColoringAction.h
     src/ColoringAction.cpp
-    src/DensityPlotAction.h
-    src/DensityPlotAction.cpp
     src/MiscellaneousAction.h
     src/MiscellaneousAction.cpp
     src/PlotAction.h

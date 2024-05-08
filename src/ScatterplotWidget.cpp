@@ -114,14 +114,6 @@ void ScatterplotWidget::setRenderMode(const RenderMode& renderMode)
         case ScatterplotWidget::SCATTERPLOT:
             break;
         
-        case ScatterplotWidget::DENSITY:
-            computeDensity();
-            break;
-
-        case ScatterplotWidget::LANDSCAPE:
-            computeDensity();
-            break;
-
         default:
             break;
     }
@@ -129,35 +121,9 @@ void ScatterplotWidget::setRenderMode(const RenderMode& renderMode)
     update();
 }
 
-ScatterplotWidget::ColoringMode ScatterplotWidget::getColoringMode() const
-{
-    return _coloringMode;
-}
-
-void ScatterplotWidget::setColoringMode(const ColoringMode& coloringMode)
-{
-    if (coloringMode == _coloringMode)
-        return;
-
-    _coloringMode = coloringMode;
-
-    emit coloringModeChanged(_coloringMode);
-}
-
 PixelSelectionTool& ScatterplotWidget::getPixelSelectionTool()
 {
     return _pixelSelectionTool;
-}
-
-void ScatterplotWidget::computeDensity()
-{
-    emit densityComputationStarted();
-
-    _densityRenderer.computeDensity();
-
-    emit densityComputationEnded();
-
-    update();
 }
 
 // Positions need to be passed as a pointer as we need to store them locally in order
@@ -258,13 +224,6 @@ void ScatterplotWidget::setPointScaling(mv::gui::PointScaling scalingMode)
 void ScatterplotWidget::setScalarEffect(PointEffect effect)
 {
     _pointRenderer.setScalarEffect(effect);
-
-    update();
-}
-
-void ScatterplotWidget::setSigma(const float sigma)
-{
-    _densityRenderer.setSigma(sigma);
 
     update();
 }

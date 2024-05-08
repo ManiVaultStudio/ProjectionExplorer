@@ -63,20 +63,20 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 {
     WidgetAction::fromVariantMap(variantMap);
 
-    //_datasetsAction.fromParentVariantMap(variantMap);
     _plotAction.fromParentVariantMap(variantMap);
     _positionAction.fromParentVariantMap(variantMap);
     _coloringAction.fromParentVariantMap(variantMap);
     _renderModeAction.fromParentVariantMap(variantMap);
     _selectionAction.fromParentVariantMap(variantMap);
     _miscellaneousAction.fromParentVariantMap(variantMap);
+    _datasetsAction.fromParentVariantMap(variantMap);
 }
 
 QVariantMap SettingsAction::toVariantMap() const
 {
     QVariantMap variantMap = WidgetAction::toVariantMap();
 
-    //_datasetsAction.insertIntoVariantMap(variantMap);
+    _datasetsAction.insertIntoVariantMap(variantMap);
     _renderModeAction.insertIntoVariantMap(variantMap);
     _plotAction.insertIntoVariantMap(variantMap);
     _positionAction.insertIntoVariantMap(variantMap);
