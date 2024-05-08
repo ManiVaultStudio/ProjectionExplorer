@@ -54,10 +54,6 @@ public:
     QColor getBackgroundColor();
     void setBackgroundColor(QColor color);
 
-    /** Get/set coloring mode */
-    ColoringMode getColoringMode() const;
-    void setColoringMode(const ColoringMode& coloringMode);
-
     /** Get reference to the pixel selection tool */
     PixelSelectionTool& getPixelSelectionTool();
 
@@ -88,7 +84,6 @@ public:
 
     void setScalarEffect(PointEffect effect);
     void setPointScaling(mv::gui::PointScaling scalingMode);
-    void setSigma(const float sigma);
 
     void drawOldSelection(bool drawOldSelection) { _drawOldSelection = drawOldSelection; }
     void setOldPosition(QPoint pos, float radius) { _oldSelectionPoint = pos; _oldSelectionRadius = radius; }
@@ -217,21 +212,6 @@ signals:
      */
     void renderModeChanged(const RenderMode& renderMode);
 
-    /**
-     * Signals that the coloring mode changed
-     * @param coloringMode Signals that the coloring mode has changed
-     */
-    void coloringModeChanged(const ColoringMode& coloringMode);
-
-    /** Signals that the density computation has started */
-    void densityComputationStarted();
-
-    /** Signals that the density computation has ended */
-    void densityComputationEnded();
-
-public slots:
-    void computeDensity();
-
 private slots:
     void updatePixelRatio();
 
@@ -242,7 +222,6 @@ private:
     bool                    _isInitialized = false;
     RenderMode              _renderMode = SCATTERPLOT;
     QColor                  _backgroundColor;
-    ColoringMode            _coloringMode = ColoringMode::Constant;
     PointRenderer           _pointRenderer;                     
     DensityRenderer         _densityRenderer;                   
     QSize                   _windowSize;                        /** Size of the scatterplot widget */

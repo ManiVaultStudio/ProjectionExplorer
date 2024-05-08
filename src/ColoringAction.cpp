@@ -66,8 +66,6 @@ ColoringAction::ColoringAction(QObject* parent, const QString& title) :
     });
 
     connect(&_colorByAction, &OptionAction::currentIndexChanged, this, [this](const std::int32_t& currentIndex) {
-        _scatterplotPlugin->getScatterplotWidget().setColoringMode(currentIndex == 0 ? ScatterplotWidget::ColoringMode::Constant : ScatterplotWidget::ColoringMode::Data);
-
         _constantColorAction.setEnabled(currentIndex == 0);
 
         const auto currentColorDataset = getCurrentColorDataset();
@@ -95,7 +93,6 @@ ColoringAction::ColoringAction(QObject* parent, const QString& title) :
     connect(&_scatterplotPlugin->getPositionDataset(), &Dataset<Points>::childRemoved, this, &ColoringAction::updateColorByActionOptions);
 
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, &ColoringAction::updateScatterPlotWidgetColors);
-    connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::coloringModeChanged, this, &ColoringAction::updateScatterPlotWidgetColors);
 
     connect(&_dimensionAction, &DimensionPickerAction::currentDimensionIndexChanged, this, &ColoringAction::updateScatterPlotWidgetColors);
     connect(&_dimensionAction, &DimensionPickerAction::currentDimensionIndexChanged, this, &ColoringAction::updateColorMapActionScalarRange);
@@ -103,13 +100,11 @@ ColoringAction::ColoringAction(QObject* parent, const QString& title) :
     connect(&_constantColorAction, &ColorAction::colorChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_colorMap1DAction, &ColorMapAction::imageChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_colorMap2DAction, &ColorMapAction::imageChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
-    connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::coloringModeChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, &ColoringAction::updateScatterplotWidgetColorMap);
 
     connect(&_colorMap1DAction.getRangeAction(ColorMapAction::Axis::X), &DecimalRangeAction::rangeChanged, this, &ColoringAction::updateScatterPlotWidgetColorMapRange);
     connect(&_colorMap2DAction.getRangeAction(ColorMapAction::Axis::X), &DecimalRangeAction::rangeChanged, this, &ColoringAction::updateScatterPlotWidgetColorMapRange);
 
-    connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::coloringModeChanged, this, &ColoringAction::updateColorMapActionsReadOnly);
     connect(&_scatterplotPlugin->getScatterplotWidget(), &ScatterplotWidget::renderModeChanged, this, &ColoringAction::updateColorMapActionsReadOnly);
 
     const auto updateReadOnly = [this]() {
@@ -122,8 +117,6 @@ ColoringAction::ColoringAction(QObject* parent, const QString& title) :
 
     updateScatterplotWidgetColorMap();
     updateColorMapActionScalarRange();
-
-    _scatterplotPlugin->getScatterplotWidget().setColoringMode(ScatterplotWidget::ColoringMode::Constant);
 }
 
 QMenu* ColoringAction::getContextMenu(QWidget* parent /*= nullptr*/)
@@ -258,12 +251,10 @@ void ColoringAction::updateScatterplotWidgetColorMap()
 
                 scatterplotWidget.setColorMap(colorPixmap.toImage());
                 scatterplotWidget.setScalarEffect(PointEffect::Color);
-                scatterplotWidget.setColoringMode(ScatterplotWidget::ColoringMode::Constant);
             }
             else if (_colorByAction.getCurrentIndex() == 1) {
                 scatterplotWidget.setColorMap(_colorMap2DAction.getColorMapImage());
                 scatterplotWidget.setScalarEffect(PointEffect::Color2D);
-                scatterplotWidget.setColoringMode(ScatterplotWidget::ColoringMode::Scatter);
             }
             else {
                 scatterplotWidget.setColorMap(_colorMap1DAction.getColorMapImage().mirrored(false, true));
@@ -278,7 +269,6 @@ void ColoringAction::updateScatterplotWidgetColorMap()
         case ScatterplotWidget::LANDSCAPE:
         {
             scatterplotWidget.setScalarEffect(PointEffect::Color);
-            scatterplotWidget.setColoringMode(ScatterplotWidget::ColoringMode::Scatter);
             scatterplotWidget.setColorMap(_colorMap1DAction.getColorMapImage());
             
             break;

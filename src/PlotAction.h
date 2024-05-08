@@ -3,7 +3,6 @@
 #include <actions/VerticalGroupAction.h>
 
 #include "PointPlotAction.h"
-#include "DensityPlotAction.h"
 
 class ScatterplotPlugin;
 
@@ -73,12 +72,10 @@ public: // Serialization
 public: // Action getters
 
     PointPlotAction& getPointPlotAction() { return _pointPlotAction; }
-    DensityPlotAction& getDensityPlotAction() { return _densityPlotAction; }
 
 private:
     ScatterplotPlugin*  _scatterplotPlugin;     /** Pointer to scatterplot plugin */
     PointPlotAction     _pointPlotAction;       /** Point plot action */
-    DensityPlotAction   _densityPlotAction;     /** Density plot action */
 
     friend class mv::AbstractActionsManager;
 };
