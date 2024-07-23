@@ -53,6 +53,9 @@ public:
 
     void colorPointsByRanking();
 
+private: // Initialization
+    void initializeDropWidget();
+
 protected slots:
     void neighbourhoodRadiusValueChanged(int value);
     void neighbourhoodRadiusSliderPressed();

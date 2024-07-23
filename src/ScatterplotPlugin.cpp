@@ -58,9 +58,7 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
 
     getWidget().setFocusPolicy(Qt::ClickFocus);
 
-    auto bottomToolbarWidget = new QWidget();
-    auto bottomToolbarLayout = new QHBoxLayout();
-
+    // Add settings to the toolbar pinned to the top of the plugin
     _primaryToolbarAction.addAction(&_settingsAction.getDatasetsAction());
     _primaryToolbarAction.addAction(&_settingsAction.getRenderModeAction(), 3, GroupAction::Horizontal);
     _primaryToolbarAction.addAction(&_settingsAction.getPositionAction(), 1, GroupAction::Horizontal);
@@ -69,10 +67,12 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
     _primaryToolbarAction.addAction(&_settingsAction.getSubsetAction());
     _primaryToolbarAction.addAction(&_settingsAction.getSelectionAction());
 
+    // Add settings to the toolbar pinned to the bottom of the plugin
     _secondaryToolbarAction.addAction(&_settingsAction.getColoringAction().getColorMap1DAction(), 1);
     _secondaryToolbarAction.addAction(&_settingsAction.getExportAction());
     _secondaryToolbarAction.addAction(&_settingsAction.getMiscellaneousAction());
 
+    // Add slot for reacting to right-click context menu requests
     connect(_scatterPlotWidget, &ScatterplotWidget::customContextMenuRequested, this, [this](const QPoint& point) {
         if (!_positionDataset.isValid())
             return;
@@ -86,78 +86,8 @@ ScatterplotPlugin::ScatterplotPlugin(const PluginFactory* factory) :
         contextMenu->exec(getWidget().mapToGlobal(point));
     });
 
-    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
-    _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
-        DropWidget::DropRegions dropRegions;
-
-        const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
-
-        if (datasetsMimeData == nullptr)
-            return dropRegions;
-
-        if (datasetsMimeData->getDatasets().count() > 1)
-            return dropRegions;
-
-        const auto dataset = datasetsMimeData->getDatasets().first();
-        const auto datasetGuiName = dataset->text();
-        const auto datasetId = dataset->getId();
-        const auto dataType = dataset->getDataType();
-        const auto dataTypes = DataTypes({ PointType });
-
-        // Check if the data type can be dropped
-        if (!dataTypes.contains(dataType))
-            dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
-
-        // Points dataset is about to be dropped
-        if (dataType == PointType) {
-
-            // Get points dataset from the core
-            auto candidateDataset = mv::data().getDataset<Points>(datasetId);
-
-            // Establish drop region description
-            const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
-
-            if (!_positionDataset.isValid()) {
-
-                // Load as point positions when no dataset is currently loaded
-                dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
-                    _positionDataset = candidateDataset;
-                });
-            }
-            else {
-                if (_positionDataset != candidateDataset && candidateDataset->getNumDimensions() >= 2) {
-
-                    // The number of points is equal, so offer the option to replace the existing points dataset
-                    dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
-                        _positionDataset = candidateDataset;
-                    });
-                }
-
-                if (candidateDataset->getNumPoints() == _positionDataset->getNumPoints()) {
-
-                    // The number of points is equal, so offer the option to use the points dataset as source for points colors
-                    dropRegions << new DropWidget::DropRegion(this, "Point color", QString("Colorize %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "palette", true, [this, candidateDataset]() {
-                        _settingsAction.getColoringAction().addColorDataset(candidateDataset);
-                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
-                    });
-
-                    // The number of points is equal, so offer the option to use the points dataset as source for points size
-                    dropRegions << new DropWidget::DropRegion(this, "Point size", QString("Size %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "ruler-horizontal", true, [this, candidateDataset]() {
-                        _settingsAction.getPlotAction().getPointPlotAction().addPointSizeDataset(candidateDataset);
-                        _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().setCurrentDataset(candidateDataset);
-                    });
-
-                    // The number of points is equal, so offer the option to use the points dataset as source for points opacity
-                    dropRegions << new DropWidget::DropRegion(this, "Point opacity", QString("Set %1 points opacity with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "brush", true, [this, candidateDataset]() {
-                        _settingsAction.getPlotAction().getPointPlotAction().addPointOpacityDataset(candidateDataset);
-                        _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().setCurrentDataset(candidateDataset);
-                    });
-                }
-            }
-        }
-
-        return dropRegions;
-    });
+    // Initialize the widget that allows dropping datasets on the view plugin
+    initializeDropWidget();
 
     _scatterPlotWidget->installEventFilter(this);
 
@@ -277,6 +207,82 @@ void ScatterplotPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
             }
         }
     }
+}
+
+void ScatterplotPlugin::initializeDropWidget()
+{
+    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
+    _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions {
+        DropWidget::DropRegions dropRegions;
+
+        const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
+
+        if (datasetsMimeData == nullptr)
+            return dropRegions;
+
+        if (datasetsMimeData->getDatasets().count() > 1)
+            return dropRegions;
+
+        const auto dataset = datasetsMimeData->getDatasets().first();
+        const auto datasetGuiName = dataset->text();
+        const auto datasetId = dataset->getId();
+        const auto dataType = dataset->getDataType();
+        const auto dataTypes = DataTypes({ PointType });
+
+        // Check if the data type can be dropped
+        if (!dataTypes.contains(dataType))
+            dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
+
+        // Points dataset is about to be dropped
+        if (dataType == PointType) {
+
+            // Get points dataset from the core
+            auto candidateDataset = mv::data().getDataset<Points>(datasetId);
+
+            // Establish drop region description
+            const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
+
+            if (!_positionDataset.isValid()) {
+
+                // Load as point positions when no dataset is currently loaded
+                dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
+                    _positionDataset = candidateDataset;
+                    });
+            }
+            else {
+                if (_positionDataset != candidateDataset && candidateDataset->getNumDimensions() >= 2) {
+
+                    // The number of points is equal, so offer the option to replace the existing points dataset
+                    dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]() {
+                        _positionDataset = candidateDataset;
+                        });
+                }
+
+                if (candidateDataset->getNumPoints() == _positionDataset->getNumPoints()) {
+
+                    // The number of points is equal, so offer the option to use the points dataset as source for points colors
+                    dropRegions << new DropWidget::DropRegion(this, "Point color", QString("Colorize %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "palette", true, [this, candidateDataset]() {
+                        _settingsAction.getColoringAction().addColorDataset(candidateDataset);
+                        _settingsAction.getColoringAction().setCurrentColorDataset(candidateDataset);
+                        });
+
+                    // The number of points is equal, so offer the option to use the points dataset as source for points size
+                    dropRegions << new DropWidget::DropRegion(this, "Point size", QString("Size %1 points with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "ruler-horizontal", true, [this, candidateDataset]() {
+                        _settingsAction.getPlotAction().getPointPlotAction().addPointSizeDataset(candidateDataset);
+                        _settingsAction.getPlotAction().getPointPlotAction().getSizeAction().setCurrentDataset(candidateDataset);
+                        });
+
+                    // The number of points is equal, so offer the option to use the points dataset as source for points opacity
+                    dropRegions << new DropWidget::DropRegion(this, "Point opacity", QString("Set %1 points opacity with %2").arg(_positionDataset->getGuiName(), candidateDataset->getGuiName()), "brush", true, [this, candidateDataset]() {
+                        _settingsAction.getPlotAction().getPointPlotAction().addPointOpacityDataset(candidateDataset);
+                        _settingsAction.getPlotAction().getPointPlotAction().getOpacityAction().setCurrentDataset(candidateDataset);
+                        });
+                }
+            }
+        }
+
+        return dropRegions;
+        });
 }
 
 void ScatterplotPlugin::neighbourhoodRadiusValueChanged(int value)
