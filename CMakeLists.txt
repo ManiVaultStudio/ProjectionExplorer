@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.17)
 # -----------------------------------------------------------------------------
 # Projection Explanation Plugin
 # -----------------------------------------------------------------------------
-set(PROJECT "ExplanationScatterplot")
+set(PROJECT "ProjectionExplorer")
 PROJECT(${PROJECT})
 
 # -----------------------------------------------------------------------------
@@ -197,5 +197,5 @@ add_custom_command(TARGET ${PROJECT} POST_BUILD
 # -----------------------------------------------------------------------------
 if(MSVC)
     set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
-    set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${MV_INSTALL_DIR}/debug/ManiVault Studio.exe","${MV_INSTALL_DIR}/release/ManiVault Studio.exe">)
+    set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug/ManiVault\ Studio.exe,${MV_INSTALL_DIR}/release/ManiVault\ Studio.exe>)
 endif()
