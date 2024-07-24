@@ -37,6 +37,9 @@ public:
         _minRange = min;
         _maxRange = max;
         _range = _maxRange - _minRange;
+
+        if (_range == 0)
+            _range = 1;
     }
 
     void addData(const std::vector<float>& values)
