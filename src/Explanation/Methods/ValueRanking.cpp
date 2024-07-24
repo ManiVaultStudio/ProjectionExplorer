@@ -33,16 +33,12 @@ void ValueMethod::recompute(const DataTable& dataset, std::vector<std::vector<in
 
     precomputeGlobalValues(dataset);
     precomputeLocalValues(dataset, neighbourhoodMatrix);
+    precomputeNormalizationFactors(dataset);
 }
 
 float ValueMethod::computeDimensionRank(const DataTable& dataset, int i, int j)
 {
-    float sum = 0;
-    for (int k = 0; k < dataset.numDimensions(); k++)
-    {
-        sum += abs((_localValues(i, k) - _globalValues[k]) / _dataRanges[k]); //_localValues(i, k) / _globalValues[k];
-    }
-    return ((_localValues(i, j) - _globalValues[j]) / _dataRanges[j]) / sum;
+    return ((_localValues(i, j) - _globalValues[j]) / _dataRanges[j]) / _sums[i];
 }
 
 void ValueMethod::computeDimensionRank(const DataTable& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking)
@@ -128,4 +124,19 @@ void ValueMethod::precomputeLocalValues(const DataTable& dataset, std::vector<st
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
     std::cout << "Local Value Elapsed time: " << elapsed.count() << " s\n";
+}
+
+void ValueMethod::precomputeNormalizationFactors(const DataTable& dataset)
+{
+    _sums.clear();
+    _sums.resize(dataset.numPoints());
+    for (int i = 0; i < dataset.numPoints(); i++)
+    {
+        float sum = 0;
+        for (int d = 0; d < dataset.numDimensions(); d++)
+        {
+            sum += abs((_localValues(i, d) - _globalValues[d]) / _dataRanges[d]);
+        }
+        _sums[i] = sum;
+    }
 }

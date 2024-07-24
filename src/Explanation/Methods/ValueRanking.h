@@ -12,10 +12,13 @@ public:
 private:
     void precomputeGlobalValues(const DataTable& dataset);
     void precomputeLocalValues(const DataTable& dataset, NeighbourhoodMatrix& neighbourhoodMatrix);
+    void precomputeNormalizationFactors(const DataTable& dataset);
 
     std::vector<float> _globalValues;
 
     DataMatrix _localValues;
 
     std::vector<float> _dataRanges;
+
+    std::vector<float> _sums;
 };
