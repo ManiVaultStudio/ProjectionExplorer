@@ -1,0 +1,5 @@
+{
+    "name" : "Projection Explorer",
+    "version" : "1.0",
+    "dependencies" : ["Points"]
+}
