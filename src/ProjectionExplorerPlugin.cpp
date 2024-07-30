@@ -97,6 +97,10 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                     dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                         {
                             _projectionDataset = candidateDataset;
+                            // Extract 2-dimensional points from the data set based on the selected dimensions
+                            std::vector<Vector2f> points;
+                            _projectionDataset->extractDataForDimensions(points, 0, 1);
+                            _scatterplotWidget->setData(points);
                         });
                 }
                 else

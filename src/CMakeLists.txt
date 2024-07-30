@@ -9,6 +9,8 @@ set(PLUGIN_SOURCES
 set(WIDGET_SOURCES
     ${DIR}/Widgets/ScatterplotWidget.h
     ${DIR}/Widgets/ScatterplotWidget.cpp
+    ${DIR}/Widgets/OpenGLWidget.h
+    ${DIR}/Widgets/OpenGLWidget.cpp
     PARENT_SCOPE
 )
 

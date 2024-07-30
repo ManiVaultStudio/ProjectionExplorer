@@ -1,9 +1,15 @@
 #pragma once
 
-#include <QOpenGLWidget>
-#include <QOpenGLFunctions_3_3_Core>
+#include "OpenGLWidget.h"
 
-class ScatterplotWidget : public QOpenGLWidget, QOpenGLFunctions_3_3_Core
+#include "renderers/PointRenderer.h"
+
+namespace mv
+{
+    class Vector2f;
+}
+
+class ScatterplotWidget : public mv::gui::OpenGLWidget
 {
     Q_OBJECT
 
@@ -11,9 +17,15 @@ public:
     ScatterplotWidget();
     ~ScatterplotWidget();
 
+public:
+    void setData(const std::vector<mv::Vector2f>& data);
+
 protected:
-    void initializeGL()         Q_DECL_OVERRIDE;
-    void resizeGL(int w, int h) Q_DECL_OVERRIDE;
-    void paintGL()              Q_DECL_OVERRIDE;
-    void cleanup();
+    void onWidgetInitialized()          override;
+    void onWidgetResized(int w, int h)  override;
+    void onWidgetRendered()             override;
+    void onWidgetCleanup()              override;
+
+private:
+    mv::gui::PointRenderer           _pointRenderer;        /** Scatter plot renderer */
 };
