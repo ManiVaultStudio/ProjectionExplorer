@@ -101,6 +101,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                             std::vector<Vector2f> points;
                             _projectionDataset->extractDataForDimensions(points, 0, 1);
                             _scatterplotWidget->setData(points);
+                            _explanationModel.setProjection(_projectionDataset);
                         });
                 }
                 else

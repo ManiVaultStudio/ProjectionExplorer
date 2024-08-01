@@ -6,6 +6,14 @@ set(PLUGIN_SOURCES
     PARENT_SCOPE
 )
 
+set(EXPLANATION_SOURCES
+    ${DIR}/Explanation/ExplanationModel.h
+    ${DIR}/Explanation/ExplanationModel.cpp
+    ${DIR}/Explanation/DataMatrix.h
+    ${DIR}/Explanation/DataMatrix.cpp
+    PARENT_SCOPE
+)
+
 set(WIDGET_SOURCES
     ${DIR}/Widgets/ScatterplotWidget.h
     ${DIR}/Widgets/ScatterplotWidget.cpp

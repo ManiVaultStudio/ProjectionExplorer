@@ -37,6 +37,7 @@ find_package(ManiVault COMPONENTS Core PointData CONFIG)
 add_subdirectory(src)
 
 source_group( Plugin FILES ${PLUGIN_SOURCES})
+source_group( Explanation FILES ${EXPLANATION_SOURCES})
 source_group( Actions FILES ${ACTION_SOURCES})
 source_group( Widgets FILES ${WIDGET_SOURCES})
 source_group( Aux FILES ${AUX})
@@ -45,7 +46,7 @@ source_group( Aux FILES ${AUX})
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${ACTION_SOURCES} ${WIDGET_SOURCES} ${AUX})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${EXPLANATION_SOURCES} ${ACTION_SOURCES} ${WIDGET_SOURCES} ${AUX})
 
 # -----------------------------------------------------------------------------
 # Target include directories
@@ -54,6 +55,7 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${ACTION_SOURCES} ${WIDGET_
 #target_include_directories(${PROJECT_NAME} PRIVATE "${ManiVault_INCLUDE_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE "D:/Work/ManiVault/Install/$<CONFIGURATION>/include")
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/Eigen/include)
 
 # -----------------------------------------------------------------------------
 # Target properties

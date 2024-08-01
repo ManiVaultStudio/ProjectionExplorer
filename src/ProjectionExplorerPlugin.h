@@ -2,6 +2,8 @@
 
 #include <ViewPlugin.h>
 
+#include "Explanation/ExplanationModel.h"
+
 #include "Actions/SettingsAction.h"
 #include "Widgets/ScatterplotWidget.h"
 
@@ -60,6 +62,9 @@ protected:
     ScatterplotWidget*      _scatterplotWidget;         /** Widget for plotting the projection points */
 
     mv::Dataset<Points>     _projectionDataset;         /** Points smart pointer */
+
+    Explanation::Model      _explanationModel;
+
     SettingsAction          _settingsAction;
 };
 
