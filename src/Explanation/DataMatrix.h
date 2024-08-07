@@ -14,6 +14,14 @@ class DataMatrix
 public:
     static void fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix);
 
+    int getNumRows() { return _data.rows(); }
+    int getNumCols() { return _data.cols(); }
+
+    float operator()(int row, int col)
+    {
+        return _data(row, col);
+    }
+
 private:
-    Eigen::ArrayXXf _data;
+    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _data;
 };

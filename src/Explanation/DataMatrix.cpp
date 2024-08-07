@@ -8,24 +8,30 @@
 
 void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix)
 {
+    Timer t("Copy");
+
     int numPoints = dataset->getNumPoints();
     int numDimensions = dataset->getNumDimensions();
 
-    std::vector<bool> enabledDims = dataset->getDimensionsPickerAction().getEnabledDimensions();
-    int numEnabledDims = std::count(enabledDims.begin(), enabledDims.end(), true);
+    dataMatrix._data.resize(numPoints, numDimensions);
 
-    dataMatrix._data.resize(numPoints, numEnabledDims);
-
-    Timer t("Copy");
-
-    dataset->visitFromBeginToEnd([&dataMatrix, &dataset, numPoints, numEnabledDims, enabledDims](auto begin, auto end)
+    // Copy the full data to the data matrix
+    dataset->visitFromBeginToEnd([&dataMatrix, &dataset, numPoints, numDimensions](auto begin, auto end)
         {
-            for (int d = 0; d < numEnabledDims; d++)
-            {
-                int dim = enabledDims[d];
-                std::copy(begin + dim * numPoints, begin + (dim + 1) * numPoints, dataMatrix._data.data() + d * numPoints);
-            }
+            std::copy(begin, end, dataMatrix._data.data());
         });
 
-    qDebug() << dataMatrix._data(0, 0);
+    // Find the list of enabled dimension indices
+    std::vector<bool> enabledDimBools = dataset->getDimensionsPickerAction().getEnabledDimensions();
+    int numEnabledDims = std::count(enabledDimBools.begin(), enabledDimBools.end(), true);
+    std::vector<int> enabledDims(numEnabledDims);
+    int d = 0;
+    for (int i = 0; i < enabledDimBools.size(); i++)
+    {
+        if (enabledDimBools[i])
+            enabledDims[d++] = i;
+    }
+
+    // Only retain the enabled dimensions in the data matrix
+    dataMatrix._data = dataMatrix._data(Eigen::all, enabledDims);
 }
