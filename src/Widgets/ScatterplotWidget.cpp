@@ -1,11 +1,11 @@
 #include "ScatterplotWidget.h"
 
 #include <graphics/Vector2f.h>
-#include <graphics/Bounds.h>
-
 #include <util/Exception.h>
+#include <util/Timer.h>
 
 #include <QPainter>
+
 
 using namespace mv;
 
@@ -28,7 +28,8 @@ namespace
     }
 }
 
-ScatterplotWidget::ScatterplotWidget() :
+ScatterplotWidget::ScatterplotWidget(Explanation::Model& explanationModel) :
+    _explanationModel(explanationModel),
     _pointRenderer()
 {
 
@@ -40,14 +41,22 @@ ScatterplotWidget::~ScatterplotWidget()
 
 void ScatterplotWidget::setData(const std::vector<Vector2f>& data)
 {
-    Bounds dataBounds = getDataBounds(data);
-    dataBounds.expand(0.1f);
+    _dataBounds = getDataBounds(data);
 
-    _pointRenderer.setBounds(dataBounds);
+    _dataBounds.ensureMinimumSize(1e-07f, 1e-07f);
+    _dataBounds.makeSquare();
+    _dataBounds.expand(0.1f);
 
+    _pointRenderer.setBounds(_dataBounds);
+    _pointRenderer.setPointSize(20.0f);
     _pointRenderer.setData(data);
 
     update();
+}
+
+void ScatterplotWidget::setSelection(const std::vector<char>& highlights, const std::int32_t& numSelectedPoints)
+{
+    _pointRenderer.setHighlights(highlights, numSelectedPoints);
 }
 
 void ScatterplotWidget::onWidgetInitialized()
@@ -62,9 +71,10 @@ void ScatterplotWidget::onWidgetResized(int w, int h)
 
 void ScatterplotWidget::onWidgetRendered()
 {
-    glClearColor(0, 0, 1, 0);
+    Timer t("Render");
+    glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-
+    //qDebug() << "Repaint Widget";
     try {
         QPainter painter;
 
@@ -84,6 +94,16 @@ void ScatterplotWidget::onWidgetRendered()
 
         painter.setBrush(brush);
         painter.fillRect(0, 0, 100, 100, brush);
+
+        // Draw lens
+        Lens& lens = _explanationModel.getLens();
+        // Draw local neighbourhood circle
+        QPen pen;
+        pen.setColor(QColor(255, 0, 0, 255));
+        pen.setStyle(Qt::SolidLine);
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(lens.position.x - lens.radius, lens.position.y - lens.radius, lens.radius * 2, lens.radius * 2);
 
         painter.end();
     }

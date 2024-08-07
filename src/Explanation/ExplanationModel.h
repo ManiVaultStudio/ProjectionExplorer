@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DataMatrix.h"
+#include "Lens.h"
 
 class Points;
 
@@ -16,11 +17,16 @@ namespace Explanation
 class Model
 {
 public:
+    DataMatrix& getProjection();
     void setProjection(mv::Dataset<Points> projection);
 
+    Lens& getLens();
+
 private:
-    DataMatrix _dataset;
-    DataMatrix _projection;
+    DataMatrix      _dataset;
+    DataMatrix      _projection;
+
+    Lens            _lens;
 };
 
 } // namespace Explanation

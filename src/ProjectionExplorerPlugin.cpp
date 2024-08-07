@@ -1,11 +1,15 @@
 #include "ProjectionExplorerPlugin.h"
 
 #include <event/Event.h>
+#include <graphics/Vector2f.h>
 
 #include <DatasetsMimeData.h>
 
 #include <QDebug>
 #include <QMimeData>
+#include <QPointF>
+
+#include "util/Timer.h" ////////////
 
 Q_PLUGIN_METADATA(IID "nl.uu.ProjectionExplorer")
 
@@ -16,10 +20,12 @@ ProjectionExplorerPlugin::ProjectionExplorerPlugin(const PluginFactory* factory)
     _dropWidget(nullptr),
     _projectionDataset(nullptr),
     _settingsAction(this, "SettingsAction"),
-    _scatterplotWidget(new ScatterplotWidget())
+    _scatterplotWidget(new ScatterplotWidget(_explanationModel))
 {
     // This line is mandatory if drag and drop behavior is required
     _scatterplotWidget->setAcceptDrops(true);
+
+    getWidget().setFocusPolicy(Qt::ClickFocus);
 }
 
 void ProjectionExplorerPlugin::init()
@@ -49,6 +55,13 @@ void ProjectionExplorerPlugin::init()
     // Alternatively, classes which derive from mv::EventListener (all plugins do) can also respond to events
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&ProjectionExplorerPlugin::onDataEvent, this, std::placeholders::_1));
+
+    _scatterplotWidget->installEventFilter(this);
+
+    connect(&_inputEventHandler, &InputEventHandler::mouseDragged, this, &ProjectionExplorerPlugin::onMouseDragged);
+
+    // Update point selection when the position dataset data changes
+    connect(&_projectionDataset, &Dataset<Points>::dataSelectionChanged, this, &ProjectionExplorerPlugin::onProjectionSelectionChanged);
 }
 
 void ProjectionExplorerPlugin::initializeDropWidget()
@@ -102,6 +115,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                             _projectionDataset->extractDataForDimensions(points, 0, 1);
                             _scatterplotWidget->setData(points);
                             _explanationModel.setProjection(_projectionDataset);
+                            _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
                         });
                 }
                 else
@@ -141,15 +155,98 @@ void ProjectionExplorerPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
             // Get the selection set that changed
             const auto& selectionSet = changedDataSet->getSelection<Points>();
 
-            // Print to the console
-            qDebug() << datasetGuiName << "selection has changed";
-
             break;
         }
 
         default:
             break;
     }
+}
+
+void ProjectionExplorerPlugin::onProjectionSelectionChanged()
+{
+    if (!_projectionDataset.isValid())
+        return;
+
+    Timer t("Selection changed");
+    auto selection = _projectionDataset->getSelection<Points>();
+
+    std::vector<bool> selected;
+    std::vector<char> highlights;
+
+    _projectionDataset->selectedLocalIndices(selection->indices, selected);
+
+    highlights.resize(_projectionDataset->getNumPoints(), 0);
+
+    for (int i = 0; i < selected.size(); i++)
+        highlights[i] = selected[i] ? 1 : 0;
+
+    //qDebug() << "highlights:" << highlights.size();
+    _scatterplotWidget->setSelection(highlights, static_cast<std::int32_t>(selection->indices.size()));
+
+    _scatterplotWidget->update();
+}
+
+void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
+{
+    qDebug() << "Two";
+    Timer t("Mouse drag");
+
+    // Update the lens
+    _explanationModel.getLens().position = cursorPos;
+    const Lens& lens = _explanationModel.getLens();
+
+    // Reserve space for the maximum number of points that can possibly fall within the lens selection
+    std::vector<std::uint32_t> lensSelectionIndices;
+    lensSelectionIndices.reserve(_projectionDataset->getNumPoints());
+
+    const auto dataBounds = _scatterplotWidget->getBounds();
+    const auto w = _scatterplotWidget->width();
+    const auto h = _scatterplotWidget->height();
+    const auto size = w < h ? w : h;
+    const auto uvOffset = Vector2f((_scatterplotWidget->width() - size) / 2.0f, (_scatterplotWidget->height() - size) / 2.0f);
+
+    DataMatrix& projection = _explanationModel.getProjection();
+    float lensRadiusSqr = lens.radius * lens.radius;
+
+    Vector2f lensPositionInDataSpace = lens.position - uvOffset;
+    lensPositionInDataSpace /= Vector2f(size, size);
+    lensPositionInDataSpace *= Vector2f(dataBounds.getWidth(), -dataBounds.getHeight());
+    lensPositionInDataSpace += Vector2f(dataBounds.getLeft(), dataBounds.getTop());
+    //    ((lens.position / size) - uvOffset) * Vector2f(dataBounds.getWidth(), dataBounds.getHeight()) + Vector2f()
+
+    float lensRadiusInDataSpace = 30;
+    lensRadiusInDataSpace /= size;
+    lensRadiusInDataSpace *= dataBounds.getWidth(); // FIXME For now width should be same as height, but perhaps not always
+    float lensRadiusInDataSpaceSqr = lensRadiusInDataSpace * lensRadiusInDataSpace;
+    {
+        Timer t("Inner mouse drag");
+        // Loop over all points and establish whether they are selected or not
+        for (int i = 0; i < projection.getNumRows(); i++) {
+            Vector2f p(projection(i, 0), projection(i, 1));
+            Vector2f diff = lensPositionInDataSpace - p;
+
+            if (diff.sqrMagnitude() < lensRadiusInDataSpaceSqr)
+                lensSelectionIndices.push_back(_localToGlobalIndices[i]);
+        }
+    }
+
+    // Apply the selection indices
+    _projectionDataset->setSelectionIndices(lensSelectionIndices);
+
+    mv::Dataset<Points> selection = _projectionDataset->getSelection<Points>();
+
+        // Notify others that the selection changed
+        events().notifyDatasetDataSelectionChanged(_projectionDataset);
+
+    //qDebug() << "Lens selection indices: " << lensSelectionIndices.size();
+}
+
+bool ProjectionExplorerPlugin::eventFilter(QObject* target, QEvent* event)
+{
+    _inputEventHandler.onEvent(event);
+
+    return QObject::eventFilter(target, event);
 }
 
 ViewPlugin* ProjectionExplorerPluginFactory::produce()
