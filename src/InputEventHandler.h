@@ -13,13 +13,13 @@ class InputEventHandler : public QObject
     Q_OBJECT
 public:
     void onEvent(QEvent* event);
-    QPointF getMousePos() { return mousePos; }
+    QPointF getMousePos() { return _currentMousePos; }
 
 signals:
     void mouseDragged(mv::Vector2f cursorPos);
 
 private:
-    bool _leftMouseButtonPressed = false;
-    QPointF mousePos;
-    QTimer* _mouseDragTimer;
+    bool        _leftMouseButtonPressed = false;
+    QPointF     _currentMousePos;
+    QTimer*     _mouseDragTimer;
 };

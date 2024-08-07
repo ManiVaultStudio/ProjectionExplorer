@@ -48,7 +48,7 @@ void ScatterplotWidget::setData(const std::vector<Vector2f>& data)
     _dataBounds.expand(0.1f);
 
     _pointRenderer.setBounds(_dataBounds);
-    _pointRenderer.setPointSize(20.0f);
+    _pointRenderer.setPointSize(1.0f);
     _pointRenderer.setData(data);
 
     update();

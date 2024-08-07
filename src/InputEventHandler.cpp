@@ -21,9 +21,9 @@ void InputEventHandler::onEvent(QEvent* event)
             _mouseDragTimer = new QTimer(this);
             connect(_mouseDragTimer, &QTimer::timeout, this, [this]()
                 {
-                    emit mouseDragged(Vector2f(mousePos.x(), mousePos.y()));
+                    emit mouseDragged(Vector2f(_currentMousePos.x(), _currentMousePos.y()));
                 });
-            _mouseDragTimer->start(5);
+            _mouseDragTimer->start(20);
         }
 
         break;
@@ -48,11 +48,8 @@ void InputEventHandler::onEvent(QEvent* event)
         if (!_leftMouseButtonPressed)
             break;
 
-        mousePos = mouseEvent->position();
-        //qDebug() << "One";
-        //emit mouseDragged(Vector2f(mouseEvent->position().x(), mouseEvent->position().y()));
-        //qDebug() << "Three";
-        //
+        _currentMousePos = mouseEvent->position();
+
         break;
     }
     }

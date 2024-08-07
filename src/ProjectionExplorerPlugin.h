@@ -53,12 +53,9 @@ public:
 private:
     void initializeDropWidget();
 
-    /**
-     * Invoked when a data event occurs
-     * @param dataEvent Data event which occurred
-     */
-    void onDataEvent(mv::DatasetEvent* dataEvent);
+    /** Invoked when the selection of the projection dataset changes */
     void onProjectionSelectionChanged();
+    /** Invoked when the left-mouse button is pressed and the cursor moved */
     void onMouseDragged(mv::Vector2f cursorPos);
 
     bool eventFilter(QObject* target, QEvent* event) Q_DECL_OVERRIDE;

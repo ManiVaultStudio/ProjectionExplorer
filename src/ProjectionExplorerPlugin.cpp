@@ -53,8 +53,8 @@ void ProjectionExplorerPlugin::init()
     });
 
     // Alternatively, classes which derive from mv::EventListener (all plugins do) can also respond to events
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    _eventListener.registerDataEventByType(PointType, std::bind(&ProjectionExplorerPlugin::onDataEvent, this, std::placeholders::_1));
+    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
+    //_eventListener.registerDataEventByType(PointType, std::bind(&ProjectionExplorerPlugin::onDataEvent, this, std::placeholders::_1));
 
     _scatterplotWidget->installEventFilter(this);
 
@@ -136,33 +136,6 @@ void ProjectionExplorerPlugin::initializeDropWidget()
         });
 }
 
-void ProjectionExplorerPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
-{
-    // Get smart pointer to dataset that changed
-    const auto changedDataSet = dataEvent->getDataset();
-
-    const auto datasetGuiName = changedDataSet->getGuiName();
-
-    // The data event has a type so that we know what type of data event occurred (e.g. data added, changed, removed, renamed, selection changes)
-    switch (dataEvent->getType())
-    {
-        // Points dataset selection has changed
-        case EventType::DatasetDataSelectionChanged:
-        {
-            // Cast the data event to a data selection changed event
-            const auto dataSelectionChangedEvent = static_cast<DatasetDataSelectionChangedEvent*>(dataEvent);
-
-            // Get the selection set that changed
-            const auto& selectionSet = changedDataSet->getSelection<Points>();
-
-            break;
-        }
-
-        default:
-            break;
-    }
-}
-
 void ProjectionExplorerPlugin::onProjectionSelectionChanged()
 {
     if (!_projectionDataset.isValid())
@@ -189,7 +162,6 @@ void ProjectionExplorerPlugin::onProjectionSelectionChanged()
 
 void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
 {
-    qDebug() << "Two";
     Timer t("Mouse drag");
 
     // Update the lens
