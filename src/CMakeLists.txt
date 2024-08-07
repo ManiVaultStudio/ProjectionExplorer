@@ -3,6 +3,8 @@ set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PLUGIN_SOURCES
     ${DIR}/ProjectionExplorerPlugin.h
     ${DIR}/ProjectionExplorerPlugin.cpp
+    ${DIR}/InputEventHandler.h
+    ${DIR}/InputEventHandler.cpp
     PARENT_SCOPE
 )
 
