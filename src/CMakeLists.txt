@@ -5,6 +5,7 @@ set(PLUGIN_SOURCES
     ${DIR}/ProjectionExplorerPlugin.cpp
     ${DIR}/InputEventHandler.h
     ${DIR}/InputEventHandler.cpp
+    ${DIR}/Lens.h
     PARENT_SCOPE
 )
 
