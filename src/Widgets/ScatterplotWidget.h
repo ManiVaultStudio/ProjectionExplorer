@@ -42,5 +42,4 @@ private:
     mv::gui::PointRenderer  _pointRenderer;         /** Scatter plot renderer */
 
     mv::Bounds              _dataBounds;            /** Stored data bounds for lens computation */
-
 };

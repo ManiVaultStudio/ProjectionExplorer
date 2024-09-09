@@ -81,7 +81,7 @@ void ScatterplotWidget::onWidgetResized(int w, int h)
 void ScatterplotWidget::onWidgetRendered()
 {
     Timer t("Render");
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0.3, 0.3, 0.3, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     //qDebug() << "Repaint Widget";
     try {
