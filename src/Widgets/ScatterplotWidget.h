@@ -12,6 +12,7 @@
 namespace mv
 {
     class Vector2f;
+    class Vector3f;
 }
 class Lens;
 
@@ -27,6 +28,7 @@ public:
     mv::Bounds getBounds() { return _dataBounds; }
     void setData(const std::vector<mv::Vector2f>& data);
     void setSelection(const std::vector<char>& selection, const std::int32_t& numSelectedPoints);
+    void setColors(const std::vector<mv::Vector3f>& colors);
 
 protected:
     void onWidgetInitialized()          override;

@@ -1,6 +1,7 @@
 #include "ScatterplotWidget.h"
 
 #include <graphics/Vector2f.h>
+#include <graphics/Vector3f.h>
 #include <util/Exception.h>
 #include <util/Timer.h>
 
@@ -57,6 +58,14 @@ void ScatterplotWidget::setData(const std::vector<Vector2f>& data)
 void ScatterplotWidget::setSelection(const std::vector<char>& highlights, const std::int32_t& numSelectedPoints)
 {
     _pointRenderer.setHighlights(highlights, numSelectedPoints);
+}
+
+void ScatterplotWidget::setColors(const std::vector<Vector3f>& colors)
+{
+    _pointRenderer.setColors(colors);
+    _pointRenderer.setScalarEffect(mv::gui::PointEffect::None);
+
+    update();
 }
 
 void ScatterplotWidget::onWidgetInitialized()
