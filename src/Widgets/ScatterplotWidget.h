@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenGLWidget.h"
+#include <widgets/OpenGLWidget.h>
 
 #include "Explanation/ExplanationModel.h"
 
