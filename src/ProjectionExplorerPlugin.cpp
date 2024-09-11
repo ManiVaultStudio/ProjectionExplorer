@@ -62,16 +62,12 @@ void ProjectionExplorerPlugin::init()
         _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
     });
 
-    // Alternatively, classes which derive from mv::EventListener (all plugins do) can also respond to events
-    //_eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    //_eventListener.registerDataEventByType(PointType, std::bind(&ProjectionExplorerPlugin::onDataEvent, this, std::placeholders::_1));
-
-    _scatterplotWidget->installEventFilter(this);
-
     connect(&_inputEventHandler, &InputEventHandler::mouseDragged, this, &ProjectionExplorerPlugin::onMouseDragged);
 
     // Update point selection when the position dataset data changes
     connect(&_projectionDataset, &Dataset<Points>::dataSelectionChanged, this, &ProjectionExplorerPlugin::onProjectionSelectionChanged);
+
+    _scatterplotWidget->installEventFilter(this);
 }
 
 void ProjectionExplorerPlugin::initializeDropWidget()
@@ -120,12 +116,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                     dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                         {
                             _projectionDataset = candidateDataset;
-                            // Extract 2-dimensional points from the data set based on the selected dimensions
-                            std::vector<Vector2f> points;
-                            _projectionDataset->extractDataForDimensions(points, 0, 1);
-                            _scatterplotWidget->setData(points);
-                            _explanationModel.setProjection(_projectionDataset);
-                            _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
+                            onNewProjectionSet();
                         });
                 }
                 else
@@ -137,6 +128,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                         dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                             {
                                 _projectionDataset = candidateDataset;
+                                onNewProjectionSet();
                             });
                     }
                 }
@@ -144,6 +136,58 @@ void ProjectionExplorerPlugin::initializeDropWidget()
 
             return dropRegions;
         });
+}
+
+void ProjectionExplorerPlugin::onNewProjectionSet()
+{
+    _dropWidget->setShowDropIndicator(!_projectionDataset.isValid());
+
+    // Extract 2-dimensional points from the data set based on the selected dimensions
+    std::vector<Vector2f> points;
+    _projectionDataset->extractDataForDimensions(points, 0, 1);
+    _scatterplotWidget->setData(points);
+    _explanationModel.setProjection(_projectionDataset);
+    _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
+    _explanationModel.computeExplanationMethod();
+
+    DataMatrix dimRanking;
+    _explanationModel.computeDimensionRanks(dimRanking);
+
+    // Build vector of top ranked dimensions
+    std::vector<int> topRankedDims(dimRanking.getNumRows());
+
+    const DataMatrix& dataset = _explanationModel.getDataset();
+    for (int i = 0; i < dimRanking.getNumRows(); i++)
+    {
+        std::vector<int> indices(dimRanking.getNumCols());
+        std::iota(indices.begin(), indices.end(), 0); //Initializing
+
+        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) > dimRanking(i, b); });
+
+        int j = 0;
+        //while (dataset.isExcluded(indices[j]) && j < dataset.numDimensions() - 1) { j++; }
+        topRankedDims[i] = indices[j];
+    }
+
+    // Color points by dimension ranking
+    const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping().getColors();
+
+    std::vector<Vector3f> colorData(topRankedDims.size());
+    for (int i = 0; i < topRankedDims.size(); i++)
+    {
+        int dim = topRankedDims[i];
+        float confidence = 1;
+
+        if (dim < colorMapping.size())
+        {
+            QColor color = colorMapping[dim];
+            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
+        }
+        else
+            colorData[i] = Vector3f(1.0f * confidence, 0.2f * confidence, 0.2f * confidence);
+    }
+
+    _scatterplotWidget->setColors(colorData);
 }
 
 void ProjectionExplorerPlugin::onProjectionSelectionChanged()
@@ -157,7 +201,10 @@ void ProjectionExplorerPlugin::onProjectionSelectionChanged()
     std::vector<bool> selected;
     std::vector<char> highlights;
 
-    _projectionDataset->selectedLocalIndices(selection->indices, selected);
+    {
+        Timer t("Local selection");
+        _projectionDataset->selectedLocalIndices(selection->indices, selected);
+    }
 
     highlights.resize(_projectionDataset->getNumPoints(), 0);
 
@@ -168,6 +215,9 @@ void ProjectionExplorerPlugin::onProjectionSelectionChanged()
     _scatterplotWidget->setSelection(highlights, static_cast<std::int32_t>(selection->indices.size()));
 
     _scatterplotWidget->update();
+
+    std::vector<float> dimRanking(_explanationModel.getDataset().getNumCols());
+    _explanationModel.computeSelectionDimensionRanks(dimRanking, selection->indices);
 }
 
 void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
