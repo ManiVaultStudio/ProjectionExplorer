@@ -6,6 +6,10 @@ set(PLUGIN_SOURCES
     ${DIR}/InputEventHandler.h
     ${DIR}/InputEventHandler.cpp
     ${DIR}/Lens.h
+    ${DIR}/LocalValueComputation.h
+    ${DIR}/LocalValueComputation.cpp
+    ${DIR}/OffscreenBuffer.h
+    ${DIR}/OffscreenBuffer.cpp
     PARENT_SCOPE
 )
 
@@ -14,14 +18,19 @@ set(EXPLANATION_SOURCES
     ${DIR}/Explanation/ExplanationModel.cpp
     ${DIR}/Explanation/DataMatrix.h
     ${DIR}/Explanation/DataMatrix.cpp
+    ${DIR}/Explanation/ColorMapping.h
+    ${DIR}/Explanation/ColorMapping.cpp
+    ${DIR}/Explanation/Methods/ExplanationMethod.h
+    ${DIR}/Explanation/Methods/ValueMethod.h
+    ${DIR}/Explanation/Methods/ValueMethod.cpp
     PARENT_SCOPE
 )
 
 set(WIDGET_SOURCES
     ${DIR}/Widgets/ScatterplotWidget.h
     ${DIR}/Widgets/ScatterplotWidget.cpp
-    ${DIR}/Widgets/OpenGLWidget.h
-    ${DIR}/Widgets/OpenGLWidget.cpp
+    ${DIR}/Widgets/ExplanationWidget.h
+    ${DIR}/Widgets/ExplanationWidget.cpp
     PARENT_SCOPE
 )
 
