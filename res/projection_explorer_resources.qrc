@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="projection_explorer">
+        <file>shaders/Splat.vert</file>
+        <file>shaders/Splat.frag</file>
+    </qresource>
+</RCC>

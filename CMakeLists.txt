@@ -36,6 +36,11 @@ find_package(ManiVault COMPONENTS Core PointData CONFIG)
 # Define the plugin sources
 add_subdirectory(src)
 
+set(QRESOURCES
+    res/projection_explorer_resources.qrc
+)
+QT6_ADD_RESOURCES(RESOURCE_FILES ${QRESOURCES})
+
 source_group( Plugin FILES ${PLUGIN_SOURCES})
 source_group( Explanation FILES ${EXPLANATION_SOURCES})
 source_group( Actions FILES ${ACTION_SOURCES})
@@ -46,7 +51,7 @@ source_group( Aux FILES ${AUX})
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${EXPLANATION_SOURCES} ${ACTION_SOURCES} ${WIDGET_SOURCES} ${AUX})
+add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${EXPLANATION_SOURCES} ${ACTION_SOURCES} ${WIDGET_SOURCES} ${AUX} ${RESOURCE_FILES})
 
 # -----------------------------------------------------------------------------
 # Target include directories
