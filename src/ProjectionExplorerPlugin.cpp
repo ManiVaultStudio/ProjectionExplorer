@@ -20,7 +20,8 @@ ProjectionExplorerPlugin::ProjectionExplorerPlugin(const PluginFactory* factory)
     _dropWidget(nullptr),
     _projectionDataset(nullptr),
     _settingsAction(this, "SettingsAction"),
-    _scatterplotWidget(new ScatterplotWidget(_explanationModel))
+    _scatterplotWidget(new ScatterplotWidget(_explanationModel)),
+    _explanationWidget(new ExplanationWidget(_explanationModel))
 {
     // This line is mandatory if drag and drop behavior is required
     _scatterplotWidget->setAcceptDrops(true);
@@ -35,7 +36,16 @@ void ProjectionExplorerPlugin::init()
 
     layout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addWidget(_scatterplotWidget);
+    auto centralWidget = new QWidget();
+    centralWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    centralWidget->setContentsMargins(0, 0, 0, 0);
+    auto centralLayout = new QHBoxLayout();
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    centralLayout->addWidget(_scatterplotWidget);
+    centralLayout->addWidget(_explanationWidget);
+    centralWidget->setLayout(centralLayout);
+    layout->addWidget(centralWidget);
 
     // Apply the layout
     getWidget().setLayout(layout);

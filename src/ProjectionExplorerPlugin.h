@@ -6,6 +6,7 @@
 #include "Lens.h"
 
 #include "Widgets/ScatterplotWidget.h"
+#include "Widgets/ExplanationWidget.h"
 #include "Explanation/ExplanationModel.h"
 #include "Actions/SettingsAction.h"
 
@@ -65,6 +66,7 @@ protected:
 
     // Widgets
     ScatterplotWidget*      _scatterplotWidget;         /** Widget for plotting the projection points */
+    ExplanationWidget*      _explanationWidget;         /** Widget for showing the local explanation histograms */
     SettingsAction          _settingsAction;
 
     // Data
