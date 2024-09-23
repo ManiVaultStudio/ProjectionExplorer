@@ -18,6 +18,16 @@ namespace mv
 namespace Explanation
 {
 
+class DataStatistics
+{
+public:
+    std::vector<float> means;
+    std::vector<float> variances;
+    std::vector<float> minRange;
+    std::vector<float> maxRange;
+    std::vector<float> ranges;
+};
+
 class Model
 {
 public:
@@ -25,22 +35,35 @@ public:
     DataMatrix& getProjection();
     void setProjection(mv::Dataset<Points> projection);
 
+    DataStatistics& getDataStatistics();
+    DataMatrix& getDimRanking() { return _dimRanking; }
+    const std::vector<float>& getSelectionDimRanking() const { return _selectionRanking; }
+    const std::vector<float>& getRankAggregation() const { return _rankAggregation; }
+
     Lens& getLens();
     ColorMapping& getColorMapping() { return _colorMapping; }
 
     void computeExplanationMethod();
-    void computeDimensionRanks(DataMatrix& dimRanks);
-    void computeSelectionDimensionRanks(std::vector<float>& dimRanking, std::vector<unsigned int>& selection);
+    void computeDimensionRanks();
+    void computeSelectionDimensionRanks(std::vector<unsigned int>& selection);
+
+private:
+    void computeStatistics();
 
 private:
     DataMatrix              _dataset;
     DataMatrix              _projection;
+    DataStatistics          _dataStatistics;
 
     Lens                    _lens;
 
     Explanation::Method*    _method;
     /** Value-based explanation method */
     ValueMethod             _valueMethod;
+
+    DataMatrix              _dimRanking;
+    std::vector<float>      _selectionRanking;
+    std::vector<float>      _rankAggregation;
 
     ColorMapping            _colorMapping;
 };

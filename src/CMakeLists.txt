@@ -20,6 +20,8 @@ set(EXPLANATION_SOURCES
     ${DIR}/Explanation/DataMatrix.cpp
     ${DIR}/Explanation/ColorMapping.h
     ${DIR}/Explanation/ColorMapping.cpp
+    ${DIR}/Explanation/Histogram.h
+    ${DIR}/Explanation/Histogram.cpp
     ${DIR}/Explanation/Methods/ExplanationMethod.h
     ${DIR}/Explanation/Methods/ValueMethod.h
     ${DIR}/Explanation/Methods/ValueMethod.cpp

@@ -228,7 +228,7 @@ void ColorMapping::recompute(DataMatrix& dataset, DataMatrix& dimRanking)
     std::vector<QColor> newMapping(numDimensions);
     for (int i = 0; i < newMapping.size(); i++)
     {
-        newMapping[i] = QColor(30, 30, 30);
+        newMapping[i] = QColor(180, 180, 180);
     }
     int numTopDimensions = std::min(_palette.size(), newMapping.size());
     for (int i = 0; i < numTopDimensions; i++)

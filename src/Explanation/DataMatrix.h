@@ -2,6 +2,9 @@
 
 #include <Eigen/Eigen>
 
+using ArrayXXfr = Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using ArrayXXfc = Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+
 namespace mv
 {
     template<class T>
@@ -14,14 +17,23 @@ class DataMatrix
 public:
     static void fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix);
 
-    int getNumRows() { return _data.rows(); }
-    int getNumCols() { return _data.cols(); }
+    void resize(int rows, int cols) { _data.resize(rows, cols); }
 
-    float operator()(int row, int col)
+    int getNumRows() const { return _data.rows(); }
+    int getNumCols() const { return _data.cols(); }
+
+    ArrayXXfc& getData() { return _data; }
+
+    float& operator()(int row, int col)
     {
         return _data(row, col);
     }
 
+    //float operator()(int row, int col)
+    //{
+    //    return _data(row, col);
+    //}
+
 private:
-    Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _data;
+    ArrayXXfc _data;
 };

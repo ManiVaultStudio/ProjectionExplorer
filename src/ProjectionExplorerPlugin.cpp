@@ -116,7 +116,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                     dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                         {
                             _projectionDataset = candidateDataset;
-                            onNewProjectionSet();
+                            onNewProjectionLoaded();
                         });
                 }
                 else
@@ -128,7 +128,7 @@ void ProjectionExplorerPlugin::initializeDropWidget()
                         dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                             {
                                 _projectionDataset = candidateDataset;
-                                onNewProjectionSet();
+                                onNewProjectionLoaded();
                             });
                     }
                 }
@@ -138,8 +138,9 @@ void ProjectionExplorerPlugin::initializeDropWidget()
         });
 }
 
-void ProjectionExplorerPlugin::onNewProjectionSet()
+void ProjectionExplorerPlugin::onNewProjectionLoaded()
 {
+    qDebug() << "onNewProjectionSet";
     _dropWidget->setShowDropIndicator(!_projectionDataset.isValid());
 
     // Extract 2-dimensional points from the data set based on the selected dimensions
@@ -150,8 +151,8 @@ void ProjectionExplorerPlugin::onNewProjectionSet()
     _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
     _explanationModel.computeExplanationMethod();
 
-    DataMatrix dimRanking;
-    _explanationModel.computeDimensionRanks(dimRanking);
+    _explanationModel.computeDimensionRanks();
+    DataMatrix& dimRanking = _explanationModel.getDimRanking();
 
     // Build vector of top ranked dimensions
     std::vector<int> topRankedDims(dimRanking.getNumRows());
@@ -188,13 +189,15 @@ void ProjectionExplorerPlugin::onNewProjectionSet()
     }
 
     _scatterplotWidget->setColors(colorData);
+
+    _explanationWidget->getHistogramChart().computeGlobalHistograms();
 }
 
 void ProjectionExplorerPlugin::onProjectionSelectionChanged()
 {
     if (!_projectionDataset.isValid())
         return;
-
+    qDebug() << "Selection changed";
     Timer t("Selection changed");
     auto selection = _projectionDataset->getSelection<Points>();
 
@@ -214,16 +217,24 @@ void ProjectionExplorerPlugin::onProjectionSelectionChanged()
     //qDebug() << "highlights:" << highlights.size();
     _scatterplotWidget->setSelection(highlights, static_cast<std::int32_t>(selection->indices.size()));
 
-    _scatterplotWidget->update();
+    if (selection->indices.size() > 0)
+    {
+        _explanationModel.computeSelectionDimensionRanks(selection->indices);
+    }
 
-    std::vector<float> dimRanking(_explanationModel.getDataset().getNumCols());
-    _explanationModel.computeSelectionDimensionRanks(dimRanking, selection->indices);
+    _explanationWidget->getHistogramChart().setRanking(selection->indices);
+
+    _scatterplotWidget->update();
+    _explanationWidget->getHistogramChart().update();
+
+    //std::vector<float> dimRanking(_explanationModel.getDataset().getNumCols());
+    //_explanationModel.computeSelectionDimensionRanks(dimRanking, selection->indices);
 }
 
 void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
 {
     Timer t("Mouse drag");
-
+    qDebug() << "Mouse drag";
     // Update the lens
     _explanationModel.getLens().position = cursorPos;
     const Lens& lens = _explanationModel.getLens();

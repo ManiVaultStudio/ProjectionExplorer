@@ -20,6 +20,7 @@ void ValueMethod::recompute(DataMatrix& dataset)
 
 void ValueMethod::recompute(DataMatrix& dataset, DataMatrix& projection, GridIndex& gridIndex)
 {
+    // Per-dimension ranges of values found in the dataset
     _dataRanges.clear();
     _dataRanges.resize(dataset.getNumCols());
     std::vector<float> minRanges(dataset.getNumCols(), std::numeric_limits<float>::max());
@@ -198,13 +199,13 @@ void ValueMethod::computeDimensionRank(DataMatrix& dataset, const std::vector<un
 
     // Compute ranking
     float sum = 0;
-    for (int k = 0; k < numDimensions; k++)
+    for (int d = 0; d < numDimensions; d++)
     {
-        sum += abs((localMeans[k] - _globalValues[k]) / _dataRanges[k]);
+        sum += abs((localMeans[d] - _globalValues[d]) / _dataRanges[d]);
     }
-    for (int j = 0; j < numDimensions; j++)
+    for (int d = 0; d < numDimensions; d++)
     {
-        dimRanking[j] = ((localMeans[j] - _globalValues[j]) / _dataRanges[j]) / sum;
+        dimRanking[d] = ((localMeans[d] - _globalValues[d]) / _dataRanges[d]) / sum;
     }
 
     auto finish = std::chrono::high_resolution_clock::now();

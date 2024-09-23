@@ -13,7 +13,7 @@ public:
     ColorMapping();
 
     const std::vector<QColor>& getPalette() { return _palette; }
-    const std::vector<QColor>& getColors() { return _colorMapping; }
+    const std::vector<QColor>& getColors() const { return _colorMapping; }
 
     void recreate(DataMatrix& dataset);
     void recompute(DataMatrix& dataset, DataMatrix& dimRanking);

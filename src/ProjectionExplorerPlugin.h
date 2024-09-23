@@ -55,7 +55,7 @@ private:
     void initializeDropWidget();
 
     /** Invoked when a new projection dataset is dropped on the plugin */
-    void onNewProjectionSet();
+    void onNewProjectionLoaded();
     /** Invoked when the selection of the projection dataset changes */
     void onProjectionSelectionChanged();
     /** Invoked when the left-mouse button is pressed and the cursor moved */
