@@ -2,6 +2,9 @@
 
 #include <Eigen/Eigen>
 
+#include <vector>
+#include <QString>
+
 using ArrayXXfr = Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using ArrayXXfc = Eigen::Array<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 
@@ -19,6 +22,7 @@ public:
 
     void resize(int rows, int cols) { _data.resize(rows, cols); }
 
+    const std::vector<QString>& getDimensionNames() { return _dimNames; }
     int getNumRows() const { return _data.rows(); }
     int getNumCols() const { return _data.cols(); }
 
@@ -36,4 +40,5 @@ public:
 
 private:
     ArrayXXfc _data;
+    std::vector<QString> _dimNames;
 };

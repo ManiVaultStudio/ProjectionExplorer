@@ -51,4 +51,6 @@ void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix
     //}
     //else dataMatrix._data = dataMatrix._data(Eigen::all, enabledDims);
     //std::cout << "POST: " <<  dataMatrix._data << std::endl;
+
+    dataMatrix._dimNames = dataset->getDimensionNames();
 }

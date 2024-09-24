@@ -94,6 +94,11 @@ void HistogramChart::paintEvent(QPaintEvent* event)
 
     painter.fillRect(0, 0, 600, (numDimensions + 2) * BOX_HEIGHT, QColor(38, 38, 38));
 
+    QFont font = QFont("MS Shell Dlg 2", 10, QFont::ExtraBold);
+    QFontMetricsF fm(font);
+    font.setPixelSize(16);
+    painter.setFont(font);
+
     float RANGE_WIDTH = 200;
     float RANGE_OFFSET = 150;
     float TOP_MARGIN = 30;
@@ -110,6 +115,11 @@ void HistogramChart::paintEvent(QPaintEvent* event)
             color = colorMapping.getColors()[sortIndex];
         
         painter.setPen(color);
+
+        QString dimName = _explanationModel.getDataset().getDimensionNames()[sortIndex];
+        dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 150);
+        painter.drawText(30, TOP_MARGIN + 10 + i * BOX_HEIGHT, dimName);
+
         painter.drawLine(RANGE_OFFSET, TOP_MARGIN + BOX_HEIGHT * i + 0, RANGE_OFFSET + RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * i + 0);
 
         painter.fillRect(10, TOP_MARGIN + BOX_HEIGHT * i, 14, 14, color);
