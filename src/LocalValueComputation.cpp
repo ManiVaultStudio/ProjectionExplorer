@@ -208,20 +208,23 @@ void LocalValueComputation::splatValues(DataMatrix& dataset, DataMatrix& project
             localValues[i][col + 2] = mean2 / numNeighbours;
         }
 
-        QImage image(1024, 1024, QImage::Format_RGBA8888);
-        for (int y = 0; y < 1024; y++)
-        {
-            for (int x = 0; x < 1024; x++)
-            {
-                QColor c;
-                c.setRedF(pixels[y * 1024 * 4 + x * 4 + 0] * 1.0 / 100000);
-                c.setGreenF(pixels[y * 1024 * 4 + x * 4 + 1] * 1.0 / 100000);
-                c.setBlueF(pixels[y * 1024 * 4 + x * 4 + 2] * 1.0 / 100000);
-                c.setAlphaF(1);
-                image.setPixel(x, y, c.rgba());
-            }
-        }
-        image.save(QString("fbo_out%1.png").arg(col));
+        //QImage image(1024, 1024, QImage::Format_RGBA8888);
+        //for (int y = 0; y < 1024; y++)
+        //{
+        //    for (int x = 0; x < 1024; x++)
+        //    {
+        //        QColor c;
+        //        c.setRedF(pixels[y * 1024 * 4 + x * 4 + 0] * 1.0 / 100);
+        //        c.setGreenF(pixels[y * 1024 * 4 + x * 4 + 1] * 1.0 / 100);
+        //        c.setBlueF(pixels[y * 1024 * 4 + x * 4 + 2] * 1.0 / 100);
+        //        c.setAlphaF(1);
+        //        image.setPixel(x, y, c.rgba());
+        //    }
+        //}
+        //QTransform myTransform;
+        //myTransform.rotate(180);
+        //image = image.transformed(myTransform);
+        //image.save(QString("fbo_out%1.png").arg(col));
     }
 
     _offscreenBuffer->releaseContext();
