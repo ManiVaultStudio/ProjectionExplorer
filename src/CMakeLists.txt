@@ -10,6 +10,7 @@ set(PLUGIN_SOURCES
     ${DIR}/LocalValueComputation.cpp
     ${DIR}/OffscreenBuffer.h
     ${DIR}/OffscreenBuffer.cpp
+    ${DIR}/Globals.h
     PARENT_SCOPE
 )
 

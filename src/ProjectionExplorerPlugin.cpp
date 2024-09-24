@@ -10,6 +10,7 @@
 #include <QPointF>
 
 #include "util/Timer.h" ////////////
+#include "Globals.h" /////////// Temp
 
 Q_PLUGIN_METADATA(IID "nl.uu.ProjectionExplorer")
 
@@ -145,7 +146,7 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
 
     // Extract 2-dimensional points from the data set based on the selected dimensions
     std::vector<Vector2f> points;
-    _projectionDataset->extractDataForDimensions(points, 0, 1);
+    _projectionDataset->extractDataForDimensions(points, DIM1, DIM2);
     _scatterplotWidget->setData(points);
     _explanationModel.setProjection(_projectionDataset);
     _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation

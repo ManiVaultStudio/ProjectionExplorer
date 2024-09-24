@@ -7,6 +7,8 @@
 
 #include <QPainter>
 
+#include "Globals.h"
+
 
 using namespace mv;
 
@@ -49,7 +51,7 @@ void ScatterplotWidget::setData(const std::vector<Vector2f>& data)
     _dataBounds.expand(0.1f);
 
     _pointRenderer.setBounds(_dataBounds);
-    _pointRenderer.setPointSize(1.0f);
+    _pointRenderer.setPointSize(POINT_SIZE);
     _pointRenderer.setData(data);
 
     update();

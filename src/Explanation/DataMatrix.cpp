@@ -6,6 +6,7 @@
 #include <QDebug> //////////////////
 #include "util/Timer.h" ////////////
 #include <iostream> ////////////
+#include <Globals.h> //////////// Temp
 
 void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix)
 {

@@ -6,6 +6,8 @@
 #include <PointData/PointData.h>
 #include <PointData/DimensionsPickerAction.h>
 
+#include "Globals.h" /////// Temp
+
 namespace Explanation
 {
 
