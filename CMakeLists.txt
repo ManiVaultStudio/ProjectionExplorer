@@ -7,8 +7,6 @@ option(MV_UNITY_BUILD "Combine target source files into batches for faster compi
 # -----------------------------------------------------------------------------
 PROJECT("ProjectionExplorer")
 
-set(ManiVault_INSTALL_DIR "D:/Work/ManiVault/Install")
-
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
@@ -28,7 +26,7 @@ endif(MSVC)
 # -----------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets OpenGL OpenGLWidgets REQUIRED)
 
-find_package(ManiVault COMPONENTS Core PointData CONFIG)
+find_package(ManiVault COMPONENTS Core PointData CONFIG REQUIRED)
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -57,8 +55,7 @@ add_library(${PROJECT_NAME} SHARED ${PLUGIN_SOURCES} ${EXPLANATION_SOURCES} ${AC
 # Target include directories
 # -----------------------------------------------------------------------------
 # Include ManiVault headers, including system data plugins
-#target_include_directories(${PROJECT_NAME} PRIVATE "${ManiVault_INCLUDE_DIR}")
-target_include_directories(${PROJECT_NAME} PRIVATE "D:/Work/ManiVault/Install/$<CONFIGURATION>/include")
+target_include_directories(${PROJECT_NAME} PRIVATE "${ManiVault_INCLUDE_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/thirdparty/Eigen/include)
 
@@ -83,10 +80,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGLWidgets)
 
 # Link to ManiVault and data plugins
-#target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::Core)
-#target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::PointData)
-target_link_libraries(${PROJECT_NAME} PRIVATE "D:/Work/ManiVault/Install/$<CONFIGURATION>/lib/MV_Public.lib")
-target_link_libraries(${PROJECT_NAME} PRIVATE "D:/Work/ManiVault/Install/$<CONFIGURATION>/lib/PointData.lib")
+target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::Core)
+target_link_libraries(${PROJECT_NAME} PRIVATE ManiVault::PointData)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -114,6 +109,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug,${ManiVault_INSTALL_DIR}/release>)
-    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug/ManiVault\ Studio.exe,${ManiVault_INSTALL_DIR}/release/ManiVault\ Studio.exe>)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/Debug,${ManiVault_INSTALL_DIR}/Release>)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/Debug/ManiVault\ Studio.exe,${ManiVault_INSTALL_DIR}/Release/ManiVault\ Studio.exe>)
 endif()
