@@ -5,10 +5,7 @@
 #include <event/Event.h>
 #include <graphics/Vector2f.h>
 
-#include <DatasetsMimeData.h>
-
 #include <QDebug>
-#include <QMimeData>
 #include <QPointF>
 #include <QMap>
 
@@ -21,41 +18,18 @@ using namespace mv;
 
 ProjectionExplorerPlugin::ProjectionExplorerPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _dropWidget(nullptr),
     _projectionDataset(nullptr),
-    _settingsAction(this, "SettingsAction"),
-    _scatterplotWidget(new ScatterplotWidget(_explanationModel)),
-    _explanationWidget(new ExplanationWidget(_explanationModel))
+    _userInterface(this, _explanationModel)
 {
-    // This line is mandatory if drag and drop behavior is required
-    _scatterplotWidget->setAcceptDrops(true);
-
     getWidget().setFocusPolicy(Qt::ClickFocus);
 }
 
 void ProjectionExplorerPlugin::init()
 {
-    // Create layout
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    auto centralWidget = new QWidget();
-    centralWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    centralWidget->setContentsMargins(0, 0, 0, 0);
-    auto centralLayout = new QHBoxLayout();
-    centralLayout->setContentsMargins(0, 0, 0, 0);
-    centralLayout->setSpacing(0);
-    centralLayout->addWidget(_scatterplotWidget);
-    centralLayout->addWidget(_explanationWidget);
-    centralWidget->setLayout(centralLayout);
-    layout->addWidget(centralWidget);
-
     // Apply the layout
-    getWidget().setLayout(layout);
+    getWidget().setLayout(_userInterface.getLayout());
 
-    // Initialize the drop regions
-    initializeDropWidget();
+    ui().init();
     
     // Respond when the name of the dataset in the dataset reference changes
     connect(&_projectionDataset, &Dataset<Points>::guiNameChanged, this, [this]() {
@@ -63,7 +37,7 @@ void ProjectionExplorerPlugin::init()
         auto newDatasetName = _projectionDataset->getGuiName();
 
         // Only show the drop indicator when nothing is loaded in the dataset reference
-        _dropWidget->setShowDropIndicator(newDatasetName.isEmpty());
+        ui().getDropWidget()->setShowDropIndicator(newDatasetName.isEmpty());
     });
 
     connect(&_inputEventHandler, &InputEventHandler::mouseDragged, this, &ProjectionExplorerPlugin::onMouseDragged);
@@ -71,86 +45,18 @@ void ProjectionExplorerPlugin::init()
     // Update point selection when the position dataset data changes
     connect(&_projectionDataset, &Dataset<Points>::dataSelectionChanged, this, &ProjectionExplorerPlugin::onProjectionSelectionChanged);
 
-    _scatterplotWidget->installEventFilter(this);
-}
-
-void ProjectionExplorerPlugin::initializeDropWidget()
-{
-    // Instantiate new drop widget
-    _dropWidget = new DropWidget(_scatterplotWidget);
-
-    // Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
-    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
-    _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions
-        {
-            // A drop widget can contain zero or more drop regions
-            DropWidget::DropRegions dropRegions;
-
-            const auto datasetsMimeData = dynamic_cast<const DatasetsMimeData*>(mimeData);
-
-            if (datasetsMimeData == nullptr)
-                return dropRegions;
-
-            if (datasetsMimeData->getDatasets().count() > 1)
-                return dropRegions;
-
-            const auto dataset = datasetsMimeData->getDatasets().first();
-            const auto datasetGuiName = dataset->text();
-            const auto datasetId = dataset->getId();
-            const auto dataType = dataset->getDataType();
-            const auto dataTypes = DataTypes({ PointType });
-
-            // Check if the data type can be dropped
-            if (!dataTypes.contains(dataType))
-                dropRegions << new DropWidget::DropRegion(this, "Incompatible data", "This type of data is not supported", "exclamation-circle", false);
-
-            // Points dataset is about to be dropped
-            if (dataType == PointType)
-            {
-                // Get points dataset from the core
-                auto candidateDataset = mv::data().getDataset<Points>(datasetId);
-
-                // Establish drop region description
-                const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
-
-                if (!_projectionDataset.isValid())
-                {
-
-                    // Load as point positions when no dataset is currently loaded
-                    dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
-                        {
-                            _projectionDataset = candidateDataset;
-                            onNewProjectionLoaded();
-                        });
-                }
-                else
-                {
-                    if (_projectionDataset != candidateDataset && candidateDataset->getNumDimensions() >= 2)
-                    {
-
-                        // The number of points is equal, so offer the option to replace the existing points dataset
-                        dropRegions << new DropWidget::DropRegion(this, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
-                            {
-                                _projectionDataset = candidateDataset;
-                                onNewProjectionLoaded();
-                            });
-                    }
-                }
-            }
-
-            return dropRegions;
-        });
+    _userInterface.getScatterplotWidget()->installEventFilter(this);
 }
 
 void ProjectionExplorerPlugin::onNewProjectionLoaded()
 {
     qDebug() << "onNewProjectionSet";
-    _dropWidget->setShowDropIndicator(!_projectionDataset.isValid());
+    ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
 
     // Extract 2-dimensional points from the data set based on the selected dimensions
     std::vector<Vector2f> points;
     _projectionDataset->extractDataForDimensions(points, DIM1, DIM2);
-    _scatterplotWidget->setData(points);
+    ui().getScatterplotWidget()->setData(points);
     _explanationModel.setProjection(_projectionDataset);
     _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
     _explanationModel.computeExplanationMethod();
@@ -210,9 +116,9 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     clusterData->setClusters(clusters.values());
     events().notifyDatasetDataChanged(clusterData);
 
-    _scatterplotWidget->setColors(colorData);
+    ui().getScatterplotWidget()->setColors(colorData);
 
-    _explanationWidget->getHistogramChart().computeGlobalHistograms();
+    ui().getExplanationWidget()->getHistogramChart().computeGlobalHistograms();
 }
 
 void ProjectionExplorerPlugin::onProjectionSelectionChanged()
@@ -237,17 +143,17 @@ void ProjectionExplorerPlugin::onProjectionSelectionChanged()
         highlights[i] = selected[i] ? 1 : 0;
 
     //qDebug() << "highlights:" << highlights.size();
-    _scatterplotWidget->setSelection(highlights, static_cast<std::int32_t>(selection->indices.size()));
+    ui().getScatterplotWidget()->setSelection(highlights, static_cast<std::int32_t>(selection->indices.size()));
 
     if (selection->indices.size() > 0)
     {
         _explanationModel.computeSelectionDimensionRanks(selection->indices);
     }
 
-    _explanationWidget->getHistogramChart().setRanking(selection->indices);
+    ui().getExplanationWidget()->getHistogramChart().setRanking(selection->indices);
 
-    _scatterplotWidget->update();
-    _explanationWidget->getHistogramChart().update();
+    ui().getScatterplotWidget()->update();
+    ui().getExplanationWidget()->getHistogramChart().update();
 
     //std::vector<float> dimRanking(_explanationModel.getDataset().getNumCols());
     //_explanationModel.computeSelectionDimensionRanks(dimRanking, selection->indices);
@@ -265,11 +171,11 @@ void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
     std::vector<std::uint32_t> lensSelectionIndices;
     lensSelectionIndices.reserve(_projectionDataset->getNumPoints());
 
-    const auto dataBounds = _scatterplotWidget->getBounds();
-    const auto w = _scatterplotWidget->width();
-    const auto h = _scatterplotWidget->height();
+    const auto dataBounds = ui().getScatterplotWidget()->getBounds();
+    const auto w = ui().getScatterplotWidget()->width();
+    const auto h = ui().getScatterplotWidget()->height();
     const auto size = w < h ? w : h;
-    const auto uvOffset = Vector2f((_scatterplotWidget->width() - size) / 2.0f, (_scatterplotWidget->height() - size) / 2.0f);
+    const auto uvOffset = Vector2f((ui().getScatterplotWidget()->width() - size) / 2.0f, (ui().getScatterplotWidget()->height() - size) / 2.0f);
 
     DataMatrix& projection = _explanationModel.getProjection();
     float lensRadiusSqr = lens.radius * lens.radius;

@@ -30,6 +30,8 @@ set(EXPLANATION_SOURCES
 )
 
 set(WIDGET_SOURCES
+    ${DIR}/Widgets/UserInterface.h
+    ${DIR}/Widgets/UserInterface.cpp
     ${DIR}/Widgets/ScatterplotWidget.h
     ${DIR}/Widgets/ScatterplotWidget.cpp
     ${DIR}/Widgets/ExplanationWidget.h

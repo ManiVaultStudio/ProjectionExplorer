@@ -2,17 +2,15 @@
 
 #include <ViewPlugin.h>
 
+#include "Widgets/UserInterface.h"
+
 #include "InputEventHandler.h"
 #include "Lens.h"
 
-#include "Widgets/ScatterplotWidget.h"
-#include "Widgets/ExplanationWidget.h"
 #include "Explanation/ExplanationModel.h"
-#include "Actions/SettingsAction.h"
 
 #include <Dataset.h>
 #include <PointData/PointData.h>
-#include <widgets/DropWidget.h>
 
 /** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
@@ -51,11 +49,17 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-private:
-    void initializeDropWidget();
+    mv::Dataset<Points>& getProjectionDataset() { return _projectionDataset; }
 
     /** Invoked when a new projection dataset is dropped on the plugin */
     void onNewProjectionLoaded();
+
+public: // User Interface
+    UserInterface& ui() { return _userInterface; }
+
+private:
+    void initializeDropWidget();
+
     /** Invoked when the selection of the projection dataset changes */
     void onProjectionSelectionChanged();
     /** Invoked when the left-mouse button is pressed and the cursor moved */
@@ -64,12 +68,8 @@ private:
     bool eventFilter(QObject* target, QEvent* event) Q_DECL_OVERRIDE;
 
 protected:
-    DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
-
-    // Widgets
-    ScatterplotWidget*      _scatterplotWidget;         /** Widget for plotting the projection points */
-    ExplanationWidget*      _explanationWidget;         /** Widget for showing the local explanation histograms */
-    SettingsAction          _settingsAction;
+    // UI
+    UserInterface           _userInterface;
 
     // Data
     mv::Dataset<Points>     _projectionDataset;         /** Points smart pointer */
