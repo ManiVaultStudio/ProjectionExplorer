@@ -1,5 +1,7 @@
 #include "ProjectionExplorerPlugin.h"
 
+#include <ClusterData/ClusterData.h>
+
 #include <event/Event.h>
 #include <graphics/Vector2f.h>
 
@@ -8,6 +10,7 @@
 #include <QDebug>
 #include <QMimeData>
 #include <QPointF>
+#include <QMap>
 
 #include "util/Timer.h" ////////////
 #include "Globals.h" /////////// Temp
@@ -175,6 +178,17 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping().getColors();
 
     std::vector<Vector3f> colorData(topRankedDims.size());
+    mv::Dataset<Clusters> clusterData = mv::data().createDataset("Cluster", "TestClusters");
+
+    QHash<QString, Cluster> clusters;
+    for (int i = 0; i < _explanationModel.getColorMapping().getPalette().size(); i++)
+    {
+        const QColor& c = _explanationModel.getColorMapping().getPalette()[i];
+        QString name = QString("%1%2%3").arg(c.red(), c.green(), c.blue());
+        Cluster cluster(name, c);
+        clusters[name] = cluster;
+    }
+
     for (int i = 0; i < topRankedDims.size(); i++)
     {
         int dim = topRankedDims[i];
@@ -183,11 +197,18 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
         if (dim < colorMapping.size())
         {
             QColor color = colorMapping[dim];
+            QString name = QString("%1%2%3").arg(color.red(), color.green(), color.blue());
+
             colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
+            auto& indices = clusters[name].getIndices();
+            indices.push_back(i);
+            clusters[name].setIndices(indices);
         }
         else
             colorData[i] = Vector3f(1.0f * confidence, 0.2f * confidence, 0.2f * confidence);
     }
+    clusterData->setClusters(clusters.values());
+    events().notifyDatasetDataChanged(clusterData);
 
     _scatterplotWidget->setColors(colorData);
 
