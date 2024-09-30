@@ -128,7 +128,7 @@ void Model::computeExplanationMethod()
     //NeighbourhoodMatrix matrix;
     //computeNeighbourhoodMatrix(_projection, matrix, projectionDiameter * 0.1, 0, 1, gridIndex);
 
-    _valueMethod.recompute(_dataset, _projection, gridIndex);
+    _valueMethod.recompute(_dataset, _projection);
 }
 
 void Model::computeDimensionRanks()

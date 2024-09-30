@@ -1,7 +1,5 @@
 #include "ValueMethod.h"
 
-#include "GridIndex.h"
-
 #include <util/Timer.h>
 #include <QDebug>
 #include <iostream>
@@ -18,7 +16,7 @@ void ValueMethod::recompute(DataMatrix& dataset)
 //    precomputeLocalValues(dataset, neighbourhoodMatrix);
 //}
 
-void ValueMethod::recompute(DataMatrix& dataset, DataMatrix& projection, GridIndex& gridIndex)
+void ValueMethod::recompute(DataMatrix& dataset, DataMatrix& projection)
 {
     // Per-dimension ranges of values found in the dataset
     _dataRanges.clear();
@@ -46,7 +44,7 @@ void ValueMethod::recompute(DataMatrix& dataset, DataMatrix& projection, GridInd
 
     precomputeGlobalValues(dataset);
 
-    precomputeLocalValues(dataset, projection, gridIndex);
+    precomputeLocalValues(dataset, projection);
 }
 
 void ValueMethod::precomputeGlobalValues(DataMatrix& dataset)
@@ -117,7 +115,7 @@ void ValueMethod::precomputeGlobalValues(DataMatrix& dataset)
 //    std::cout << "Local Value Elapsed time: " << elapsed.count() << " s\n";
 //}
 
-void ValueMethod::precomputeLocalValues(DataMatrix& dataset, DataMatrix& projection, GridIndex& gridIndex)
+void ValueMethod::precomputeLocalValues(DataMatrix& dataset, DataMatrix& projection)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -128,27 +126,6 @@ void ValueMethod::precomputeLocalValues(DataMatrix& dataset, DataMatrix& project
 
     _lvc.initialize(projection);
     _lvc.splatValues(dataset, projection, _localValues);
-
-//#pragma omp parallel for
-    //for (int i = 0; i < numPoints; i++)
-    //{
-    //    const std::vector<int>& neighbourhood = gridIndex.getBucket(projection(i, 0), projection(i, 1));
-
-    //    for (int j = 0; j < numDimensions; j++)
-    //    {
-    //        // Compute mean
-    //        float mean = 0;
-    //        for (int n = 0; n < neighbourhood.size(); n++)
-    //        {
-    //            mean += dataset(neighbourhood[n], j);
-    //        }
-    //        mean /= neighbourhood.size();
-
-    //        _localValues[i][j] = mean;
-    //    }
-    //    if (i % 1000 == 0)
-    //        std::cout << "Local var: " << i << std::endl;
-    //}
 
     _sums.clear();
     _sums.resize(dataset.getNumRows());

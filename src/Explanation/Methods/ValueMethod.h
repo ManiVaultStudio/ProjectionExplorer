@@ -5,14 +5,12 @@
 
 #include <vector>
 
-class GridIndex;
-
 class ValueMethod : public Explanation::Method
 {
 public:
     void recompute(DataMatrix& dataset) override;
     //void recompute(DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix);
-    void recompute(DataMatrix& dataset, DataMatrix& projection, GridIndex& gridIndex);
+    void recompute(DataMatrix& dataset, DataMatrix& projection);
 
     float computeDimensionRank(DataMatrix& dataset, int i, int j);
     void computeDimensionRank(DataMatrix& dataset, const std::vector<unsigned int>& selection, std::vector<float>& dimRanking);
@@ -20,7 +18,7 @@ public:
 private:
     void precomputeGlobalValues(DataMatrix& dataset);
     //void precomputeLocalValues(DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix);
-    void precomputeLocalValues(DataMatrix& dataset, DataMatrix& projection, GridIndex& gridIndex);
+    void precomputeLocalValues(DataMatrix& dataset, DataMatrix& projection);
 
 private:
     std::vector<float>  _globalValues;
