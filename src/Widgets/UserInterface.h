@@ -6,6 +6,7 @@
 #include "Widgets/ExplanationWidget.h"
 #include "Actions/SettingsAction.h"
 
+#include <actions/HorizontalToolbarAction.h>
 #include <widgets/DropWidget.h>
 
 #include <QVBoxLayout>
@@ -40,4 +41,7 @@ private:
     ScatterplotWidget*          _scatterplotWidget;         /** Widget for plotting the projection points */
     ExplanationWidget*          _explanationWidget;         /** Widget for showing the local explanation histograms */
     SettingsAction              _settingsAction;
+
+    // Toolbars
+    HorizontalToolbarAction     _primaryToolbarAction;      /** Horizontal toolbar for primary content */
 };

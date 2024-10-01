@@ -54,6 +54,8 @@ public:
     /** Invoked when a new projection dataset is dropped on the plugin */
     void onNewProjectionLoaded();
 
+    void generateClusterDataset();
+
 public: // User Interface
     UserInterface& ui() { return _userInterface; }
 

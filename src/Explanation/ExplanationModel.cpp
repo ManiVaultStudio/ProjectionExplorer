@@ -7,6 +7,53 @@
 
 #include "Globals.h" /////// Temp
 
+namespace
+{
+    float computeProjectionDiameter(DataMatrix& projection, int xDim, int yDim)
+    {
+        float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
+        float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
+        for (int i = 0; i < projection.getNumRows(); i++)
+        {
+            float x = projection(i, xDim);
+            float y = projection(i, yDim);
+
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+        float rangeX = maxX - minX;
+        float rangeY = maxY - minY;
+
+        //bounds = Bounds(minX, maxX, minY, maxY);
+        //qDebug() << "Bounds Left: " << bounds.getLeft() << "minX: " << minX;
+        //qDebug() << "Bounds Right: " << bounds.getRight() << "maxX: " << maxX;
+        float diameter = rangeX > rangeY ? rangeX : rangeY;
+        return diameter;
+    }
+
+    void computeTopRankedDims(const DataMatrix& dataset, const DataMatrix& dimRanking, std::vector<int>& topRankedDims)
+    {
+        // Build vector of top ranked dimensions
+        topRankedDims.resize(dimRanking.getNumRows());
+
+        // Top dimension
+        int d = 0;
+
+        std::vector<int> indices(dimRanking.getNumCols());
+
+        for (int i = 0; i < dimRanking.getNumRows(); i++)
+        {
+            std::iota(indices.begin(), indices.end(), 0);
+            std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) > dimRanking(i, b); });
+
+            //while (dataset.isExcluded(indices[j]) && j < dataset.numDimensions() - 1) { j++; }
+            topRankedDims[i] = indices[d];
+        }
+    }
+}
+
 namespace Explanation
 {
 
@@ -38,75 +85,6 @@ DataStatistics& Model::getDataStatistics()
 Lens& Model::getLens()
 {
     return _lens;
-}
-
-float computeProjectionDiameter(DataMatrix& projection, int xDim, int yDim)
-{
-    float minX = std::numeric_limits<float>::max(), maxX = -std::numeric_limits<float>::max();
-    float minY = std::numeric_limits<float>::max(), maxY = -std::numeric_limits<float>::max();
-    for (int i = 0; i < projection.getNumRows(); i++)
-    {
-        float x = projection(i, xDim);
-        float y = projection(i, yDim);
-
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-    }
-    float rangeX = maxX - minX;
-    float rangeY = maxY - minY;
-
-    //bounds = Bounds(minX, maxX, minY, maxY);
-    //qDebug() << "Bounds Left: " << bounds.getLeft() << "minX: " << minX;
-    //qDebug() << "Bounds Right: " << bounds.getRight() << "maxX: " << maxX;
-    float diameter = rangeX > rangeY ? rangeX : rangeY;
-    return diameter;
-}
-
-void findNeighbourhood(DataMatrix& projection, int centerId, float radius, std::vector<int>& neighbourhood, int xDim, int yDim)
-{
-    float x = projection(centerId, xDim);
-    float y = projection(centerId, yDim);
-
-    float radSquared = radius * radius;
-
-    neighbourhood.clear();
-
-    for (int i = 0; i < projection.getNumRows(); i++)
-    {
-        float xd = projection(i, xDim) - x;
-        if (abs(xd) > radius) continue;
-        float yd = projection(i, yDim) - y;
-        if (abs(yd) > radius) continue;
-        float magSquared = xd * xd + yd * yd;
-
-        if (magSquared > radSquared)
-            continue;
-
-        neighbourhood.push_back(i);
-    }
-}
-
-using Neighbourhood = std::vector<int>;
-using NeighbourhoodMatrix = std::vector<Neighbourhood>;
-void computeNeighbourhoodMatrix(DataMatrix& projection, NeighbourhoodMatrix& neighbourhoodMatrix, float radius, int xDim, int yDim)
-{
-    auto start = std::chrono::high_resolution_clock::now();
-
-    neighbourhoodMatrix.clear();
-    neighbourhoodMatrix.resize(projection.getNumRows());
-
-    for (int i = 0; i < projection.getNumRows(); i++)
-    {
-        findNeighbourhood(projection, i, radius, neighbourhoodMatrix[i], xDim, yDim);
-
-        if (i % 10000 == 0) std::cout << "Computing neighbourhood for points: [" << i << "/" << projection.getNumRows() << "]" << std::endl;
-    }
-
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "Neighbourhood Elapsed time : " << elapsed.count() << " s\n";
 }
 
 void Model::computeExplanationMethod()
@@ -152,6 +130,8 @@ void Model::computeDimensionRanks()
     {
         _rankAggregation[i] /= (float)numPoints;
     }
+
+    computeTopRankedDims(_dataset, _dimRanking, _topRankedDimensions);
 
     _colorMapping.recompute(_dataset, _dimRanking);
 }

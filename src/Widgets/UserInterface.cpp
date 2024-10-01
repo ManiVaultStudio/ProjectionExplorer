@@ -11,6 +11,7 @@ UserInterface::UserInterface(ProjectionExplorerPlugin* plugin, Explanation::Mode
     _plugin(plugin),
     _layout(new QVBoxLayout()),
     _centralWidget(new QWidget()),
+    _primaryToolbarAction(plugin, "PrimaryToolbar"),
     _dropWidget(nullptr),
     _settingsAction(_centralWidget, "SettingsAction"),
     _scatterplotWidget(new ScatterplotWidget(explanationModel)),
@@ -28,6 +29,7 @@ UserInterface::UserInterface(ProjectionExplorerPlugin* plugin, Explanation::Mode
     centralLayout->addWidget(_scatterplotWidget);
     centralLayout->addWidget(_explanationWidget);
     _centralWidget->setLayout(centralLayout);
+    _layout->addWidget(_primaryToolbarAction.createWidget(&_plugin->getWidget()));
     _layout->addWidget(_centralWidget);
 }
 
@@ -35,6 +37,8 @@ void UserInterface::init()
 {
     // Initialize the drop regions
     initializeDropWidget();
+
+    _primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 4, GroupAction::Horizontal);
 }
 
 void UserInterface::initializeDropWidget()

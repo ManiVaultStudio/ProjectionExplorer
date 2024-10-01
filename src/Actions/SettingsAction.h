@@ -1,6 +1,7 @@
 #pragma once
 
 #include <actions/GroupAction.h>
+#include <actions/TriggerAction.h>
 
 using namespace mv::gui;
 
@@ -38,9 +39,10 @@ public: // Serialization
 
 public: // Action getters
 
-
+    TriggerAction& getGenerateClustersAction() { return _generateClustersAction; }
 
 protected:
     ProjectionExplorerPlugin*   _plugin;        /** Pointer to plugin class */
 
+    TriggerAction               _generateClustersAction;
 };

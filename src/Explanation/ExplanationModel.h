@@ -37,6 +37,7 @@ public:
 
     DataStatistics& getDataStatistics();
     DataMatrix& getDimRanking() { return _dimRanking; }
+    const std::vector<int>& getTopRankedDims() { return _topRankedDimensions; }
     const std::vector<float>& getSelectionDimRanking() const { return _selectionRanking; }
     const std::vector<float>& getRankAggregation() const { return _rankAggregation; }
 
@@ -62,6 +63,8 @@ private:
     ValueMethod             _valueMethod;
 
     DataMatrix              _dimRanking;
+    std::vector<int>        _topRankedDimensions;
+
     std::vector<float>      _selectionRanking;
     std::vector<float>      _rankAggregation;
 

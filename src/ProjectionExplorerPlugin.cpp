@@ -61,29 +61,46 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
     _explanationModel.computeExplanationMethod();
 
+    // Compute the ranks of all the dimensions per point
     _explanationModel.computeDimensionRanks();
     DataMatrix& dimRanking = _explanationModel.getDimRanking();
 
-    // Build vector of top ranked dimensions
-    std::vector<int> topRankedDims(dimRanking.getNumRows());
-
-    const DataMatrix& dataset = _explanationModel.getDataset();
-    for (int i = 0; i < dimRanking.getNumRows(); i++)
-    {
-        std::vector<int> indices(dimRanking.getNumCols());
-        std::iota(indices.begin(), indices.end(), 0); //Initializing
-
-        std::sort(indices.begin(), indices.end(), [&](int a, int b) {return dimRanking(i, a) > dimRanking(i, b); });
-
-        int j = 0;
-        //while (dataset.isExcluded(indices[j]) && j < dataset.numDimensions() - 1) { j++; }
-        topRankedDims[i] = indices[j];
-    }
+    // Get vector of top ranked dimensions
+    const std::vector<int>& topRankedDims = _explanationModel.getTopRankedDims();
 
     // Color points by dimension ranking
     const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping().getColors();
 
     std::vector<Vector3f> colorData(topRankedDims.size());
+
+    for (int i = 0; i < topRankedDims.size(); i++)
+    {
+        int dim = topRankedDims[i];
+        float confidence = 1;
+
+        if (dim < colorMapping.size())
+        {
+            QColor color = colorMapping[dim];
+
+            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
+        }
+        else
+            colorData[i] = Vector3f(1.0f * confidence, 0.2f * confidence, 0.2f * confidence);
+    }
+
+    ui().getScatterplotWidget()->setColors(colorData);
+
+    ui().getExplanationWidget()->getHistogramChart().computeGlobalHistograms();
+}
+
+void ProjectionExplorerPlugin::generateClusterDataset()
+{
+    // Color points by dimension ranking
+    const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping().getColors();
+
+    // Get vector of top ranked dimensions
+    const std::vector<int>& topRankedDims = _explanationModel.getTopRankedDims();
+
     mv::Dataset<Clusters> clusterData = mv::data().createDataset("Cluster", "TestClusters");
 
     QHash<QString, Cluster> clusters;
@@ -105,20 +122,13 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
             QColor color = colorMapping[dim];
             QString name = QString("%1%2%3").arg(color.red(), color.green(), color.blue());
 
-            colorData[i] = Vector3f(color.redF() * confidence, color.greenF() * confidence, color.blueF() * confidence);
             auto& indices = clusters[name].getIndices();
             indices.push_back(i);
             clusters[name].setIndices(indices);
         }
-        else
-            colorData[i] = Vector3f(1.0f * confidence, 0.2f * confidence, 0.2f * confidence);
     }
     clusterData->setClusters(clusters.values());
     events().notifyDatasetDataChanged(clusterData);
-
-    ui().getScatterplotWidget()->setColors(colorData);
-
-    ui().getExplanationWidget()->getHistogramChart().computeGlobalHistograms();
 }
 
 void ProjectionExplorerPlugin::onProjectionSelectionChanged()
