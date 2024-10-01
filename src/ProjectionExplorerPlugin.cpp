@@ -196,7 +196,7 @@ void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
     lensPositionInDataSpace += Vector2f(dataBounds.getLeft(), dataBounds.getTop());
     //    ((lens.position / size) - uvOffset) * Vector2f(dataBounds.getWidth(), dataBounds.getHeight()) + Vector2f()
 
-    float lensRadiusInDataSpace = 30;
+    float lensRadiusInDataSpace = _explanationModel.getLens().radius;
     lensRadiusInDataSpace /= size;
     lensRadiusInDataSpace *= dataBounds.getWidth(); // FIXME For now width should be same as height, but perhaps not always
     float lensRadiusInDataSpaceSqr = lensRadiusInDataSpace * lensRadiusInDataSpace;

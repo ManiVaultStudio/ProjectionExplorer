@@ -50,6 +50,7 @@ public:
     void init() override;
 
     mv::Dataset<Points>& getProjectionDataset() { return _projectionDataset; }
+    Explanation::Model& getExplanationModel() { return _explanationModel; }
 
     /** Invoked when a new projection dataset is dropped on the plugin */
     void onNewProjectionLoaded();
@@ -60,8 +61,6 @@ public: // User Interface
     UserInterface& ui() { return _userInterface; }
 
 private:
-    void initializeDropWidget();
-
     /** Invoked when the selection of the projection dataset changes */
     void onProjectionSelectionChanged();
     /** Invoked when the left-mouse button is pressed and the cursor moved */

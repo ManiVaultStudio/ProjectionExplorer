@@ -11,12 +11,17 @@ using namespace mv::gui;
 SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     GroupAction(parent, title),
     _plugin(dynamic_cast<ProjectionExplorerPlugin*>(parent)),
+    _lensRadiusAction(this, "Lens Radius", 1, 100, 30),
     _generateClustersAction(this, "Generate Clusters")
 {
     setConnectionPermissionsToForceNone();
 
     connect(&_generateClustersAction, &TriggerAction::triggered, this, [this]() {
         _plugin->generateClusterDataset();
+    });
+
+    connect(&_lensRadiusAction, &IntegralAction::valueChanged, this, [this](int32_t value) {
+        _plugin->getExplanationModel().getLens().radius = value;
     });
 }
 
