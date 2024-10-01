@@ -13,7 +13,7 @@ UserInterface::UserInterface(ProjectionExplorerPlugin* plugin, Explanation::Mode
     _centralWidget(new QWidget()),
     _primaryToolbarAction(plugin, "PrimaryToolbar"),
     _dropWidget(nullptr),
-    _settingsAction(_centralWidget, "SettingsAction"),
+    _settingsAction(_plugin, "SettingsAction"),
     _scatterplotWidget(new ScatterplotWidget(explanationModel)),
     _explanationWidget(new ExplanationWidget(explanationModel))
 {
