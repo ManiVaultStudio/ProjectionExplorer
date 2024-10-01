@@ -33,6 +33,11 @@ public:
         return _data(row, col);
     }
 
+    const float operator()(int row, int col) const
+    {
+        return _data(row, col);
+    }
+
     //float operator()(int row, int col)
     //{
     //    return _data(row, col);
