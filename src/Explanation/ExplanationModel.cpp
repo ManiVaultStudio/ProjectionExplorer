@@ -70,7 +70,7 @@ DataMatrix& Model::getProjection()
 void Model::setProjection(mv::Dataset<Points> projection)
 {
     DataMatrix::fromDataset(projection->getSourceDataset<Points>(), _dataset);
-    DataMatrix::fromDataset(projection, _projection);
+    DataMatrix::fromDataset(projection, _projection, true);
 
     computeStatistics();
 

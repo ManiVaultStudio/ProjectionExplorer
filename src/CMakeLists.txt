@@ -36,6 +36,8 @@ set(WIDGET_SOURCES
     ${DIR}/Widgets/ScatterplotWidget.cpp
     ${DIR}/Widgets/ExplanationWidget.h
     ${DIR}/Widgets/ExplanationWidget.cpp
+    ${DIR}/Widgets/DimensionPickingDialog.h
+    ${DIR}/Widgets/DimensionPickingDialog.cpp
     PARENT_SCOPE
 )
 

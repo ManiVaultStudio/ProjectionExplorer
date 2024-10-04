@@ -8,7 +8,7 @@
 #include <iostream> ////////////
 #include <Globals.h> //////////// Temp
 
-void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix)
+void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix, bool projection/* = false */)
 {
     Timer t("Copy");
 
@@ -43,15 +43,14 @@ void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix
         if (enabledDimBools[i])
             enabledDims[d++] = i;
     }
-    //std::cout << "PRE: " << dataMatrix._data << std::endl;
+
     // Only retain the enabled dimensions in the data matrix
-    //if (numDimensions == 3)
-    //{
-    //    ArrayXXfc newData = dataMatrix._data(Eigen::all, { 2, 1 });
-    //    dataMatrix._data = newData;
-    //}
-    //else dataMatrix._data = dataMatrix._data(Eigen::all, enabledDims);
-    //std::cout << "POST: " <<  dataMatrix._data << std::endl;
+    if (projection)
+    {
+        ArrayXXfc newData = dataMatrix._data(Eigen::all, { DIM1, DIM2 });
+        dataMatrix._data = newData;
+    }
+    else dataMatrix._data = dataMatrix._data(Eigen::all, enabledDims);
 
     dataMatrix._dimNames = dataset->getDimensionNames();
 }

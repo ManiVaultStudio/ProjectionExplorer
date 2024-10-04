@@ -18,7 +18,7 @@ class Points;
 class DataMatrix
 {
 public:
-    static void fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix);
+    static void fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix, bool projection = false);
 
     void resize(int rows, int cols) { _data.resize(rows, cols); }
 

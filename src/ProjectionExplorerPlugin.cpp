@@ -1,5 +1,7 @@
 #include "ProjectionExplorerPlugin.h"
 
+#include "Widgets/DimensionPickingDialog.h"
+
 #include <ClusterData/ClusterData.h>
 
 #include <event/Event.h>
@@ -53,6 +55,18 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     qDebug() << "onNewProjectionSet";
     ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
 
+    // Ask user which dimensions they want to load in the projection
+    DimensionPickingDialog dimPickingDialog(&this->getWidget());
+    dimPickingDialog.setModal(true);
+
+    int ok = dimPickingDialog.exec();
+
+    if (ok == QDialog::Accepted)
+    {
+        DIM1 = dimPickingDialog.getFirstDimension();
+        DIM2 = dimPickingDialog.getSecondDimension();
+    }
+
     // Extract 2-dimensional points from the data set based on the selected dimensions
     std::vector<Vector2f> points;
     _projectionDataset->extractDataForDimensions(points, DIM1, DIM2);
@@ -101,7 +115,7 @@ void ProjectionExplorerPlugin::generateClusterDataset()
     // Get vector of top ranked dimensions
     const std::vector<int>& topRankedDims = _explanationModel.getTopRankedDims();
 
-    mv::Dataset<Clusters> clusterData = mv::data().createDataset("Cluster", "TestClusters");
+    mv::Dataset<Clusters> clusterData = mv::data().createDataset("Cluster", "TestClusters", _projectionDataset->getSourceDataset<Points>());
 
     QHash<QString, Cluster> clusters;
     for (int i = 0; i < _explanationModel.getColorMapping().getPalette().size(); i++)
