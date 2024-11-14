@@ -121,7 +121,7 @@ void ProjectionExplorerPlugin::generateClusterDataset()
     for (int i = 0; i < _explanationModel.getColorMapping().getPalette().size(); i++)
     {
         const QColor& c = _explanationModel.getColorMapping().getPalette()[i];
-        QString name = QString("%1%2%3").arg(c.red(), c.green(), c.blue());
+        QString name = QString("%1%2%3").arg(c.red()).arg(c.green()).arg(c.blue());
         Cluster cluster(name, c);
         clusters[name] = cluster;
     }
@@ -134,7 +134,7 @@ void ProjectionExplorerPlugin::generateClusterDataset()
         if (dim < colorMapping.size())
         {
             QColor color = colorMapping[dim];
-            QString name = QString("%1%2%3").arg(color.red(), color.green(), color.blue());
+            QString name = QString("%1%2%3").arg(color.red()).arg(color.green()).arg(color.blue());
 
             auto& indices = clusters[name].getIndices();
             indices.push_back(i);

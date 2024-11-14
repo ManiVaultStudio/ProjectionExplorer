@@ -3,4 +3,10 @@
         <file>shaders/Splat.vert</file>
         <file>shaders/Splat.frag</file>
     </qresource>
+	    <qresource prefix="projection_explorer">
+        <file>colors/kelly20.colors</file>
+        <file>colors/vis_dist_40.colors</file>
+        <file>colors/vis_dist_60.colors</file>
+        <file>colors/vis_dist_100.colors</file>
+    </qresource>
 </RCC>
