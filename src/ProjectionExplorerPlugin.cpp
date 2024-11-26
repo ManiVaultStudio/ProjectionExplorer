@@ -138,6 +138,7 @@ void ProjectionExplorerPlugin::generateClusterDataset()
 
             auto& indices = clusters[name].getIndices();
             indices.push_back(i);
+            clusters[name].setName(_explanationModel.getDataset().getDimensionNames()[dim]);
             clusters[name].setIndices(indices);
         }
     }
