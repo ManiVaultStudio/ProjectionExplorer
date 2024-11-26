@@ -126,7 +126,7 @@ mv::Bounds getDataBounds(DataMatrix& projection)
     return bounds;
 }
 
-void LocalValueComputation::splatValues(DataMatrix& dataset, DataMatrix& projection, std::vector<std::vector<float>>& localValues)
+void LocalValueComputation::splatValues(DataMatrix& dataset, DataMatrix& projection, std::vector<std::vector<float>>& localValues, float splatSize)
 {
     qDebug() << "LocalValueComputation::splatValues()";
     _offscreenBuffer->bindContext();
@@ -150,6 +150,7 @@ void LocalValueComputation::splatValues(DataMatrix& dataset, DataMatrix& project
 
     _splatProgram.bind();
     _splatProgram.uniformMatrix3f("projMatrix", orthoM);
+    _splatProgram.uniform1f("splatSize", splatSize);
 
     glViewport(0, 0, 1024, 1024);
 

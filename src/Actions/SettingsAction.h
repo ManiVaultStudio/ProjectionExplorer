@@ -3,6 +3,7 @@
 #include <actions/GroupAction.h>
 #include <actions/TriggerAction.h>
 #include <actions/IntegralAction.h>
+#include <actions/DecimalAction.h>
 
 using namespace mv::gui;
 
@@ -42,10 +43,12 @@ public: // Action getters
 
     TriggerAction& getGenerateClustersAction() { return _generateClustersAction; }
     IntegralAction& getLensRadiusAction() { return _lensRadiusAction; }
+    DecimalAction& getGlobalRadiusAction() { return _globalRadiusAction; }
 
 protected:
     ProjectionExplorerPlugin*   _plugin;        /** Pointer to plugin class */
 
     IntegralAction              _lensRadiusAction;
     TriggerAction               _generateClustersAction;
+    DecimalAction               _globalRadiusAction;
 };

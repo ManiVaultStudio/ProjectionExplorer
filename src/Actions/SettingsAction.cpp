@@ -12,7 +12,8 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     GroupAction(parent, title),
     _plugin(dynamic_cast<ProjectionExplorerPlugin*>(parent)),
     _lensRadiusAction(this, "Lens Radius", 1, 100, 30),
-    _generateClustersAction(this, "Generate Clusters")
+    _generateClustersAction(this, "Generate Clusters"),
+    _globalRadiusAction(this, "Global Radius", 0.01, 0.2, 0.02, 2)
 {
     setConnectionPermissionsToForceNone();
 
@@ -22,6 +23,10 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
 
     connect(&_lensRadiusAction, &IntegralAction::valueChanged, this, [this](int32_t value) {
         _plugin->getExplanationModel().getLens().radius = value;
+    });
+
+    connect(&_globalRadiusAction, &DecimalAction::valueChanged, this, [this](float value) {
+        _plugin->getExplanationModel().getValueMethod().setGlobalNeighbourhoodRadius(value);
     });
 }
 

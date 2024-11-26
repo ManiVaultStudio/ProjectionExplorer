@@ -41,6 +41,7 @@ public:
     const std::vector<float>& getSelectionDimRanking() const { return _selectionRanking; }
     const std::vector<float>& getRankAggregation() const { return _rankAggregation; }
 
+    ValueMethod& getValueMethod() { return _valueMethod; }
     Lens& getLens();
     ColorMapping& getColorMapping() { return _colorMapping; }
 

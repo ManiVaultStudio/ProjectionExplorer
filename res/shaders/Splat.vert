@@ -1,5 +1,7 @@
 #version 330 core
 
+uniform float splatSize;
+
 uniform mat3 projMatrix;
 
 layout(location = 0) in vec2 vertex;
@@ -17,5 +19,5 @@ void main()
     
     pass_values = values;
     
-    gl_Position = vec4(vertex * 0.02 + pos, 0, 1);
+    gl_Position = vec4(vertex * splatSize + pos, 0, 1);
 }

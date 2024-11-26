@@ -4,6 +4,11 @@
 #include <QDebug>
 #include <iostream>
 
+void ValueMethod::setGlobalNeighbourhoodRadius(float radius)
+{
+    _globalNeighbourhoodRadius = radius;
+}
+
 void ValueMethod::recompute(DataMatrix& dataset)
 {
 
@@ -125,7 +130,7 @@ void ValueMethod::precomputeLocalValues(DataMatrix& dataset, DataMatrix& project
     _localValues.resize(numPoints, std::vector<float>(numDimensions));
 
     _lvc.initialize(projection);
-    _lvc.splatValues(dataset, projection, _localValues);
+    _lvc.splatValues(dataset, projection, _localValues, _globalNeighbourhoodRadius);
 
     _sums.clear();
     _sums.resize(dataset.getNumRows());

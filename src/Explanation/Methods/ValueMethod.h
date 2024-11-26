@@ -8,6 +8,8 @@
 class ValueMethod : public Explanation::Method
 {
 public:
+    void setGlobalNeighbourhoodRadius(float radius);
+
     void recompute(DataMatrix& dataset) override;
     //void recompute(DataMatrix& dataset, std::vector<std::vector<int>>& neighbourhoodMatrix);
     void recompute(DataMatrix& dataset, DataMatrix& projection);
@@ -29,4 +31,6 @@ private:
     std::vector<float> _dataRanges;
 
     std::vector<float> _sums;
+
+    float               _globalNeighbourhoodRadius = 0.02;
 };

@@ -40,6 +40,7 @@ void UserInterface::init()
 
     GroupAction* groupAction = new GroupAction(_plugin, "Numeric Group", true);
     groupAction->addAction(&_settingsAction.getLensRadiusAction(), 3);
+    groupAction->addAction(&_settingsAction.getGlobalRadiusAction(), 3);
 
     _primaryToolbarAction.addAction(groupAction, 3, GroupAction::Horizontal);
     _primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 4, GroupAction::Horizontal);

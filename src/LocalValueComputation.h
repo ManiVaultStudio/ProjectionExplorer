@@ -13,7 +13,7 @@ class LocalValueComputation : protected QOpenGLFunctions_3_3_Core
 public:
     void initialize(DataMatrix& projection);
 
-    void splatValues(DataMatrix& dataset, DataMatrix& projection, std::vector<std::vector<float>>& localValues);
+    void splatValues(DataMatrix& dataset, DataMatrix& projection, std::vector<std::vector<float>>& localValues, float splatSize);
 
 private:
     //QOpenGLTexture* _splatTexture;
