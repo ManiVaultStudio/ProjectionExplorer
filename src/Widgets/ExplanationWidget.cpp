@@ -106,6 +106,10 @@ void HistogramChart::paintEvent(QPaintEvent* event)
     int maxDimensionShown = height() / BOX_HEIGHT;
     qDebug() << "Max dims shown: " << maxDimensionShown;
 
+    auto& dimNames = _explanationModel.getDataset().getDimensionNames();
+    if (dimNames.empty())
+        return;
+
     for (int i = 0; i < std::min<int>(numDimensions, maxDimensionShown); i++)
     {
         int sortIndex = _sortIndices.size() > 0 ? _sortIndices[i] : i;
