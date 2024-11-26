@@ -12,8 +12,8 @@ void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix
 {
     Timer t("Copy");
 
-    int numPoints = dataset->getNumPoints();
-    int numDimensions = dataset->getNumDimensions();
+    size_t numPoints = dataset->getNumPoints();
+    size_t numDimensions = dataset->getNumDimensions();
 
     dataMatrix._data.resize(numPoints, numDimensions);
 
@@ -21,9 +21,9 @@ void DataMatrix::fromDataset(mv::Dataset<Points> dataset, DataMatrix& dataMatrix
     dataset->visitFromBeginToEnd([&dataMatrix, &dataset, numPoints, numDimensions](auto begin, auto end)
         {
             //std::copy(begin, end, dataMatrix._data.data());
-            for (int i = 0; i < numPoints; i++)
+            for (size_t i = 0; i < numPoints; i++)
             {
-                for (int d = 0; d < numDimensions; d++)
+                for (size_t d = 0; d < numDimensions; d++)
                 {
                     dataMatrix(i, d) = *(begin + (i * numDimensions + d));
                     //std::cout << *(begin + (i * numDimensions + d)) << std::endl;
