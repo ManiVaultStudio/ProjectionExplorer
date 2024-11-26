@@ -41,6 +41,7 @@ namespace
 
 ColorMapping::ColorMapping()
 {
+
     std::vector<QString> paletteNames = {
         ":/projection_explorer/colors/kelly20.colors",
         ":/projection_explorer/colors/vis_dist_40.colors",
@@ -55,121 +56,6 @@ ColorMapping::ColorMapping()
     }
 
     _palette = palettes[2];
-
-    // Initialize color palette
-    //_palette.resize(60); // "#31a09a", "#59a14f", "#A13237"
-    //const char* kelly_colors[] = { "#F3C300", "#875692", "#F38400", "#A1CAF1", "#BE0032", "#C2B280", "#59a14f", "#008856", "#E68FAC", "#0067A5", "#F99379", "#604E97", "#F6A600", "#B3446C", "#DCD300", "#882D17", "#8DB600", "#654522", "#E25822", "#2B3D26" };
-    //const char* visdist_colors_40[] = {
-    //    "#696969",
-    //    "#556b2f",
-    //    "#a0522d",
-    //    "#800000",
-    //    "#808000",
-    //    "#483d8b",
-    //    "#008000",
-    //    "#008080",
-    //    "#4682b4",
-    //    "#9acd32",
-    //    "#00008b",
-    //    "#daa520",
-    //    "#8fbc8f",
-    //    "#800080",
-    //    "#d2b48c",
-    //    "#ff4500",
-    //    "#00ced1",
-    //    "#ff8c00",
-    //    "#c71585",
-    //    "#0000cd",
-    //    "#00ff00",
-    //    "#00ff7f",
-    //    "#dc143c",
-    //    "#00bfff",
-    //    "#f4a460",
-    //    "#a020f0",
-    //    "#adff2f",
-    //    "#da70d6",
-    //    "#ff00ff",
-    //    "#1e90ff",
-    //    "#db7093",
-    //    "#f0e68c",
-    //    "#fa8072",
-    //    "#ffff54",
-    //    "#dda0dd",
-    //    "#90ee90",
-    //    "#add8e6",
-    //    "#7b68ee",
-    //    "#7fffd4",
-    //    "#ffc0cb"
-    //};
-
-    //const char* visdist_colors_60[] = {
-    //"#D72638",
-    //"#2f4f4f",
-    //"#556b2f",
-    //"#a0522d",
-    //"#228b22",
-    //"#7f0000",
-    //"#191970",
-    //"#708090",
-    //"#808000",
-    //"#3cb371",
-    //"#bc8f8f",
-    //"#663399",
-    //"#008080",
-    //"#bdb76b",
-    //"#cd853f",
-    //"#4682b4",
-    //"#d2691e",
-    //"#9acd32",
-    //"#cd5c5c",
-    //"#00008b",
-    //"#32cd32",
-    //"#daa520",
-    //"#7f007f",
-    //"#8fbc8f",
-    //"#b03060",
-    //"#48d1cc",
-    //"#ff4500",
-    //"#ff8c00",
-    //"#ffd700",
-    //"#c71585",
-    //"#0000cd",
-    //"#deb887",
-    //"#00ff00",
-    //"#ba55d3",
-    //"#8a2be2",
-    //"#00ff7f",
-    //"#4169e1",
-    //"#dc143c",
-    //"#00ffff",
-    //"#00bfff",
-    //"#9370db",
-    //"#0000ff",
-    //"#adff2f",
-    //"#ff6347",
-    //"#d8bfd8",
-    //"#ff00ff",
-    //"#1e90ff",
-    //"#db7093",
-    //"#eee8aa",
-    //"#ffff54",
-    //"#dda0dd",
-    //"#90ee90",
-    //"#87ceeb",
-    //"#ff1493",
-    //"#ffa07a",
-    //"#afeeee",
-    //"#ee82ee",
-    //"#7fffd4",
-    //"#ff69b4",
-    //"#ffb6c1"
-    //};
-    //for (int i = 0; i < _palette.size(); i++)
-    //{
-    //    _palette[i].setNamedColor(visdist_colors_60[i]);
-    //    _palette[i] = blendColors(_palette[i], QColor(255, 255, 255), 0.35);
-    //    //_palette[i].setHsvF(_palette[i].hueF(), _palette[i].saturationF() * 0.8, _palette[i].lightnessF());
-    //}
 }
 
 void ColorMapping::recreate(DataMatrix& dataset)
