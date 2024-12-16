@@ -99,13 +99,6 @@ void ScatterplotWidget::onWidgetRendered()
         }
         painter.endNativePainting();
 
-        QBrush brush;
-        brush.setColor(Qt::red);
-        brush.setStyle(Qt::Dense3Pattern);
-
-        painter.setBrush(brush);
-        painter.fillRect(0, 0, 100, 100, brush);
-
         // Draw lens
         Lens& lens = _explanationModel.getLens();
         // Draw local neighbourhood circle
