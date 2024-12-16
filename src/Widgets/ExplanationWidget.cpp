@@ -42,8 +42,6 @@ void HistogramChart::setRanking(const std::vector<unsigned int>& selection)
     if (selection.empty())
     {
         _sortIndices.clear();
-        _sortIndices.resize(numDimensions);
-        std::iota(_sortIndices.begin(), _sortIndices.end(), 0);
         return;
     }
 
@@ -114,7 +112,7 @@ void HistogramChart::paintEvent(QPaintEvent* event)
 
     for (int i = 0; i < std::min<int>(numDimensions, maxDimensionShown); i++)
     {
-        int sortIndex = _sortIndices.size() > 0 ? _sortIndices[i] : i;
+        int sortIndex = !_sortIndices.empty() ? _sortIndices[i] : i;
 
         QColor color(180, 180, 180, 255);
         if (sortIndex < colorMapping.getColors().size())
