@@ -123,7 +123,7 @@ void HistogramChart::paintEvent(QPaintEvent* event)
         painter.setPen(color);
 
         QString dimName = _explanationModel.getDataset().getDimensionNames()[sortIndex];
-        dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 150);
+        dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 100);
         painter.drawText(30, TOP_MARGIN + 10 + i * BOX_HEIGHT, dimName);
 
         painter.drawLine(RANGE_OFFSET, TOP_MARGIN + BOX_HEIGHT * i + 0, RANGE_OFFSET + RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * i + 0);
