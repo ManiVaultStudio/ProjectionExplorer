@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include <iostream>
+#include <QDebug>
 
 namespace
 {
@@ -48,14 +49,14 @@ ColorMapping::ColorMapping()
         ":/projection_explorer/colors/vis_dist_60.colors",
         ":/projection_explorer/colors/vis_dist_100.colors",
     };
-    std::vector<std::vector<QColor>> palettes(paletteNames.size());
+    _palettes.resize(paletteNames.size());
 
     for (int i = 0; i < paletteNames.size(); i++)
     {
-        loadPalette(palettes[i], paletteNames[i]);
+        loadPalette(_palettes[i], paletteNames[i]);
     }
 
-    _palette = palettes[2];
+    switchPalettes(0);
 }
 
 void ColorMapping::recreate(DataMatrix& dataset)
@@ -163,4 +164,20 @@ void ColorMapping::recompute(DataMatrix& dataset, DataMatrix& dimRanking)
         newMapping[_dimAssignment[i]] = _palette[i];
     }
     _colorMapping = newMapping;
+}
+
+void ColorMapping::switchPalettes(int index)
+{
+    if (index < 0)
+    {
+        qWarning() << "Asked to switch to negative palette index " << index << ". Enabling palette 0..";
+        index = 0;
+    }
+    if (index >= _palettes.size())
+    {
+        index = _palettes.size() - 1;
+        qWarning() << "Asked to switch to palette " << index << " but only " << _palettes.size() << " are loaded..";
+    }
+
+    _palette = _palettes[index];
 }

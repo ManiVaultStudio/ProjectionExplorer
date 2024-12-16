@@ -4,6 +4,7 @@
 #include <actions/TriggerAction.h>
 #include <actions/IntegralAction.h>
 #include <actions/DecimalAction.h>
+#include <actions/OptionAction.h>
 
 using namespace mv::gui;
 
@@ -44,6 +45,7 @@ public: // Action getters
     TriggerAction& getGenerateClustersAction() { return _generateClustersAction; }
     IntegralAction& getLensRadiusAction() { return _lensRadiusAction; }
     DecimalAction& getGlobalRadiusAction() { return _globalRadiusAction; }
+    OptionAction& getColorOptionAction() { return _colorOptionAction; }
 
 protected:
     ProjectionExplorerPlugin*   _plugin;        /** Pointer to plugin class */
@@ -51,4 +53,5 @@ protected:
     IntegralAction              _lensRadiusAction;
     TriggerAction               _generateClustersAction;
     DecimalAction               _globalRadiusAction;
+    OptionAction                _colorOptionAction;
 };

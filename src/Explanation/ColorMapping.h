@@ -18,7 +18,10 @@ public:
     void recreate(DataMatrix& dataset);
     void recompute(DataMatrix& dataset, DataMatrix& dimRanking);
 
+    void switchPalettes(int index);
+
 private:
+    std::vector<std::vector<QColor>> _palettes;
     std::vector<QColor> _palette;
     std::vector<QColor> _colorMapping;
 

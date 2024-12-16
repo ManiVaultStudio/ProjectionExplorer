@@ -13,7 +13,8 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _plugin(dynamic_cast<ProjectionExplorerPlugin*>(parent)),
     _lensRadiusAction(this, "Lens Radius", 1, 100, 30),
     _generateClustersAction(this, "Generate Clusters"),
-    _globalRadiusAction(this, "Global Radius", 0.01, 0.2, 0.02, 2)
+    _globalRadiusAction(this, "Global Radius", 0.01, 0.2, 0.02, 2),
+    _colorOptionAction(this, "Number of colors", { "20", "40", "60", "100" }, "20")
 {
     setConnectionPermissionsToForceNone();
 
@@ -27,6 +28,10 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
 
     connect(&_globalRadiusAction, &DecimalAction::valueChanged, this, [this](float value) {
         _plugin->getExplanationModel().getValueMethod().setGlobalNeighbourhoodRadius(value);
+    });
+
+    connect(&_colorOptionAction, &OptionAction::currentIndexChanged, this, [this](const int32_t& currentIndex) {
+        _plugin->getExplanationModel().getColorMapping().switchPalettes(currentIndex);
     });
 }
 
