@@ -34,16 +34,18 @@ void HistogramChart::computeGlobalHistograms()
 
 void HistogramChart::setRanking(const std::vector<unsigned int>& selection)
 {
-    //if (numPoints == 0)
-    //{
-    //    _dimAggregation.clear();
-    //    return;
-    //}
-
     int numDimensions = _explanationModel.getSelectionDimRanking().size();
 
     _localHistograms.clear();
     _localHistograms.resize(numDimensions, Histogram(20));
+
+    if (selection.empty())
+    {
+        _sortIndices.clear();
+        _sortIndices.resize(numDimensions);
+        std::iota(_sortIndices.begin(), _sortIndices.end(), 0);
+        return;
+    }
 
     DataMatrix& dataset = _explanationModel.getDataset();
 
