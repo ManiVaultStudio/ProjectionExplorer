@@ -141,14 +141,18 @@ void HistogramChart::paintEvent(QPaintEvent* event)
             float globalBoxWidth = (float)RANGE_WIDTH / globalHist.getBins().size();
             for (int b = 0; b < globalHist.getBins().size(); b++)
             {
-                painter.fillRect(RANGE_OFFSET + b * globalBoxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, globalBoxWidth, ((float)globalHist.getBins()[b] / globalHighestBinValue) * BOX_HEIGHT / 2, QColor(180, 180, 180));
+                float binHeight = ((float)globalHist.getBins()[b] / globalHighestBinValue);
+                if (std::isnan(binHeight)) binHeight = 0;
+                painter.fillRect(RANGE_OFFSET + b * globalBoxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, globalBoxWidth, binHeight * (BOX_HEIGHT-2) / 2, QColor(180, 180, 180));
             }
 
             // Draw local histograms
             float boxWidth = (float)RANGE_WIDTH / hist.getBins().size();
             for (int b = 0; b < hist.getBins().size(); b++)
             {
-                painter.fillRect(RANGE_OFFSET + b * boxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, boxWidth, ((float)-hist.getBins()[b] / localHighestBinValue) * BOX_HEIGHT / 2, QColor(0, 180, 225));
+                float binHeight = ((float)hist.getBins()[b] / localHighestBinValue);
+                if (std::isnan(binHeight)) binHeight = 0;
+                painter.fillRect(RANGE_OFFSET + b * boxWidth, TOP_MARGIN + BOX_HEIGHT * i + 0, boxWidth, -binHeight * (BOX_HEIGHT-2) / 2, QColor(0, 180, 225));
             }
         }
     }
