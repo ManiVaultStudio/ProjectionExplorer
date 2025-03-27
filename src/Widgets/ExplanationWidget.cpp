@@ -99,8 +99,8 @@ void HistogramChart::paintEvent(QPaintEvent* event)
     font.setPixelSize(16);
     painter.setFont(font);
 
-    float RANGE_WIDTH = 200;
-    float RANGE_OFFSET = 150;
+    float RANGE_WIDTH = 150;
+    float RANGE_OFFSET = 200;
     float TOP_MARGIN = 30;
 
     int maxDimensionShown = height() / BOX_HEIGHT;
@@ -121,7 +121,7 @@ void HistogramChart::paintEvent(QPaintEvent* event)
         painter.setPen(color);
 
         QString dimName = _explanationModel.getDataset().getDimensionNames()[sortIndex];
-        dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 100);
+        dimName = fm.elidedText(dimName, Qt::TextElideMode::ElideRight, 150);
         painter.drawText(30, TOP_MARGIN + 10 + i * BOX_HEIGHT, dimName);
 
         painter.drawLine(RANGE_OFFSET, TOP_MARGIN + BOX_HEIGHT * i + 0, RANGE_OFFSET + RANGE_WIDTH, TOP_MARGIN + BOX_HEIGHT * i + 0);
