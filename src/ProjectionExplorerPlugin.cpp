@@ -232,8 +232,9 @@ void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
 
     mv::Dataset<Points> selection = _projectionDataset->getSelection<Points>();
 
-        // Notify others that the selection changed
-        events().notifyDatasetDataSelectionChanged(_projectionDataset);
+    // Notify others that the selection changed
+    // FIXME Why does this need to notify source dataset?
+    events().notifyDatasetDataSelectionChanged(_projectionDataset->getSourceDataset<Points>());
 
     //qDebug() << "Lens selection indices: " << lensSelectionIndices.size();
 }
