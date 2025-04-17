@@ -109,6 +109,9 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
 
 void ProjectionExplorerPlugin::generateClusterDataset()
 {
+    if (!_projectionDataset.isValid())
+        return;
+
     // Color points by dimension ranking
     const std::vector<QColor>& colorMapping = _explanationModel.getColorMapping().getColors();
 
