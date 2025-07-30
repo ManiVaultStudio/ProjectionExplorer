@@ -63,7 +63,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/thirdpa
 # Target properties
 # -----------------------------------------------------------------------------
 # Request C++17
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 # Enable unity build
 if(MV_UNITY_BUILD)
