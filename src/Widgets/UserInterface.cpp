@@ -18,7 +18,7 @@ UserInterface::UserInterface(ProjectionExplorerPlugin* plugin, Explanation::Mode
     _explanationWidget(new ExplanationWidget(explanationModel))
 {
     // This line is mandatory if drag and drop behavior is required
-    _scatterplotWidget->setAcceptDrops(true);
+    _centralWidget->setAcceptDrops(true);
 
     _centralWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _centralWidget->setContentsMargins(0, 0, 0, 0);
@@ -26,7 +26,7 @@ UserInterface::UserInterface(ProjectionExplorerPlugin* plugin, Explanation::Mode
     auto centralLayout = new QHBoxLayout();
     centralLayout->setContentsMargins(0, 0, 0, 0);
     centralLayout->setSpacing(0);
-    centralLayout->addWidget(_scatterplotWidget);
+    //centralLayout->addWidget(_scatterplotWidget);
     centralLayout->addWidget(_explanationWidget);
     _centralWidget->setLayout(centralLayout);
     _layout->addWidget(_primaryToolbarAction.createWidget(&_plugin->getWidget()));
@@ -50,7 +50,7 @@ void UserInterface::init()
 void UserInterface::initializeDropWidget()
 {
     // Instantiate new drop widget
-    _dropWidget = new DropWidget(_scatterplotWidget);
+    _dropWidget = new DropWidget(_centralWidget);
 
     // Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
     _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&_plugin->getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
