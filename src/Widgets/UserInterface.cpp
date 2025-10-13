@@ -86,28 +86,22 @@ void UserInterface::initializeDropWidget()
                 // Establish drop region description
                 const auto description = QString("Visualize %1 explanations").arg(datasetGuiName);
 
-                if (!_plugin->getProjectionDataset().isValid())
+                // Check if data is an embedding, otherwise tell why it can't be dropped
+                if (!candidateDataset->isDerivedData())
                 {
-
-                    // Load as point positions when no dataset is currently loaded
-                    dropRegions << new DropWidget::DropRegion(_plugin, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
-                        {
-                            _plugin->getProjectionDataset() = candidateDataset;
-                            _plugin->onNewProjectionLoaded();
-                        });
+                    dropRegions << new DropWidget::DropRegion(_plugin, "Incompatible data", "This data is not a projection/embedding.", "exclamation-circle", false);
+                }
+                else if (_plugin->getProjectionDataset() == candidateDataset)
+                {
+                    dropRegions << new DropWidget::DropRegion(_plugin, "Incompatible data", "This data is already loaded.", "exclamation-circle", false);
                 }
                 else
                 {
-                    if (_plugin->getProjectionDataset() != candidateDataset && candidateDataset->getNumDimensions() >= 2)
+                    dropRegions << new DropWidget::DropRegion(_plugin, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                     {
-
-                        // The number of points is equal, so offer the option to replace the existing points dataset
-                        dropRegions << new DropWidget::DropRegion(_plugin, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
-                            {
-                                _plugin->getProjectionDataset() = candidateDataset;
-                                _plugin->onNewProjectionLoaded();
-                            });
-                    }
+                        _plugin->getProjectionDataset() = candidateDataset;
+                        _plugin->onNewProjectionLoaded();
+                    });
                 }
             }
 
