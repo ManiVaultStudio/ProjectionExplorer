@@ -8,6 +8,8 @@
 class ValueMethod : public Explanation::Method
 {
 public:
+    ValueMethod();
+
     void setGlobalNeighbourhoodRadius(float radius);
 
     void recompute(DataMatrix& dataset) override;

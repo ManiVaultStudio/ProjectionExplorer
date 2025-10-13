@@ -8,7 +8,7 @@
 
 #include <QImage>
 
-void LocalValueComputation::initialize(DataMatrix& projection)
+void LocalValueComputation::initialize()
 {
     qDebug() << "LocalValueComputation::initialize()";
     _offscreenBuffer = new OffscreenBuffer();
@@ -65,16 +65,8 @@ void LocalValueComputation::initialize(DataMatrix& projection)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
     
-    // Position buffer
-    std::vector<float> positions(projection.getNumRows() * 2);
-    for (int i = 0; i < projection.getNumRows(); i++)
-    {
-        positions[i * 2 + 0] = projection(i, 0);
-        positions[i * 2 + 1] = projection(i, 1);
-    }
     glGenBuffers(1, &_pbo);
     glBindBuffer(GL_ARRAY_BUFFER, _pbo);
-    glBufferData(GL_ARRAY_BUFFER, projection.getNumRows() * 2 * sizeof(float), positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glVertexAttribDivisor(1, 1);
     glEnableVertexAttribArray(1);
@@ -82,7 +74,6 @@ void LocalValueComputation::initialize(DataMatrix& projection)
     // Value buffer
     glGenBuffers(1, &_vvbo);
     glBindBuffer(GL_ARRAY_BUFFER, _vvbo);
-    glBufferData(GL_ARRAY_BUFFER, projection.getNumRows() * 3 * sizeof(float), nullptr, GL_STATIC_DRAW);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glVertexAttribDivisor(2, 1);
     glEnableVertexAttribArray(2);
@@ -155,6 +146,20 @@ void LocalValueComputation::splatValues(DataMatrix& dataset, DataMatrix& project
     glViewport(0, 0, 1024, 1024);
 
     glBindVertexArray(_vao);
+
+    // Fill GPU data buffers
+    std::vector<float> positions(projection.getNumRows() * 2);
+    for (int i = 0; i < projection.getNumRows(); i++)
+    {
+        positions[i * 2 + 0] = projection(i, 0);
+        positions[i * 2 + 1] = projection(i, 1);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, _pbo);
+    glBufferData(GL_ARRAY_BUFFER, projection.getNumRows() * 2 * sizeof(float), positions.data(), GL_STATIC_DRAW);
+
+    // Value buffer
+    glBindBuffer(GL_ARRAY_BUFFER, _vvbo);
+    glBufferData(GL_ARRAY_BUFFER, projection.getNumRows() * 3 * sizeof(float), nullptr, GL_STATIC_DRAW);
 
     for (int col = 0; col < dataset.getNumCols()-3; col += 3)
     {
