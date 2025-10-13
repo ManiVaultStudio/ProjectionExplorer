@@ -1,5 +1,5 @@
 {
-    "name" : "Projection Explorer",
+    "name" : "Feature Explorer",
     "version" : "1.0",
     "dependencies" : ["Points"]
 }
