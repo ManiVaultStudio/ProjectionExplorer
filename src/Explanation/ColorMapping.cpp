@@ -62,6 +62,7 @@ ColorMapping::ColorMapping()
 void ColorMapping::recreate(DataMatrix& dataset)
 {
     // Create color mapping
+    _colorMapping.clear();
     _colorMapping.resize(dataset.getNumCols());
     for (int i = 0; i < _colorMapping.size(); i++)
     {
@@ -69,6 +70,7 @@ void ColorMapping::recreate(DataMatrix& dataset)
         _colorMapping[i] = color;
     }
 
+    _dimAssignment.clear();
     _dimAssignment.resize(_palette.size());
     std::iota(_dimAssignment.begin(), _dimAssignment.end(), 0);
 }

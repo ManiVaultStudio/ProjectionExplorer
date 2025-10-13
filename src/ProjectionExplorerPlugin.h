@@ -49,6 +49,8 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
+    void reset();
+
     mv::Dataset<Points>& getProjectionDataset() { return _projectionDataset; }
     Explanation::Model& getExplanationModel() { return _explanationModel; }
 

@@ -36,6 +36,7 @@ namespace
     void computeTopRankedDims(const DataMatrix& dataset, const DataMatrix& dimRanking, std::vector<int>& topRankedDims)
     {
         // Build vector of top ranked dimensions
+        topRankedDims.clear();
         topRankedDims.resize(dimRanking.getNumRows());
 
         // Top dimension
@@ -74,6 +75,7 @@ void Model::setProjection(mv::Dataset<Points> projection)
 
     computeStatistics();
 
+    _selectionRanking.clear();
     _selectionRanking.resize(_dataset.getNumCols());
 }
 
@@ -118,6 +120,7 @@ void Model::computeDimensionRanks()
 
     int numPoints = _dimRanking.getNumRows();
     int numDimensions = _dimRanking.getNumCols();
+    _rankAggregation.clear();
     _rankAggregation.resize(numDimensions, 0);
     for (int i = 0; i < _dimRanking.getNumRows(); i++)
     {

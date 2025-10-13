@@ -57,6 +57,7 @@ void ValueMethod::precomputeGlobalValues(DataMatrix& dataset)
     int numPoints = dataset.getNumRows();
     int numDimensions = dataset.getNumCols();
 
+    _globalValues.clear();
     _globalValues.resize(numDimensions);
 
     {
@@ -127,6 +128,7 @@ void ValueMethod::precomputeLocalValues(DataMatrix& dataset, DataMatrix& project
     int numPoints = dataset.getNumRows();
     int numDimensions = dataset.getNumCols();
 
+    _localValues.clear();
     _localValues.resize(numPoints, std::vector<float>(numDimensions));
 
     _lvc.initialize(projection);

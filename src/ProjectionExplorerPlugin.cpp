@@ -50,9 +50,16 @@ void ProjectionExplorerPlugin::init()
     _userInterface.getScatterplotWidget()->installEventFilter(this);
 }
 
+void ProjectionExplorerPlugin::reset()
+{
+    _userInterface.getExplanationWidget()->reset();
+}
+
 void ProjectionExplorerPlugin::onNewProjectionLoaded()
 {
     qDebug() << "onNewProjectionSet";
+    reset();
+
     ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
 
     // Ask user which dimensions they want to load in the projection
@@ -72,6 +79,7 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     _projectionDataset->extractDataForDimensions(points, DIM1, DIM2);
     ui().getScatterplotWidget()->setData(points);
     _explanationModel.setProjection(_projectionDataset);
+    _localToGlobalIndices.clear();
     _projectionDataset->getGlobalIndices(_localToGlobalIndices); // Save on time to recompute this every time in lens computation
     _explanationModel.computeExplanationMethod();
 

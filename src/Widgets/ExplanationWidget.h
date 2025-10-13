@@ -11,6 +11,8 @@ class HistogramChart : public QWidget
 public:
     HistogramChart(QWidget* parent, Explanation::Model& explanationModel);
 
+    void reset();
+
     void computeGlobalHistograms();
 
     void setRanking(const std::vector<unsigned int>& selection);
@@ -31,6 +33,8 @@ class ExplanationWidget : public QWidget
     Q_OBJECT
 public:
     ExplanationWidget(Explanation::Model& explanationModel);
+
+    void reset();
 
     HistogramChart& getHistogramChart() { return *_histogramChart; }
 

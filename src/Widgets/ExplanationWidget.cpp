@@ -13,6 +13,13 @@ HistogramChart::HistogramChart(QWidget* parent, Explanation::Model& explanationM
     setContentsMargins(0, 0, 0, 0);
 }
 
+void HistogramChart::reset()
+{
+    _sortIndices.clear();
+    _localHistograms.clear();
+    _globalHistograms.clear();
+}
+
 void HistogramChart::computeGlobalHistograms()
 {
     DataMatrix& dataset = _explanationModel.getDataset();
@@ -170,6 +177,11 @@ ExplanationWidget::ExplanationWidget(Explanation::Model& explanationModel) :
     layout->addWidget(_histogramChart);
 
     setLayout(layout);
+}
+
+void ExplanationWidget::reset()
+{
+    _histogramChart->reset();
 }
 
 void ExplanationWidget::updateWidgets()
