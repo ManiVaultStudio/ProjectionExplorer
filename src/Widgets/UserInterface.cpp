@@ -39,8 +39,8 @@ void UserInterface::init()
     initializeDropWidget();
 
     GroupAction* groupAction = new GroupAction(_plugin, "Numeric Group", true);
-    groupAction->addAction(&_settingsAction.getLensRadiusAction(), 3);
-    groupAction->addAction(&_settingsAction.getGlobalRadiusAction(), 3);
+    //groupAction->addAction(&_settingsAction.getLensRadiusAction(), 3);
+    //groupAction->addAction(&_settingsAction.getGlobalRadiusAction(), 3);
     groupAction->addAction(&_settingsAction.getColorOptionAction(), 1);
 
     _primaryToolbarAction.addAction(groupAction, 3, GroupAction::Horizontal);
