@@ -53,7 +53,7 @@ void UserInterface::initializeDropWidget()
     _dropWidget = new DropWidget(_centralWidget);
 
     // Set the drop indicator widget (the widget that indicates that the view is eligible for data dropping)
-    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&_plugin->getWidget(), "No data loaded", "Drag an item from the data hierarchy and drop it here to visualize data..."));
+    _dropWidget->setDropIndicatorWidget(new DropWidget::DropIndicatorWidget(&_plugin->getWidget(), "No data loaded", "Drag an embedding of dataset from the data hierarchy and drop it here to explore its features..."));
     _dropWidget->initialize([this](const QMimeData* mimeData) -> DropWidget::DropRegions
         {
             // A drop widget can contain zero or more drop regions
