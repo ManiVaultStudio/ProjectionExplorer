@@ -54,6 +54,7 @@ public:
     mv::Dataset<Points>& getProjectionDataset() { return _projectionDataset; }
     Explanation::Model& getExplanationModel() { return _explanationModel; }
 
+    void onPreNewProjectionLoaded();
     /** Invoked when a new projection dataset is dropped on the plugin */
     void onNewProjectionLoaded();
 
@@ -61,6 +62,19 @@ public:
 
 public: // User Interface
     UserInterface& ui() { return _userInterface; }
+
+public: // Serialization
+    /**
+    * Load plugin from variant map
+    * @param Variant map representation of the plugin
+    */
+    void fromVariantMap(const QVariantMap& variantMap) override;
+
+    /**
+    * Save plugin to variant map
+    * @return Variant map representation of the plugin
+    */
+    QVariantMap toVariantMap() const override;
 
 private:
     /** Invoked when the selection of the projection dataset changes */

@@ -38,13 +38,13 @@ void UserInterface::init()
     // Initialize the drop regions
     initializeDropWidget();
 
-    GroupAction* groupAction = new GroupAction(_plugin, "Numeric Group", true);
+    //GroupAction* groupAction = new GroupAction(_plugin, "Numeric Group", true);
     //groupAction->addAction(&_settingsAction.getLensRadiusAction(), 3);
     //groupAction->addAction(&_settingsAction.getGlobalRadiusAction(), 3);
-    groupAction->addAction(&_settingsAction.getColorOptionAction(), 1);
+    //groupAction->addAction(&_settingsAction.getColorOptionAction(), 1);
 
-    _primaryToolbarAction.addAction(groupAction, 3, GroupAction::Horizontal);
-    _primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 4, GroupAction::Horizontal);
+    _primaryToolbarAction.addAction(&_settingsAction.getCurrentDatasetAction());
+    _primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 2, mv::gui::TriggerAction::Text);
 }
 
 void UserInterface::initializeDropWidget()
@@ -100,7 +100,8 @@ void UserInterface::initializeDropWidget()
                     dropRegions << new DropWidget::DropRegion(_plugin, "Point position", description, "map-marker-alt", true, [this, candidateDataset]()
                     {
                         _plugin->getProjectionDataset() = candidateDataset;
-                        _plugin->onNewProjectionLoaded();
+                        _settingsAction.getCurrentDatasetAction().setCurrentDataset(candidateDataset);
+                        _plugin->onPreNewProjectionLoaded();
                     });
                 }
             }

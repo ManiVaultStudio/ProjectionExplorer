@@ -5,6 +5,7 @@
 #include <actions/IntegralAction.h>
 #include <actions/DecimalAction.h>
 #include <actions/OptionAction.h>
+#include <actions/DatasetPickerAction.h>
 
 using namespace mv::gui;
 
@@ -41,7 +42,7 @@ public: // Serialization
     QVariantMap toVariantMap() const override;
 
 public: // Action getters
-
+    DatasetPickerAction& getCurrentDatasetAction() { return _currentDatasetAction; }
     TriggerAction& getGenerateClustersAction() { return _generateClustersAction; }
     IntegralAction& getLensRadiusAction() { return _lensRadiusAction; }
     DecimalAction& getGlobalRadiusAction() { return _globalRadiusAction; }
@@ -50,6 +51,7 @@ public: // Action getters
 protected:
     ProjectionExplorerPlugin*   _plugin;        /** Pointer to plugin class */
 
+    DatasetPickerAction         _currentDatasetAction;
     IntegralAction              _lensRadiusAction;
     TriggerAction               _generateClustersAction;
     DecimalAction               _globalRadiusAction;

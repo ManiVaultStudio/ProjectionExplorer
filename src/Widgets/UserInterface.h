@@ -23,6 +23,8 @@ public:
     void init();
 
 public:
+    SettingsAction& getSettingsAction() { return _settingsAction; }
+    const SettingsAction& getSettingsAction() const { return _settingsAction; }
     ScatterplotWidget* getScatterplotWidget() { return _scatterplotWidget; }
     ExplanationWidget* getExplanationWidget() { return _explanationWidget; }
     DropWidget* getDropWidget() { return _dropWidget; }

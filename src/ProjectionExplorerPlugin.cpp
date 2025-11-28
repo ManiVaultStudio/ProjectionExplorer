@@ -55,13 +55,8 @@ void ProjectionExplorerPlugin::reset()
     _userInterface.getExplanationWidget()->reset();
 }
 
-void ProjectionExplorerPlugin::onNewProjectionLoaded()
+void ProjectionExplorerPlugin::onPreNewProjectionLoaded()
 {
-    qDebug() << "onNewProjectionSet";
-    reset();
-
-    ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
-
     // Ask user which dimensions they want to load in the projection
     DimensionPickingDialog dimPickingDialog(&this->getWidget());
     dimPickingDialog.setModal(true);
@@ -72,7 +67,17 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     {
         DIM1 = dimPickingDialog.getFirstDimension();
         DIM2 = dimPickingDialog.getSecondDimension();
+
+        onNewProjectionLoaded();
     }
+}
+
+void ProjectionExplorerPlugin::onNewProjectionLoaded()
+{
+    qDebug() << "onNewProjectionSet";
+    reset();
+
+    ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
 
     // Extract 2-dimensional points from the data set based on the selected dimensions
     std::vector<Vector2f> points;
@@ -248,6 +253,25 @@ void ProjectionExplorerPlugin::onMouseDragged(Vector2f cursorPos)
     events().notifyDatasetDataSelectionChanged(_projectionDataset->getSourceDataset<Points>());
 
     //qDebug() << "Lens selection indices: " << lensSelectionIndices.size();
+}
+
+void ProjectionExplorerPlugin::fromVariantMap(const QVariantMap& variantMap)
+{
+    ViewPlugin::fromVariantMap(variantMap);
+
+    variantMapMustContain(variantMap, "SettingsAction");
+
+    _userInterface.getSettingsAction().fromVariantMap(variantMap["SettingsAction"].toMap());
+}
+
+QVariantMap ProjectionExplorerPlugin::toVariantMap() const
+{
+    QVariantMap variantMap = ViewPlugin::toVariantMap();
+
+    const SettingsAction& settingsAction = _userInterface.getSettingsAction();
+    settingsAction.insertIntoVariantMap(variantMap);
+
+    return variantMap;
 }
 
 bool ProjectionExplorerPlugin::eventFilter(QObject* target, QEvent* event)

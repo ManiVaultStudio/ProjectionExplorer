@@ -11,6 +11,7 @@ using namespace mv::gui;
 SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     GroupAction(parent, title),
     _plugin(dynamic_cast<ProjectionExplorerPlugin*>(parent)),
+    _currentDatasetAction(this, "CurrentDataset"),
     _lensRadiusAction(this, "Lens Radius", 1, 100, 30),
     _generateClustersAction(this, "Generate Clusters"),
     _globalRadiusAction(this, "Global Radius", 0.01, 0.2, 0.12, 2),
@@ -46,11 +47,24 @@ void SettingsAction::fromVariantMap(const QVariantMap& variantMap)
 {
     WidgetAction::fromVariantMap(variantMap);
 
+    _currentDatasetAction.fromParentVariantMap(variantMap);
+
+    // Load position dataset
+    auto positionDataset = _currentDatasetAction.getCurrentDataset();
+
+    if (positionDataset.isValid())
+    {
+        mv::Dataset pickedDataset = mv::data().getDataset(positionDataset.getDatasetId());
+        _plugin->getProjectionDataset() = pickedDataset;
+        _plugin->onNewProjectionLoaded();
+    }
 }
 
 QVariantMap SettingsAction::toVariantMap() const
 {
     QVariantMap variantMap = WidgetAction::toVariantMap();
+
+    _currentDatasetAction.insertIntoVariantMap(variantMap);
 
     return variantMap;
 }
