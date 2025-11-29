@@ -122,8 +122,8 @@ void HistogramChart::paintEvent(QPaintEvent* event)
         int sortIndex = !_sortIndices.empty() ? _sortIndices[i] : i;
 
         QColor color(180, 180, 180, 255);
-        if (sortIndex < colorMapping.getColors().size())
-            color = colorMapping.getColors()[sortIndex];
+        //if (sortIndex < colorMapping.getColors().size())
+        //    color = colorMapping.getColors()[sortIndex];
         
         painter.setPen(color);
 

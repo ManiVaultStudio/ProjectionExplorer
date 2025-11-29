@@ -44,7 +44,7 @@ void UserInterface::init()
     //groupAction->addAction(&_settingsAction.getColorOptionAction(), 1);
 
     _primaryToolbarAction.addAction(&_settingsAction.getCurrentDatasetAction());
-    _primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 2, mv::gui::TriggerAction::Text);
+    //_primaryToolbarAction.addAction(&_settingsAction.getGenerateClustersAction(), 2, mv::gui::TriggerAction::Text);
 }
 
 void UserInterface::initializeDropWidget()

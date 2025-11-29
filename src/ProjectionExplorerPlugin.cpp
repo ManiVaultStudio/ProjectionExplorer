@@ -18,6 +18,38 @@ Q_PLUGIN_METADATA(IID "nl.uu.ProjectionExplorer")
 
 using namespace mv;
 
+namespace
+{
+    mv::Datasets getPatchseqDatasets()
+    {
+        Datasets datasets = data().getAllDatasets();
+
+        mv::Datasets patchseqDatasets;
+        // Iterate over the children and find the ones of type cluster
+        for (Dataset<DatasetImpl> dataset : datasets)
+        {
+            DataType type = dataset->getDataType();
+            if (type == PointType && dataset->hasProperty("PatchSeqType") && dataset->getProperty("PatchSeqType") == "E" || dataset->getProperty("PatchSeqType") == "M")
+            {
+                auto* parentItem = dataHierarchy().getItem(dataset.getDatasetId());
+                DataHierarchyItems childrenItems = dataHierarchy().getChildren(*parentItem);
+                
+                // Iterate over the children and find the ones of type cluster
+                for (DataHierarchyItem* item : childrenItems)
+                {
+                    DataType type = item->getDataType();
+                    if (type == PointType)
+                    {
+                        Dataset<Points> pointDataset = item->getDataset<Points>();
+                        patchseqDatasets.push_back(pointDataset);
+                    }
+                }
+            }
+        }
+        return patchseqDatasets;
+    }
+}
+
 ProjectionExplorerPlugin::ProjectionExplorerPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _projectionDataset(nullptr),
@@ -48,6 +80,9 @@ void ProjectionExplorerPlugin::init()
     connect(&_projectionDataset, &Dataset<Points>::dataSelectionChanged, this, &ProjectionExplorerPlugin::onProjectionSelectionChanged);
 
     _userInterface.getScatterplotWidget()->installEventFilter(this);
+
+    // Load initial datasets
+    _userInterface.getSettingsAction().getCurrentDatasetAction().setDatasets(getPatchseqDatasets());
 }
 
 void ProjectionExplorerPlugin::reset()
@@ -76,6 +111,8 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
 {
     qDebug() << "onNewProjectionSet";
     reset();
+
+    _projectionDataset = _userInterface.getSettingsAction().getCurrentDatasetAction().getCurrentDataset();
 
     ui().getDropWidget()->setShowDropIndicator(!_projectionDataset.isValid());
 
@@ -118,6 +155,8 @@ void ProjectionExplorerPlugin::onNewProjectionLoaded()
     ui().getScatterplotWidget()->setColors(colorData);
 
     ui().getExplanationWidget()->getHistogramChart().computeGlobalHistograms();
+
+    _userInterface.getExplanationWidget()->update();
 }
 
 void ProjectionExplorerPlugin::generateClusterDataset()

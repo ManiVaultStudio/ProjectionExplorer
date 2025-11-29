@@ -19,6 +19,10 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
 {
     setConnectionPermissionsToForceNone();
 
+    connect(&_currentDatasetAction, &DatasetPickerAction::datasetPicked, this, [this]() {
+        _plugin->onNewProjectionLoaded();
+    });
+
     connect(&_generateClustersAction, &TriggerAction::triggered, this, [this]() {
         _plugin->generateClusterDataset();
     });
