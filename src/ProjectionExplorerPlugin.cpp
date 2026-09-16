@@ -5,6 +5,7 @@
 #include <ClusterData/ClusterData.h>
 
 #include <event/Event.h>
+#include <util/Serialization.h>
 #include <graphics/Vector2f.h>
 
 #include <QDebug>
@@ -13,6 +14,7 @@
 
 #include "util/Timer.h" ////////////
 #include "Globals.h" /////////// Temp
+
 
 Q_PLUGIN_METADATA(IID "nl.uu.ProjectionExplorer")
 
